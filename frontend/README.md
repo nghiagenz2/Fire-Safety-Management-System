@@ -1,8 +1,9 @@
 # Frontend
 
 ## Cấu trúc chính
-- `public/index.html`
-- `src/App.js`
+- `index.html` (Vite entry)
+- `src/main.jsx`
+- `src/App.jsx`
 - `src/components/`
 - `src/pages/`
 - `src/services/`
@@ -10,10 +11,16 @@
 - `src/websocket/`
 - `src/utils/`
 
-## Chạy nhanh (placeholder)
+## Chạy nhanh (Vite)
 ```bash
 npm install
 npm run dev
+```
+
+## Build production
+```bash
+npm run build
+npm run preview
 ```
 
 ## CSS Rules (Inter + Semantic Colors)
