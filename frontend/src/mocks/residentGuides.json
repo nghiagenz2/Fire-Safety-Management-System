@@ -1,0 +1,70 @@
+[
+  {
+    "id": "guide-escape-01",
+    "title": "Thoát hiểm khi có khói dày đặc ở hành lang",
+    "duration": "04:25",
+    "level": "Khẩn cấp",
+    "category": "escape",
+    "summary": "Di chuyển thấp người, che mũi miệng bằng khăn ẩm và bám theo chỉ dẫn lối thoát hiểm gần nhất.",
+    "videoTitle": "Kỹ năng thoát hiểm trong môi trường nhiều khói",
+    "videoUrl": "https://www.youtube.com/watch?v=mock-escape-01",
+    "textSteps": [
+      "Bình tĩnh quan sát hướng khói và xác định lối thoát còn khả dụng.",
+      "Cúi thấp người, dùng khăn ẩm che mũi miệng, men theo tường để di chuyển.",
+      "Không sử dụng thang máy, ưu tiên cầu thang bộ gần nhất.",
+      "Ra khỏi tòa nhà và điểm danh tại khu vực tập kết an toàn."
+    ]
+  },
+  {
+    "id": "guide-device-01",
+    "title": "Sử dụng bình chữa cháy CO2 đúng cách",
+    "duration": "03:12",
+    "level": "Cơ bản",
+    "category": "device",
+    "summary": "Phù hợp đám cháy điện nhỏ. Rút chốt, hướng loa phun vào gốc lửa và xả theo nhịp kiểm soát.",
+    "videoTitle": "Hướng dẫn thao tác bình CO2 cho cư dân",
+    "videoUrl": "https://www.youtube.com/watch?v=mock-device-01",
+    "textSteps": [
+      "Kiểm tra niêm chì và đồng hồ áp suất trước khi thao tác.",
+      "Rút chốt an toàn, đứng ở vị trí xuôi chiều gió.",
+      "Hướng loa phun vào chân đám cháy và bóp cò theo nhịp ngắt quãng.",
+      "Theo dõi cháy bùng lại và báo lực lượng hỗ trợ nếu không khống chế được."
+    ]
+  },
+  {
+    "id": "guide-emergency-01",
+    "title": "Gọi cứu hộ đúng thông tin để phản ứng nhanh",
+    "duration": "02:08",
+    "level": "Quan trọng",
+    "category": "emergency",
+    "summary": "Khai báo ngắn gọn theo mẫu: vị trí cháy, mức độ, số người kẹt và lối tiếp cận.",
+    "videoTitle": "Mẫu cuộc gọi 114 trong 30 giây",
+    "videoUrl": "https://www.youtube.com/watch?v=mock-emergency-01",
+    "textSteps": [
+      "Nêu rõ địa chỉ tòa nhà, tầng và khu vực cháy cụ thể.",
+      "Cung cấp thông tin số người mắc kẹt, tình trạng khói và khả năng tiếp cận.",
+      "Để lại số điện thoại liên hệ và làm theo hướng dẫn của điều phối viên.",
+      "Thông báo lại cho ban quản lý để kích hoạt phương án hỗ trợ tại chỗ."
+    ],
+    "contacts": [
+      "114 - Cảnh sát PCCC",
+      "115 - Cấp cứu",
+      "0900 000 111 - Bảo vệ tòa nhà"
+    ]
+  },
+  {
+    "id": "guide-escape-02",
+    "title": "Kiểm tra cửa thoát hiểm trước khi mở",
+    "duration": "01:45",
+    "level": "Quan trọng",
+    "category": "escape",
+    "summary": "Dùng mu bàn tay kiểm tra nhiệt cửa, mở hé để đánh giá khói và rút lui nếu nhiệt cao.",
+    "videoTitle": "Đánh giá cửa thoát hiểm trong tình huống cháy",
+    "videoUrl": "https://www.youtube.com/watch?v=mock-escape-02",
+    "textSteps": [
+      "Dùng mu bàn tay áp nhẹ lên cánh cửa và tay nắm để kiểm tra nhiệt.",
+      "Nếu cửa nóng bất thường, không mở và chuyển sang lối thoát khác.",
+      "Nếu cửa mát, mở hé và quan sát khói trước khi di chuyển tiếp."
+    ]
+  }
+]
