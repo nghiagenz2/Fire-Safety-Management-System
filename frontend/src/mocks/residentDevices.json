@@ -1,0 +1,86 @@
+[
+  {
+    "id": "EXT-F1-001",
+    "type": "Bình chữa cháy CO2",
+    "model": "CO2-5KG-A1",
+    "floor": "Tầng 1",
+    "room": "A101",
+    "location": "Sảnh thang bộ A, cạnh tủ điện",
+    "distanceToResident": 18,
+    "nearestExit": "Cửa thoát E1",
+    "lastInspection": "10/03/2026",
+    "maintenanceDue": "15/06/2026",
+    "status": "safe",
+    "statusLabel": "Hoạt động tốt",
+    "usageScope": "Đám cháy thiết bị điện hoặc tủ điện nhỏ",
+    "caution": "Không cầm trực tiếp vào loa phun kim loại khi đang xả CO2.",
+    "instructionSteps": [
+      "Rút chốt an toàn trên thân bình.",
+      "Đứng xuôi chiều gió, hướng loa phun vào gốc lửa.",
+      "Bóp cò và quét ngang đều tay từ gần đến xa."
+    ]
+  },
+  {
+    "id": "EXT-F1-002",
+    "type": "Bình chữa cháy bột",
+    "model": "ABC-8KG-B2",
+    "floor": "Tầng 1",
+    "room": "A105",
+    "location": "Hành lang A, gần cửa căn hộ",
+    "distanceToResident": 24,
+    "nearestExit": "Cửa thoát E1",
+    "lastInspection": "28/02/2026",
+    "maintenanceDue": "12/05/2026",
+    "status": "warning",
+    "statusLabel": "Cảnh báo bảo trì",
+    "usageScope": "Đám cháy chất rắn, chất lỏng dễ cháy quy mô nhỏ",
+    "caution": "Sau khi xịt cần quan sát hiện tượng cháy bùng trở lại.",
+    "instructionSteps": [
+      "Lắc nhẹ bình 2 đến 3 lần trước khi sử dụng.",
+      "Rút chốt, giữ vòi hướng vào chân đám cháy.",
+      "Bóp cò dứt khoát và quét theo hình rẻ quạt."
+    ]
+  },
+  {
+    "id": "ALARM-F2-001",
+    "type": "Chuông báo cháy",
+    "model": "BELL-24V-F2",
+    "floor": "Tầng 2",
+    "room": "B201",
+    "location": "Sảnh thang máy tầng 2",
+    "distanceToResident": 12,
+    "nearestExit": "Cầu thang bộ S2",
+    "lastInspection": "01/03/2026",
+    "maintenanceDue": "Đang kiểm tra kỹ thuật",
+    "status": "danger",
+    "statusLabel": "Hỏng tín hiệu",
+    "usageScope": "Kích hoạt cảnh báo toàn tầng khi có sự cố cháy",
+    "caution": "Thiết bị đang lỗi, cư dân cần dùng nút khẩn gần nhất để báo động.",
+    "instructionSteps": [
+      "Quan sát đèn báo đỏ tại đầu báo gần nhất để xác nhận sự cố.",
+      "Nhấn nút nhấn khẩn cấp MCP ở hành lang nếu chuông không hoạt động.",
+      "Di chuyển theo lối thoát hiểm và báo cho bảo vệ tòa nhà."
+    ]
+  },
+  {
+    "id": "SPRINK-F3-001",
+    "type": "Vòi phun nước tự động",
+    "model": "SP-68C-C301",
+    "floor": "Tầng 3",
+    "room": "C301",
+    "location": "Trần hành lang C, trước cửa căn hộ",
+    "distanceToResident": 9,
+    "nearestExit": "Cửa thoát E3",
+    "lastInspection": "15/03/2026",
+    "maintenanceDue": "21/07/2026",
+    "status": "safe",
+    "statusLabel": "Hoạt động tốt",
+    "usageScope": "Phun tự động khi nhiệt độ khu vực vượt ngưỡng kích hoạt",
+    "caution": "Không treo vật cản dưới đầu phun trong bán kính 50 cm.",
+    "instructionSteps": [
+      "Giữ khoảng trống dưới đầu phun để hệ thống làm việc hiệu quả.",
+      "Nếu đầu phun kích hoạt, rời khu vực theo lối thoát gần nhất.",
+      "Không tự ý khóa van nước chữa cháy khi chưa có hướng dẫn kỹ thuật."
+    ]
+  }
+]
