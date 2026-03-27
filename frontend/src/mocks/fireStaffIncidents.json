@@ -1,0 +1,59 @@
+{
+  "incidents": [
+    {
+      "id": "INC-301",
+      "title": "Cháy kho vật tư tầng 3",
+      "fireAt": "C3",
+      "dangerZones": ["B3", "C2", "C4", "D3"],
+      "route": ["C3", "C4", "C5", "B5", "A5"],
+      "severity": "Nguy cơ cao",
+      "updatedAt": "11:28",
+      "detail": "Nhiệt độ tăng nhanh, khói dày khu vực trung tâm, ưu tiên cô lập nguồn điện."
+    },
+    {
+      "id": "INC-118",
+      "title": "Cháy phòng kỹ thuật tầng 1",
+      "fireAt": "A2",
+      "dangerZones": ["A1", "A3", "B2"],
+      "route": ["A2", "A3", "A4", "A5"],
+      "severity": "Trung bình",
+      "updatedAt": "11:20",
+      "detail": "Đám cháy cục bộ, đã kích hoạt sprinkler, tiếp tục theo dõi tái bùng phát."
+    }
+  ],
+  "updates": [
+    "11:29 - Đã khoanh vùng khu vực nguy hiểm, cấm tiếp cận C2-C4.",
+    "11:27 - Đội phản ứng nhanh số 2 vào vị trí tại hành lang C5.",
+    "11:25 - Camera nhiệt xác nhận điểm nóng tại C3 tăng 12%.",
+    "11:22 - Hệ thống loa phát lệnh thoát hiểm hướng cửa Đông."
+  ],
+  "uiMeta": {
+    "INC-301": {
+      "displayId": "INC-2026-001",
+      "summary": "Mô phỏng cháy tầng 2",
+      "severityLabel": "Trung bình",
+      "severityClass": "medium",
+      "occurredAt": "2026-03-20 14:30",
+      "locationLabel": "Tầng 2, B201",
+      "assignee": "Trần Văn B",
+      "sourceLabel": "Mô phỏng",
+      "isResolved": true
+    },
+    "INC-118": {
+      "displayId": "INC-2026-002",
+      "summary": "Phát hiện khói nhẹ từ phòng A105",
+      "severityLabel": "Thấp",
+      "severityClass": "low",
+      "occurredAt": "2026-03-22 09:15",
+      "locationLabel": "Tầng 1, A105",
+      "assignee": "Nguyễn Văn A",
+      "sourceLabel": "",
+      "isResolved": false
+    }
+  },
+  "fallbackProcessingSteps": [
+    "Vị trí cháy đã được xác định",
+    "Đội PCCC đã được triển khai",
+    "Người dân đang được hướng dẫn sơ tán"
+  ]
+}
