@@ -1,0 +1,199 @@
+[
+  {
+    "id": "TASK-301-01",
+    "incidentId": "INC-301",
+    "title": "Cô lập nguồn điện khu C3",
+    "description": "Ngắt tủ điện nhánh khu kho vật tư tầng 3 để giảm nguy cơ cháy lan và tránh điện giật khi phun chữa cháy.",
+    "category": "isolation",
+    "priority": "critical",
+    "priorityLabel": "Khẩn cấp",
+    "status": "in_progress",
+    "statusLabel": "Đang thực hiện",
+    "assignee": "Trần Văn B",
+    "team": "Đội phản ứng nhanh số 2",
+    "floor": "Tầng 3",
+    "zone": "C3",
+    "createdAt": "2026-03-30T11:20:00+07:00",
+    "dueAt": "2026-03-30T11:35:00+07:00",
+    "updatedAt": "2026-03-30T11:28:00+07:00",
+    "estimatedMinutes": 15,
+    "progress": 60,
+    "checklist": [
+      {
+        "id": "CL-301-01-01",
+        "label": "Xác nhận phạm vi tủ điện cần cô lập",
+        "completed": true
+      },
+      {
+        "id": "CL-301-01-02",
+        "label": "Thông báo phòng điều khiển trung tâm",
+        "completed": true
+      },
+      {
+        "id": "CL-301-01-03",
+        "label": "Niêm phong tạm thời khu vực sau khi ngắt",
+        "completed": false
+      }
+    ],
+    "attachments": [
+      {
+        "id": "ATT-301-01",
+        "name": "anh_tu_dien_c3.jpg",
+        "type": "image"
+      }
+    ],
+    "notes": "Ưu tiên hoàn tất trước khi đội vòi rồng tiến vào sâu khu kho."
+  },
+  {
+    "id": "TASK-301-02",
+    "incidentId": "INC-301",
+    "title": "Thiết lập hành lang sơ tán C5 -> B5",
+    "description": "Dẫn hướng cư dân khu C4-C5 di chuyển theo lối an toàn về cửa thoát hiểm phía Đông.",
+    "category": "evacuation",
+    "priority": "high",
+    "priorityLabel": "Cao",
+    "status": "pending",
+    "statusLabel": "Chờ thực hiện",
+    "assignee": "Lê Minh C",
+    "team": "Đội hướng dẫn sơ tán",
+    "floor": "Tầng 3",
+    "zone": "C5",
+    "createdAt": "2026-03-30T11:22:00+07:00",
+    "dueAt": "2026-03-30T11:38:00+07:00",
+    "updatedAt": "2026-03-30T11:22:00+07:00",
+    "estimatedMinutes": 12,
+    "progress": 0,
+    "checklist": [
+      {
+        "id": "CL-301-02-01",
+        "label": "Đặt biển cảnh báo tại điểm giao C4",
+        "completed": false
+      },
+      {
+        "id": "CL-301-02-02",
+        "label": "Mở loa cầm tay hướng dẫn thoát nạn",
+        "completed": false
+      }
+    ],
+    "attachments": [],
+    "notes": "Có người cao tuổi tại căn C509, cần ưu tiên hỗ trợ."
+  },
+  {
+    "id": "TASK-118-01",
+    "incidentId": "INC-118",
+    "title": "Kiểm tra tái bùng phát tại A2-A3",
+    "description": "Theo dõi điểm nóng sau khi sprinkler kích hoạt, xác nhận không còn than hồng và khói âm ỉ.",
+    "category": "verification",
+    "priority": "medium",
+    "priorityLabel": "Trung bình",
+    "status": "completed",
+    "statusLabel": "Hoàn thành",
+    "assignee": "Nguyễn Văn A",
+    "team": "Đội trực ca 1",
+    "floor": "Tầng 1",
+    "zone": "A2",
+    "createdAt": "2026-03-30T11:00:00+07:00",
+    "dueAt": "2026-03-30T11:25:00+07:00",
+    "updatedAt": "2026-03-30T11:24:00+07:00",
+    "estimatedMinutes": 20,
+    "progress": 100,
+    "checklist": [
+      {
+        "id": "CL-118-01-01",
+        "label": "Đo nhiệt độ bề mặt khu vực A2",
+        "completed": true
+      },
+      {
+        "id": "CL-118-01-02",
+        "label": "Xác nhận thông gió cưỡng bức hoạt động ổn định",
+        "completed": true
+      },
+      {
+        "id": "CL-118-01-03",
+        "label": "Báo cáo kết quả về phòng trực",
+        "completed": true
+      }
+    ],
+    "attachments": [
+      {
+        "id": "ATT-118-01",
+        "name": "bao_cao_nhiet_do_a2.pdf",
+        "type": "document"
+      }
+    ],
+    "notes": "Mức nhiệt giảm về ngưỡng an toàn sau 18 phút theo dõi."
+  },
+  {
+    "id": "TASK-301-03",
+    "incidentId": "INC-301",
+    "title": "Bổ sung bình CO2 tại chốt C4",
+    "description": "Điều phối thêm 2 bình CO2 5kg đến khu hành lang C4 để dự phòng đám cháy điện tái phát.",
+    "category": "logistics",
+    "priority": "high",
+    "priorityLabel": "Cao",
+    "status": "in_progress",
+    "statusLabel": "Đang thực hiện",
+    "assignee": "Phạm Quốc D",
+    "team": "Đội hậu cần PCCC",
+    "floor": "Tầng 3",
+    "zone": "C4",
+    "createdAt": "2026-03-30T11:24:00+07:00",
+    "dueAt": "2026-03-30T11:40:00+07:00",
+    "updatedAt": "2026-03-30T11:29:00+07:00",
+    "estimatedMinutes": 10,
+    "progress": 40,
+    "checklist": [
+      {
+        "id": "CL-301-03-01",
+        "label": "Kiểm tra áp suất bình trước khi vận chuyển",
+        "completed": true
+      },
+      {
+        "id": "CL-301-03-02",
+        "label": "Bố trí bình tại 2 điểm chốt C4",
+        "completed": false
+      }
+    ],
+    "attachments": [],
+    "notes": "Một bình dự phòng đang trên đường từ kho tầng 1."
+  },
+  {
+    "id": "TASK-301-04",
+    "incidentId": "INC-301",
+    "title": "Đóng log hiện trường và bàn giao ca",
+    "description": "Tổng hợp mốc thời gian xử lý, thiết bị đã sử dụng và nhân sự tham gia để bàn giao ca trực tiếp theo.",
+    "category": "reporting",
+    "priority": "low",
+    "priorityLabel": "Thấp",
+    "status": "pending",
+    "statusLabel": "Chờ thực hiện",
+    "assignee": "Tổ trưởng trực ca 3",
+    "team": "Ban chỉ huy hiện trường",
+    "floor": "Phòng trực",
+    "zone": "Control",
+    "createdAt": "2026-03-30T11:26:00+07:00",
+    "dueAt": "2026-03-30T12:05:00+07:00",
+    "updatedAt": "2026-03-30T11:26:00+07:00",
+    "estimatedMinutes": 25,
+    "progress": 0,
+    "checklist": [
+      {
+        "id": "CL-301-04-01",
+        "label": "Tổng hợp timeline xử lý",
+        "completed": false
+      },
+      {
+        "id": "CL-301-04-02",
+        "label": "Đối chiếu số lượng thiết bị đã dùng",
+        "completed": false
+      },
+      {
+        "id": "CL-301-04-03",
+        "label": "Ký xác nhận bàn giao",
+        "completed": false
+      }
+    ],
+    "attachments": [],
+    "notes": "Thực hiện sau khi hiện trường chuyển trạng thái an toàn."
+  }
+]

@@ -1,14 +1,18 @@
 const express = require('express');
+const env = require('./config/env');
+const routes = require('./routes');
+const notFound = require('./middlewares/notFound.middleware');
+const errorHandler = require('./middlewares/errorHandler.middleware');
 
 const app = express();
-const port = process.env.PORT || 5000;
 
 app.use(express.json());
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', service: 'backend' });
-});
+app.use('/api', routes);
 
-app.listen(port, () => {
-  console.log(`Backend running at http://localhost:${port}`);
+app.use(notFound);
+app.use(errorHandler);
+
+app.listen(env.PORT, () => {
+  console.log(`Backend running at http://localhost:${env.PORT} (${env.NODE_ENV})`);
 });

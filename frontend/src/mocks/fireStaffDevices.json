@@ -1,0 +1,122 @@
+[
+  {
+    "id": "FSE-EXT-F1-001",
+    "type": "Bình chữa cháy CO2",
+    "model": "CO2-5KG-A1",
+    "floor": "Tầng 1",
+    "room": "A102",
+    "location": "Sảnh thang bộ A, cạnh tủ điện tổng",
+    "nearestExit": "Cửa thoát E1",
+    "distanceToResident": 14,
+    "distanceToFireStation": 22,
+    "lastInspection": "12/03/2026",
+    "maintenanceDue": "20/06/2026",
+    "status": "safe",
+    "statusLabel": "Sẵn sàng sử dụng",
+    "assignedTeam": "Đội trực ca 1",
+    "usageScope": "Đám cháy điện, tủ điện, phòng kỹ thuật nhỏ",
+    "caution": "Không chạm tay trần vào loa phun khi đang xả khí.",
+    "instructionSteps": [
+      "Rút chốt an toàn và kiểm tra niêm phong còn nguyên.",
+      "Hướng loa phun vào gốc lửa, giữ khoảng cách 1.5-2m.",
+      "Bóp cò dứt khoát và quét ngang đến khi lửa tắt hoàn toàn."
+    ],
+    "operationalNotes": "Áp suất ổn định, tem kiểm định còn hiệu lực."
+  },
+  {
+    "id": "FSE-EXT-F2-003",
+    "type": "Bình chữa cháy bột ABC",
+    "model": "ABC-8KG-B2",
+    "floor": "Tầng 2",
+    "room": "B204",
+    "location": "Hành lang B, gần cửa thoát hiểm Đông",
+    "nearestExit": "Cửa thoát E2",
+    "distanceToResident": 11,
+    "distanceToFireStation": 16,
+    "lastInspection": "01/03/2026",
+    "maintenanceDue": "28/04/2026",
+    "status": "warning",
+    "statusLabel": "Cần bảo trì sớm",
+    "assignedTeam": "Đội trực ca 2",
+    "usageScope": "Cháy chất rắn, chất lỏng, thiết bị điện quy mô nhỏ",
+    "caution": "Lắc bình trước khi dùng để tránh đóng bột.",
+    "instructionSteps": [
+      "Kiểm tra đồng hồ áp suất, đảm bảo kim nằm vùng xanh.",
+      "Rút chốt, đứng xuôi chiều gió và bóp cò theo nhịp ngắn.",
+      "Theo dõi khả năng cháy bùng trở lại trong 3 phút sau khi dập."
+    ],
+    "operationalNotes": "Áp suất cận ngưỡng thấp, ưu tiên thay nạp trong tuần."
+  },
+  {
+    "id": "FSE-HYDR-F1-002",
+    "type": "Họng nước chữa cháy vách tường",
+    "model": "HYD-65A-INDOOR",
+    "floor": "Tầng 1",
+    "room": "Sảnh trung tâm",
+    "location": "Tủ PCCC khu vực lễ tân",
+    "nearestExit": "Cửa chính E0",
+    "distanceToResident": 19,
+    "distanceToFireStation": 10,
+    "lastInspection": "18/03/2026",
+    "maintenanceDue": "18/09/2026",
+    "status": "safe",
+    "statusLabel": "Lưu lượng đạt chuẩn",
+    "assignedTeam": "Đội kỹ thuật PCCC",
+    "usageScope": "Khống chế đám cháy lan rộng trong hành lang/sảnh lớn",
+    "caution": "Luôn có tối thiểu 2 người vận hành khi mở van họng nước.",
+    "instructionSteps": [
+      "Mở tủ, kéo vòi theo hướng đám cháy và giữ thẳng tuyến vòi.",
+      "Một người giữ lăng phun, một người mở van từ từ.",
+      "Điều chỉnh tia nước dạng phun/sương tùy loại đám cháy."
+    ],
+    "operationalNotes": "Lưu lượng đo thử đạt 2.6 bar, không rò rỉ đầu nối."
+  },
+  {
+    "id": "FSE-ALM-F3-005",
+    "type": "Nút nhấn khẩn báo cháy",
+    "model": "MCP-24V-R3",
+    "floor": "Tầng 3",
+    "room": "C308",
+    "location": "Hành lang C, cạnh cửa thang bộ",
+    "nearestExit": "Cầu thang bộ S3",
+    "distanceToResident": 7,
+    "distanceToFireStation": 12,
+    "lastInspection": "27/02/2026",
+    "maintenanceDue": "Đang kiểm tra kỹ thuật",
+    "status": "danger",
+    "statusLabel": "Mất kết nối trung tâm",
+    "assignedTeam": "Đội trực ca 3",
+    "usageScope": "Kích hoạt báo cháy thủ công khi phát hiện khói/lửa",
+    "caution": "Thiết bị đang lỗi, dùng MCP dự phòng ở giao lộ hành lang C3.",
+    "instructionSteps": [
+      "Xác minh có dấu hiệu cháy bằng quan sát khói/nhiệt bất thường.",
+      "Nhấn MCP dự phòng gần nhất để phát tín hiệu cảnh báo.",
+      "Thông báo qua bộ đàm cho phòng trực và triển khai sơ tán khu vực."
+    ],
+    "operationalNotes": "Lỗi module truyền tín hiệu, đã tạo phiếu sửa chữa CR-233."
+  },
+  {
+    "id": "FSE-SPR-F2-004",
+    "type": "Đầu phun sprinkler tự động",
+    "model": "SP-68C-BLOCK-B",
+    "floor": "Tầng 2",
+    "room": "B210",
+    "location": "Trần hành lang B, trước cụm căn hộ",
+    "nearestExit": "Cửa thoát E2",
+    "distanceToResident": 8,
+    "distanceToFireStation": 14,
+    "lastInspection": "16/03/2026",
+    "maintenanceDue": "22/07/2026",
+    "status": "safe",
+    "statusLabel": "Hoạt động tốt",
+    "assignedTeam": "Đội kỹ thuật PCCC",
+    "usageScope": "Kích hoạt tự động khi nhiệt độ vượt ngưỡng 68°C",
+    "caution": "Không treo biển/quạt trang trí dưới đầu phun trong bán kính 50cm.",
+    "instructionSteps": [
+      "Đảm bảo vùng dưới đầu phun luôn thông thoáng.",
+      "Khi hệ thống kích hoạt, ưu tiên cô lập nguồn điện khu vực.",
+      "Báo phòng kỹ thuật kiểm tra van zone sau khi sự cố kết thúc."
+    ],
+    "operationalNotes": "Nhiệt ngưỡng kích hoạt đúng chuẩn, không tắc nghẽn đường ống."
+  }
+]

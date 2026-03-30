@@ -1,0 +1,71 @@
+.resident-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.stat-card-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+}
+
+.stat-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+
+.stat-icon-wrapper.green {
+  background-color: var(--color-success, #28a745);
+}
+
+.stat-icon-wrapper.blue {
+  background-color: var(--color-brand, #0052cc);
+}
+
+.stat-card-item.bg-light-safe {
+  background-color: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.stat-card-item.bg-light-brand {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.resident-3d-placeholder {
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 16px;
+  border-style: dashed;
+  background-color: #f8fafc;
+}
+
+.stat-card-value {
+  margin: 0;
+  line-height: 1;
+}
+
+.stat-card-value.small {
+  font-size: 20px;
+}
+
+.stat-card-label {
+  margin: 4px 0 0;
+}
+
+@media (max-width: 768px) {
+  .resident-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
