@@ -833,7 +833,98 @@
   justify-content: flex-end;
 }
 
+.firestaff-task-header p {
+  margin-top: 6px;
+}
+
+.firestaff-task-summary {
+  margin-top: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.firestaff-task-kpi {
+  padding: 12px 14px;
+}
+
+.firestaff-task-kpi p {
+  margin: 0;
+}
+
+.firestaff-task-kpi p + p {
+  margin-top: 4px;
+}
+
+.firestaff-task-filters {
+  margin-top: 12px;
+  padding: 14px;
+}
+
+.firestaff-task-filter-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.firestaff-task-table-card {
+  margin-top: 12px;
+  padding: 16px;
+}
+
+.firestaff-task-table {
+  min-width: 920px;
+}
+
+.firestaff-task-code,
+.firestaff-task-meta {
+  margin: 0;
+}
+
+.firestaff-task-meta {
+  margin-top: 4px;
+}
+
+.firestaff-task-status-select {
+  min-height: 34px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  color: #0f172a;
+  padding: 0 10px;
+  min-width: 150px;
+}
+
+.firestaff-task-status-select.status-pending {
+  color: #92400e;
+  background-color: #ffedd5;
+  border-color: #fdba74;
+}
+
+.firestaff-task-status-select.status-in-progress {
+  color: #1d4ed8;
+  background-color: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.firestaff-task-status-select.status-completed {
+  color: #166534;
+  background-color: #dcfce7;
+  border-color: #86efac;
+}
+
+.firestaff-task-status-select:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
 @media (min-width: 900px) {
+  .firestaff-task-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .firestaff-task-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .firestaff-device-filter-grid {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
@@ -850,6 +941,11 @@
 }
 
 @media (max-width: 640px) {
+  .firestaff-task-filters,
+  .firestaff-task-table-card {
+    padding: 12px;
+  }
+
   .firestaff-device-filters,
   .firestaff-device-table-card,
   .firestaff-device-model-card {

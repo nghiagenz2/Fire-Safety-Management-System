@@ -8,6 +8,7 @@ import ResidentDevicePage from "./pages/resident/ResidentDevicePage.jsx";
 import FireStaffIncidentPage from "./pages/firestaff/FireStaffIncidentPage.jsx";
 import FireStaffSimulationPage from "./pages/firestaff/FireStaffSimulationPage.jsx";
 import FireStaffDevicePage from "./pages/firestaff/FireStaffDevicePage.jsx";
+import FireStaffTaskPage from "./pages/firestaff/FireStaffTaskPage.jsx";
 
 import ResidentHomePage from "./pages/resident/ResidentHomePage.jsx";
 import ResidentEscapePage from "./pages/resident/ResidentEscapePage.jsx";
@@ -22,10 +23,7 @@ function App() {
           element={<Navigate to="/firestaff/simulation" replace />}
         />
         <Route path="/firestaff/devices" element={<FireStaffDevicePage />} />
-        <Route
-          path="/firestaff/tasks"
-          element={<Navigate to="/firestaff/simulation" replace />}
-        />
+        <Route path="/firestaff/tasks" element={<FireStaffTaskPage />} />
         <Route
           path="/firestaff/simulation"
           element={<FireStaffSimulationPage />}
