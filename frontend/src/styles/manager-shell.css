@@ -1,0 +1,283 @@
+.manager-screen {
+	min-height: 100vh;
+	padding: 18px 14px 96px;
+	background:
+		radial-gradient(circle at 12% -20%, rgba(255, 193, 7, 0.32), transparent 45%),
+		radial-gradient(circle at 90% 10%, rgba(0, 82, 204, 0.14), transparent 40%),
+		linear-gradient(180deg, #f7fbff 0%, #ffffff 100%);
+	display: flex;
+	flex-direction: column;
+}
+
+.manager-device-shell {
+	padding: 16px;
+	display: grid;
+	gap: 16px;
+	flex: 1;
+	margin: 0 auto;
+	width: 100%;
+}
+
+.manager-topbar {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.manager-topbar p,
+.manager-topbar h1 {
+	margin: 0;
+}
+
+.manager-overline {
+	margin: 0 0 4px;
+}
+
+.manager-title {
+	margin: 0;
+}
+
+.manager-device-head {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.manager-device-title,
+.manager-device-subtitle {
+	margin: 0;
+}
+
+.manager-device-subtitle {
+	margin-top: 4px;
+}
+
+.manager-device-add-btn {
+	min-height: 40px;
+	border: none;
+	border-radius: 12px;
+	padding: 0 16px;
+	color: #ffffff;
+	background: var(--color-brand);
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	cursor: pointer;
+	transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.manager-panel {
+	border: 1px solid #e5e7eb;
+	border-radius: 16px;
+	background-color: #ffffff;
+	box-shadow: 0 12px 30px rgba(17, 24, 39, 0.08);
+}
+
+.manager-device-filter {
+	padding: 16px;
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 16px;
+}
+
+.manager-filter-item {
+	display: grid;
+	gap: 8px;
+}
+
+.manager-filter-item label {
+	font-weight: 600;
+}
+
+.manager-search-wrap {
+	position: relative;
+}
+
+.manager-search-icon {
+	position: absolute;
+	left: 12px;
+	top: 50%;
+	transform: translateY(-50%);
+	color: #9ca3af;
+}
+
+.manager-search-input,
+.manager-filter-select {
+	width: 100%;
+	min-height: 44px;
+	border: 1px solid #cbd5e1;
+	border-radius: 12px;
+	background: #ffffff;
+	padding: 0 14px;
+	font-family: inherit;
+	color: var(--text-primary);
+}
+
+.manager-search-input {
+	padding-left: 42px;
+}
+
+.manager-search-input:focus,
+.manager-filter-select:focus {
+	outline: none;
+	border-color: var(--color-brand);
+	box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.16);
+}
+
+.manager-device-table-panel {
+	overflow-x: auto;
+	overflow-y: hidden;
+	background: #ffffff;
+	border-radius: 12px;
+}
+
+.manager-device-table {
+	width: 100%;
+	border-collapse: collapse;
+	min-width: 1200px;
+}
+
+.manager-device-table th,
+.manager-device-table td {
+	padding: 16px 20px;
+	border-bottom: 1px solid #e5e7eb;
+	text-align: left;
+	white-space: nowrap;
+	font-size: 14px;
+	line-height: 20px;
+}
+
+.manager-device-table th {
+	font-size: 12px;
+	line-height: 16px;
+	font-weight: 600;
+	color: #64748b;
+	background: #f8fafc;
+}
+
+.manager-device-id {
+	font-weight: 700;
+	color: #0f172a;
+}
+
+.manager-device-status {
+	padding: 3px 10px;
+	border-radius: 999px;
+	font-size: 14px;
+	line-height: 20px;
+	font-weight: 500;
+	border: 1px solid transparent;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.manager-device-status.status-active {
+	color: #15803d;
+	background: rgba(34, 197, 94, 0.16);
+	border-color: rgba(34, 197, 94, 0.4);
+}
+
+.manager-device-status.status-warning {
+	color: #b45309;
+	background: rgba(245, 158, 11, 0.16);
+	border-color: rgba(245, 158, 11, 0.45);
+}
+
+.manager-device-status.status-danger {
+	color: #b91c1c;
+	background: rgba(239, 68, 68, 0.14);
+	border-color: rgba(239, 68, 68, 0.36);
+}
+
+.manager-device-status.status-maintenance {
+	color: #1d4ed8;
+	background: rgba(96, 165, 250, 0.2);
+	border-color: rgba(96, 165, 250, 0.45);
+}
+
+.manager-device-actions {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.manager-action-btn {
+	border: none;
+	background: transparent;
+	padding: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+}
+
+.manager-action-btn.edit {
+	color: #2563eb;
+}
+
+.manager-action-btn.location {
+	color: #16a34a;
+}
+
+.manager-action-btn.delete {
+	color: #ef4444;
+}
+
+.manager-device-empty {
+	text-align: center;
+	color: #64748b;
+	padding: 24px 16px;
+}
+
+@media (max-width: 1024px) {
+	.manager-device-filter {
+		grid-template-columns: 1fr;
+	}
+
+	.manager-device-table {
+		min-width: 980px;
+	}
+}
+
+@media (max-width: 768px) {
+	.manager-screen {
+		padding: 14px 10px 96px;
+	}
+
+	.manager-device-shell {
+		padding: 12px;
+	}
+
+	.manager-device-head {
+		flex-direction: column;
+	}
+
+	.manager-device-add-btn {
+		align-self: flex-end;
+	}
+
+	.manager-topbar {
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+	.manager-screen {
+		max-width: 980px;
+		margin: 0 auto;
+		padding: 20px 20px 104px;
+	}
+}
+
+@media (min-width: 1025px) {
+	.manager-screen {
+		max-width: 720px;
+		margin: 0 auto;
+		padding-left: 20px;
+		padding-right: 20px;
+	}
+}

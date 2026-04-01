@@ -2,16 +2,16 @@ import { Link } from 'react-router-dom';
 import { Buildings, MagnifyingGlass, Bell, User } from '@phosphor-icons/react';
 import '../styles/Header.css';
 
-function Header() {
+function Header({ roleLabel = 'Cư dân', homePath = '/resident/home' }) {
   return (
     <>
       <header className="app-header">
         <div className="header-left">
-          <Link to="/resident/home" className="header-logo">
+          <Link to={homePath} className="header-logo">
             <Buildings weight="fill" size={32} className="logo-icon" />
             <div className="logo-text-group">
               <h1 className="logo-title">PCCC 3D</h1>
-              <p className="logo-subtitle">Cư dân</p>
+              <p className="logo-subtitle">{roleLabel}</p>
             </div>
           </Link>
         </div>
@@ -38,7 +38,7 @@ function Header() {
               </div>
               <div className="user-info">
                 <span className="user-name">Người dùng</span>
-                <span className="user-role">Cư dân</span>
+                <span className="user-role">{roleLabel}</span>
               </div>
             </div>
           </div>
