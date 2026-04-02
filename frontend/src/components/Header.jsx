@@ -3,6 +3,13 @@ import { Buildings, MagnifyingGlass, Bell, User } from '@phosphor-icons/react';
 import '../styles/Header.css';
 
 function Header({ roleLabel = 'Cư dân', homePath = '/resident/home' }) {
+  const actor = homePath.startsWith('/manager')
+    ? 'manager'
+    : homePath.startsWith('/firestaff')
+      ? 'firestaff'
+      : 'resident';
+  const profilePath = `/${actor}/profile`;
+
   return (
     <>
       <header className="app-header">
@@ -32,7 +39,7 @@ function Header({ roleLabel = 'Cư dân', homePath = '/resident/home' }) {
               <span className="notification-badge"></span>
             </button>
 
-            <div className="user-profile">
+            <Link to={profilePath} className="user-profile" aria-label="Mở trang hồ sơ người dùng">
               <div className="user-avatar">
                 <User weight="fill" size={20} />
               </div>
@@ -40,7 +47,7 @@ function Header({ roleLabel = 'Cư dân', homePath = '/resident/home' }) {
                 <span className="user-name">Người dùng</span>
                 <span className="user-role">{roleLabel}</span>
               </div>
-            </div>
+            </Link>
           </div>
         </div>
       </header>
