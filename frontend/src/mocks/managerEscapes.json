@@ -1,0 +1,93 @@
+[
+  {
+    "id": "EXIT-F1-MAIN",
+    "type": "Cửa thoát hiểm",
+    "location": "Tầng 1",
+    "room": "Lối ra chính",
+    "status": "available",
+    "statusLabel": "Khả dụng",
+    "floor": "Tầng 1",
+    "level": "Trạng thái",
+    "connectedTo": "Lối ra chính",
+    "lastInspection": "2026-03-20",
+    "owner": "Nguyễn Văn A"
+  },
+  {
+    "id": "STAIRS-F1-F2",
+    "type": "Thang bộ",
+    "location": "Tầng 1",
+    "room": "Tầng 2",
+    "status": "available",
+    "statusLabel": "Khả dụng",
+    "floor": "Tầng 1",
+    "level": "Tầng 2",
+    "connectedTo": "Tầng 2",
+    "lastInspection": "2026-03-18",
+    "owner": "Nguyễn Văn A"
+  },
+  {
+    "id": "EMERG-F2-001",
+    "type": "Thang thoát hiểm",
+    "location": "Tầng 2",
+    "room": "Thang thoát hiểm ngoài",
+    "status": "available",
+    "statusLabel": "Khả dụng",
+    "floor": "Tầng 2",
+    "level": "Thang thoát hiểm ngoài",
+    "connectedTo": "Thang thoát hiểm ngoài",
+    "lastInspection": "2026-03-15",
+    "owner": "Trần Văn B"
+  },
+  {
+    "id": "EXIT-F3-SIDE",
+    "type": "Cửa thoát hiểm",
+    "location": "Tầng 3",
+    "room": "Lối ra phụ",
+    "status": "inspection",
+    "statusLabel": "Cần kiểm tra",
+    "floor": "Tầng 3",
+    "level": "Lối ra phụ",
+    "connectedTo": "Lối ra phụ",
+    "lastInspection": "2026-02-25",
+    "owner": "Lê Văn C"
+  },
+  {
+    "id": "STAIRS-F2-F3",
+    "type": "Thang bộ",
+    "location": "Tầng 2",
+    "room": "Tầng 3",
+    "status": "available",
+    "statusLabel": "Khả dụng",
+    "floor": "Tầng 2",
+    "level": "Tầng 3",
+    "connectedTo": "Tầng 3",
+    "lastInspection": "2026-03-19",
+    "owner": "Trần Văn B"
+  },
+  {
+    "id": "EXIT-F1-BACK",
+    "type": "Cửa thoát hiểm",
+    "location": "Tầng 1",
+    "room": "Lối ra sau",
+    "status": "available",
+    "statusLabel": "Khả dụng",
+    "floor": "Tầng 1",
+    "level": "Lối ra sau",
+    "connectedTo": "Lối ra sau",
+    "lastInspection": "2026-03-21",
+    "owner": "Nguyễn Văn A"
+  },
+  {
+    "id": "ELEVATOR-F1-F3",
+    "type": "Thang máy dừng khẩn cấp",
+    "location": "Tầng 1",
+    "room": "Khu vực thang máy",
+    "status": "unavailable",
+    "statusLabel": "Không khả dụng",
+    "floor": "Tầng 1",
+    "level": "Khu vực thang máy",
+    "connectedTo": "Không sử dụng (chế độ khẩn cấp)",
+    "lastInspection": "2026-03-10",
+    "owner": "Kỹ thuật"
+  }
+]

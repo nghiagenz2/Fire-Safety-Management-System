@@ -198,6 +198,24 @@
 	border-color: rgba(96, 165, 250, 0.45);
 }
 
+.manager-device-status.status-available {
+	color: #15803d;
+	background: rgba(34, 197, 94, 0.16);
+	border-color: rgba(34, 197, 94, 0.4);
+}
+
+.manager-device-status.status-inspection {
+	color: #b45309;
+	background: rgba(245, 158, 11, 0.16);
+	border-color: rgba(245, 158, 11, 0.45);
+}
+
+.manager-device-status.status-unavailable {
+	color: #b91c1c;
+	background: rgba(239, 68, 68, 0.14);
+	border-color: rgba(239, 68, 68, 0.36);
+}
+
 .manager-device-actions {
 	display: inline-flex;
 	align-items: center;
