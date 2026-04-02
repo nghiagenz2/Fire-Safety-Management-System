@@ -16,6 +16,7 @@ import FireStaffTaskPage from "./pages/firestaff/FireStaffTaskPage.jsx";
 import ManagerHomePage from "./pages/manager/ManagerHomePage.jsx";
 import ManagerDevicePage from "./pages/manager/ManagerDevicePage.jsx";
 import ManagerEscapePage from "./pages/manager/ManagerEscapePage.jsx";
+import ManagerAccountPage from "./pages/manager/ManagerAccountPage.jsx";
 
 import ResidentHomePage from "./pages/resident/ResidentHomePage.jsx";
 import ResidentEscapePage from "./pages/resident/ResidentEscapePage.jsx";
@@ -51,7 +52,7 @@ function App() {
         <Route path="/manager/dashboard" element={<Navigate to="/manager/home" replace />} />
         <Route path="/manager/incidents" element={<Navigate to="/manager/home" replace />} />
         <Route path="/manager/reports" element={<Navigate to="/manager/home" replace />} />
-        <Route path="/manager/account" element={<Navigate to="/manager/home" replace />} />
+        <Route path="/manager/account" element={<ManagerAccountPage />} />
 
         {/* Resident Pages */}
         <Route path="/resident/home" element={<ResidentHomePage />} />
