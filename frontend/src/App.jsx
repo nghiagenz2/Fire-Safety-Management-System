@@ -6,6 +6,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import Splash from './components/Splash.jsx';
 import Onboarding from './components/Onboarding.jsx';
 import LoginForm from './components/LoginForm.jsx';
+import ProfilePage from './components/ProfilePage.jsx';
 import ScrollToTop from "./components/ScrollToTop.jsx";
 import ResidentGuidancePage from "./pages/resident/ResidentGuidancePage.jsx";
 import ResidentDevicePage from "./pages/resident/ResidentDevicePage.jsx";
@@ -16,6 +17,7 @@ import FireStaffTaskPage from "./pages/firestaff/FireStaffTaskPage.jsx";
 import ManagerHomePage from "./pages/manager/ManagerHomePage.jsx";
 import ManagerDevicePage from "./pages/manager/ManagerDevicePage.jsx";
 import ManagerEscapePage from "./pages/manager/ManagerEscapePage.jsx";
+import ManagerAccountPage from "./pages/manager/ManagerAccountPage.jsx";
 
 import ResidentHomePage from "./pages/resident/ResidentHomePage.jsx";
 import ResidentEscapePage from "./pages/resident/ResidentEscapePage.jsx";
@@ -43,6 +45,7 @@ function App() {
           path="/firestaff/incidents"
           element={<FireStaffIncidentPage />}
         />
+        <Route path="/firestaff/profile" element={<ProfilePage actor="firestaff" />} />
 
         <Route path="/manager/home" element={<ManagerHomePage />} />
         <Route path="/manager/devices" element={<ManagerDevicePage />} />
@@ -51,13 +54,15 @@ function App() {
         <Route path="/manager/dashboard" element={<Navigate to="/manager/home" replace />} />
         <Route path="/manager/incidents" element={<Navigate to="/manager/home" replace />} />
         <Route path="/manager/reports" element={<Navigate to="/manager/home" replace />} />
-        <Route path="/manager/account" element={<Navigate to="/manager/home" replace />} />
+        <Route path="/manager/account" element={<ManagerAccountPage />} />
+        <Route path="/manager/profile" element={<ProfilePage actor="manager" />} />
 
         {/* Resident Pages */}
         <Route path="/resident/home" element={<ResidentHomePage />} />
         <Route path="/resident/escape" element={<ResidentEscapePage />} />
         <Route path="/resident/devices" element={<ResidentDevicePage />} />
         <Route path="/resident/guidance" element={<ResidentGuidancePage />} />
+        <Route path="/resident/profile" element={<ProfilePage actor="resident" />} />
 
         {/* Default Routes */}
         <Route path="/" element={<Navigate to="/splash" replace />} />
