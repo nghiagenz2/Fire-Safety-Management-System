@@ -1,15 +1,20 @@
 .login-page {
-  min-height: 100vh;
+  position: fixed;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(180deg, #EAF1FF 0%, #F9FBFF 100%);
   padding: 16px;
+  overflow: hidden;
+  z-index: 50;
 }
 
 .login-mobile-wrapper {
   width: 100%;
   max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .login-card {
