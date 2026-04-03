@@ -14,10 +14,10 @@
 
 .login-card {
   background: #ffffff;
-  border-radius: 22px;
+  border-radius: 0;
   box-shadow: 0 16px 38px rgba(16, 24, 40, 0.16);
   padding: 24px;
-  border: 1px solid #e5e7eb;
+  border: none;
 }
 
 .brand-box {
@@ -106,7 +106,7 @@ input[type="text"] {
   height: 46px;
   padding: 0 12px 0 36px;
   border: 1px solid #d1d5db;
-  border-radius: 0;
+  border-radius: 8px;
   background: #fff;
   color: #0f172a;
   font-size: 14px;
@@ -121,6 +121,13 @@ input.error {
 input.error:focus {
   border-color: #dc3545;
   box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+}
+
+.error-text {
+  display: block;
+  font-size: 12px;
+  color: #dc3545;
+  margin-top: 4px;
 }
 
 .password-toggle {
@@ -268,7 +275,7 @@ input.error:focus {
 @media (max-width: 640px) {
   .login-card {
     padding: 20px;
-    border-radius: 18px;
+    border-radius: 0;
   }
 
   .brand-icon {
