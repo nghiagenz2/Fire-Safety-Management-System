@@ -1,0 +1,80 @@
+{
+  "reports": [
+    {
+      "id": "REP-2024-001",
+      "title": "Báo cáo tháng 12/2024 - Tình hình an toàn PCCC",
+      "period": "01/12 - 31/12/2024",
+      "createdDate": "02/01/2025",
+      "status": "Hoàn thành",
+      "type": "monthly",
+      "summary": "Tổng số sự cố: 12, Sự cố có thiệt hại: 3, Nhân viên được huấn luyện: 145 người",
+      "stats": {
+        "incidents": 12,
+        "resolved": 11,
+        "activeIncidents": 1,
+        "falseAlarms": 2,
+        "trainingHours": 580,
+        "staffTrained": 145
+      },
+      "preparedBy": "Nguyễn Văn A",
+      "approvalsNeeded": 1
+    },
+    {
+      "id": "REP-2024-002",
+      "title": "Báo cáo kiểm tra định kỳ - Hệ thống báo cháy",
+      "period": "Q3 2024",
+      "createdDate": "15/10/2024",
+      "status": "Chờ phê duyệt",
+      "type": "inspection",
+      "summary": "Kiểm tra 250 cảm biến, 95% hoạt động bình thường, 12 cảm biến cần bảo trì",
+      "stats": {
+        "sensorsChecked": 250,
+        "operational": 238,
+        "needMaintenance": 12,
+        "complianceRate": 95
+      },
+      "preparedBy": "Trần Thị B",
+      "approvalsNeeded": 2
+    },
+    {
+      "id": "REP-2024-003",
+      "title": "Báo cáo diễn tập - Sơ tán toàn bộ tòa nhà",
+      "period": "01/09/2024",
+      "createdDate": "02/09/2024",
+      "status": "Hoàn thành",
+      "type": "drill",
+      "summary": "Diễn tập sơ tán địa điểm: Tòa A, Số người tham gia: 520, Thời gian sơ tán: 8 phút 32 giây",
+      "stats": {
+        "location": "Tòa A",
+        "participants": 520,
+        "evacuationTime": "8m32s",
+        "issues": 2,
+        "resolved": 2
+      },
+      "preparedBy": "Lê Văn C",
+      "approvalsNeeded": 0
+    },
+    {
+      "id": "REP-2024-004",
+      "title": "Báo cáo khám phá rủi ro năng lượng",
+      "period": "Quý 2 2024",
+      "createdDate": "30/06/2024",
+      "status": "Đã từ chối",
+      "type": "risk_assessment",
+      "summary": "Nhận dạng 18 điểm rủi ro, 12 cần loại bỏ ngay (mức cao), 6 cần kế hoạch hành động",
+      "stats": {
+        "riskIdentified": 18,
+        "highRisk": 12,
+        "mediumRisk": 6,
+        "recommendations": 15
+      },
+      "preparedBy": "Phạm Văn D",
+      "approvalsNeeded": 1
+    }
+  ],
+  "filters": {
+    "statuses": ["Hoàn thành", "Chờ phê duyệt", "Đã từ chối"],
+    "types": ["monthly", "quarterly", "inspection", "drill", "risk_assessment"],
+    "periods": ["Tháng", "Quý", "Năm"]
+  }
+}
