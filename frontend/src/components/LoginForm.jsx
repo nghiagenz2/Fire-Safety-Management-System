@@ -85,27 +85,18 @@ function LoginForm() {
               <div className="input-icon-wrap">
                 <input
                   id="password"
-                  type="password"
+                  type="text"
+                  inputMode="text"
                   placeholder="••••••••"
-                  value={password}
+                  value={showPassword ? password : password.replace(/./g, '•')}
                   onChange={(e) => {
-                    setPassword(e.target.value);
+                    const newVal = e.target.value;
+                    setPassword(newVal);
                     if (fieldErrors.password) setFieldErrors({ ...fieldErrors, password: '' });
                   }}
                   className={fieldErrors.password ? 'error' : ''}
                   autoComplete="new-password"
-                  style={{ display: showPassword ? 'none' : 'block' }}
-                />
-                <input
-                  type="text"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (fieldErrors.password) setFieldErrors({ ...fieldErrors, password: '' });
-                  }}
-                  className={fieldErrors.password ? 'error' : ''}
-                  style={{ display: showPassword ? 'block' : 'none' }}
+                  style={{ letterSpacing: '0.5em' }}
                 />
                 <button
                   type="button"

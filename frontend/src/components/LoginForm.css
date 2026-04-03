@@ -100,6 +100,8 @@
   flex: 1;
   user-select: none;
   -webkit-user-select: none;
+  width: 100%;
+  max-width: 100%;
 }
 
 .input-icon {
@@ -128,23 +130,24 @@ input[type="text"] {
   -webkit-appearance: none;
   appearance: none;
   pointer-events: auto;
-  font-family: monospace;
 }
 
-input[type="password"],
 input[type="text"] {
   padding: 0 52px 0 12px;
-  -webkit-text-security: disc;
-  -webkit-text-fill-color: #0f172a;
-  -webkit-text-stroke: 0.5px transparent;
 }
 
-/* Hide Safari password reveal button completely */
+/* Aggressively hide all Safari/WebKit UI elements */
 input[type="password"]::-webkit-outer-spin-button,
 input[type="password"]::-webkit-inner-spin-button,
 input[type="password"]::-webkit-contacts-auto-fill-button,
 input[type="password"]::-webkit-credentials-auto-fill-button,
-input[type="password"]::-webkit-password-reveal-button {
+input[type="password"]::-webkit-password-reveal-button,
+input[type="text"]::-webkit-outer-spin-button,
+input[type="text"]::-webkit-inner-spin-button,
+input[type="text"]::-webkit-contacts-auto-fill-button,
+input[type="text"]::-webkit-credentials-auto-fill-button,
+input[type="text"]::-webkit-clear-button,
+input[type="text"]::-webkit-qr-code-button {
   -webkit-appearance: none !important;
   appearance: none !important;
   display: none !important;
