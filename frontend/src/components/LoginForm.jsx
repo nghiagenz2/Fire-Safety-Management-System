@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Fire, Envelope, Lock, Eye, EyeSlash, WarningCircle } from '@phosphor-icons/react';
+import { Fire, Envelope, Lock, Eye, EyeSlash } from '@phosphor-icons/react';
 import './LoginForm.css';
 
 function LoginForm() {
@@ -9,23 +9,31 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({ email: false, password: false });
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setError('');
+    const errors = { email: false, password: false };
 
-    if (!email.trim() || !password.trim()) {
-      setError('Vui lòng điền đầy đủ thông tin');
+    if (!email.trim()) {
+      errors.email = true;
+    }
+
+    if (!password.trim()) {
+      errors.password = true;
+    }
+
+    if (!email.includes('@') && email.trim()) {
+      errors.email = true;
+    }
+
+    if (errors.email || errors.password) {
+      setFieldErrors(errors);
       return;
     }
 
-    if (!email.includes('@')) {
-      setError('Email không hợp lệ');
-      return;
-    }
-
+    setFieldErrors({ email: false, password: false });
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
@@ -50,13 +58,6 @@ function LoginForm() {
           <h2 className="card-title">Đăng Nhập</h2>
           <p className="card-subtitle">Chào mừng bạn trở lại</p>
 
-          {error && (
-            <div className="alert-box">
-              <WarningCircle size={16} />
-              <span>{error}</span>
-            </div>
-          )}
-
           <form className="login-form" onSubmit={handleSubmit}>
             <div className="form-group">
               <label htmlFor="email">Email</label>
@@ -67,7 +68,11 @@ function LoginForm() {
                   type="email"
                   placeholder="example@company.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: false });
+                  }}
+                  className={fieldErrors.email ? 'error' : ''}
                 />
               </div>
             </div>
@@ -81,7 +86,11 @@ function LoginForm() {
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (fieldErrors.password) setFieldErrors({ ...fieldErrors, password: false });
+                  }}
+                  className={fieldErrors.password ? 'error' : ''}
                 />
                 <button
                   type="button"
