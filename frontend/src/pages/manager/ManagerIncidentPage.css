@@ -169,14 +169,18 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
+  .incident-shell {
+    gap: 12px;
+  }
+
   .stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    gap: 10px;
   }
 
   .stat-card {
-    padding: 10px;
+    padding: 12px;
     gap: 6px;
     border-radius: 12px;
   }
@@ -191,7 +195,7 @@
 
   .filter-section {
     grid-template-columns: 1fr;
-    gap: 8px;
+    gap: 10px;
   }
 
   .incident-panel {
@@ -210,5 +214,73 @@
   .incidents-grid {
     grid-template-columns: 1fr;
     gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .manager-screen {
+    padding: 12px 10px 96px;
+  }
+
+  .incident-shell {
+    gap: 10px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 8px;
+    gap: 4px;
+    border-radius: 10px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+  }
+
+  .stat-value {
+    font-size: 18px;
+  }
+
+  .incident-panel {
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+  }
+
+  .filter-section {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .search-icon,
+  .filter-icon {
+    left: 10px;
+  }
+
+  .search-input,
+  .filter-select {
+    min-height: 38px;
+    font-size: 12px;
+    padding: 0 10px;
+    padding-left: 32px;
+    border-radius: 8px;
+  }
+
+  .search-input::placeholder {
+    font-size: 12px;
+  }
+
+  .incidents-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .no-results {
+    padding: 32px 16px;
   }
 }
