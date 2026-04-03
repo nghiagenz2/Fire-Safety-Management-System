@@ -311,7 +311,7 @@ input.error:focus {
   background: #fff;
   font-size: 13px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 400;
   transition: all 0.2s ease;
 }
 
@@ -322,16 +322,6 @@ input.error:focus {
 
 .social-btn:hover {
   background: #f9fbff;
-}
-
-.google-btn:hover {
-  border-color: #ea4335;
-  color: #ea4335;
-}
-
-.facebook-btn:hover {
-  border-color: #1877f2;
-  color: #1877f2;
 }
 
 .register-line {
