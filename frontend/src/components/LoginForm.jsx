@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Fire, Envelope, Lock, Eye, EyeSlash } from '@phosphor-icons/react';
+import { Fire, Envelope } from '@phosphor-icons/react';
 import './LoginForm.css';
 
 function LoginForm() {
@@ -9,31 +9,33 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState({ email: false, password: false });
+  const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
+
+  const getErrorMessage = (field, value) => {
+    if (field === 'email') {
+      if (!value.trim()) return 'Vui lòng nhập email';
+      if (!value.includes('@')) return 'Email không hợp lệ';
+    }
+    if (field === 'password') {
+      if (!value.trim()) return 'Vui lòng nhập mật khẩu';
+    }
+    return '';
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const errors = { email: false, password: false };
+    const errors = { email: '', password: '' };
 
-    if (!email.trim()) {
-      errors.email = true;
-    }
+    const emailError = getErrorMessage('email', email);
+    const passwordError = getErrorMessage('password', password);
 
-    if (!password.trim()) {
-      errors.password = true;
-    }
-
-    if (!email.includes('@') && email.trim()) {
-      errors.email = true;
-    }
-
-    if (errors.email || errors.password) {
-      setFieldErrors(errors);
+    if (emailError || passwordError) {
+      setFieldErrors({ email: emailError, password: passwordError });
       return;
     }
 
-    setFieldErrors({ email: false, password: false });
+    setFieldErrors({ email: '', password: '' });
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
@@ -70,27 +72,40 @@ function LoginForm() {
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
-                    if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: false });
+                    if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: '' });
                   }}
                   className={fieldErrors.email ? 'error' : ''}
                 />
               </div>
+              {fieldErrors.email && <span className="error-text">{fieldErrors.email}</span>}
             </div>
 
             <div className="form-group">
               <label htmlFor="password">Mật khẩu</label>
               <div className="input-icon-wrap">
-                <Lock className="input-icon" />
                 <input
                   id="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type="password"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
-                    if (fieldErrors.password) setFieldErrors({ ...fieldErrors, password: false });
+                    if (fieldErrors.password) setFieldErrors({ ...fieldErrors, password: '' });
                   }}
                   className={fieldErrors.password ? 'error' : ''}
+                  autoComplete="new-password"
+                  style={{ display: showPassword ? 'none' : 'block' }}
+                />
+                <input
+                  type="text"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (fieldErrors.password) setFieldErrors({ ...fieldErrors, password: '' });
+                  }}
+                  className={fieldErrors.password ? 'error' : ''}
+                  style={{ display: showPassword ? 'block' : 'none' }}
                 />
                 <button
                   type="button"
@@ -98,9 +113,22 @@ function LoginForm() {
                   onClick={() => setShowPassword((v) => !v)}
                   aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                 >
-                  {showPassword ? <EyeOff /> : <Eye />}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    {showPassword ? (
+                      <>
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </>
+                    ) : (
+                      <>
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </>
+                    )}
+                  </svg>
                 </button>
               </div>
+              {fieldErrors.password && <span className="error-text">{fieldErrors.password}</span>}
             </div>
 
             <div className="row-helpers">
