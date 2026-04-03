@@ -442,3 +442,128 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 480px) {
+  .login-page {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .login-left-panel {
+    padding: 24px 16px;
+    min-height: 40vh;
+  }
+
+  .left-title {
+    font-size: 24px;
+    line-height: 32px;
+  }
+
+  .left-description {
+    font-size: 13px;
+    line-height: 20px;
+  }
+
+  .info-cards {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .info-card {
+    padding: 12px;
+  }
+
+  .card-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .card-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .card-title {
+    font-size: 12px;
+  }
+
+  .card-description {
+    font-size: 11px;
+  }
+
+  .login-right-panel {
+    padding: 24px 16px;
+    min-height: 60vh;
+  }
+
+  .right-content {
+    max-width: 100%;
+    gap: 20px;
+  }
+
+  .login-title {
+    font-size: 22px;
+    line-height: 28px;
+  }
+
+  .login-subtitle {
+    font-size: 13px;
+    line-height: 20px;
+  }
+
+  .login-form {
+    gap: 16px;
+  }
+
+  .form-group {
+    gap: 8px;
+  }
+
+  .form-label {
+    font-size: 12px;
+  }
+
+  .form-input {
+    height: 44px;
+    font-size: 14px;
+  }
+
+  .form-input:focus {
+    box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.15);
+  }
+
+  .login-button {
+    height: 44px;
+    font-size: 14px;
+  }
+
+  .divider {
+    margin: 16px 0;
+  }
+
+  .social-login {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .social-button {
+    height: 40px;
+    font-size: 13px;
+  }
+
+  .social-button svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .login-links {
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .link-text {
+    font-size: 12px;
+  }
+}

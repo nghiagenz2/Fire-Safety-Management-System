@@ -255,6 +255,10 @@
 }
 
 @media (max-width: 480px) {
+  .onboarding-container {
+    padding: 16px 16px 20px;
+  }
+
   .slide-image-wrapper {
     width: 140px;
     height: 140px;
@@ -269,10 +273,12 @@
 
   .slide-title {
     font-size: 22px;
+    line-height: 28px;
   }
 
   .slide-description {
     font-size: 12px;
+    line-height: 18px;
   }
 
   .next-button {
@@ -280,32 +286,19 @@
     height: 34px;
     font-size: 13px;
   }
-}
 
-@media (max-width: 480px) {
-  .slide-image-wrapper {
-    width: 140px;
-    height: 140px;
+  .skip-button {
+    min-width: 64px;
+    height: 32px;
+    font-size: 11px;
   }
 
-  .icon-badge {
-    width: 40px;
-    height: 40px;
-    right: -6px;
-    bottom: -8px;
+  .progress-dots {
+    gap: 6px;
   }
 
-  .slide-title {
-    font-size: 22px;
-  }
-
-  .slide-description {
-    font-size: 12px;
-  }
-
-  .next-button {
-    width: 120px;
-    height: 34px;
-    font-size: 13px;
+  .dot {
+    width: 12px;
+    height: 3px;
   }
 }
