@@ -1,0 +1,494 @@
+{
+  "meta": {
+    "dashboardId": "manager-pccc-overview",
+    "title": "Dashboard Thống Kê Dữ Liệu PCCC",
+    "lastUpdated": "2026-04-03T08:30:00+07:00",
+    "timezone": "Asia/Ho_Chi_Minh"
+  },
+  "layout": {
+    "summaryCards": {
+      "position": "top",
+      "columns": 5,
+      "items": [
+        "totalDevices",
+        "healthyDevices",
+        "failedOrMaintenanceDevices",
+        "availableExits",
+        "monthlyIncidents"
+      ]
+    },
+    "charts": {
+      "position": "middle",
+      "items": [
+        "devicesByFloor",
+        "deviceHealthRatio",
+        "incidentsOverTime",
+        "exitStatusByFloor"
+      ]
+    },
+    "recentTables": {
+      "position": "bottom",
+      "items": ["recentIncidents", "recentAlerts"]
+    }
+  },
+  "summaryCards": {
+    "totalDevices": {
+      "label": "Tổng số thiết bị",
+      "value": 128,
+      "unit": "thiết bị",
+      "delta": "+6.7% so với tháng trước"
+    },
+    "healthyDevices": {
+      "label": "Thiết bị hoạt động tốt",
+      "value": 96,
+      "unit": "thiết bị",
+      "ratio": 75,
+      "delta": "+3.2% so với tháng trước"
+    },
+    "failedOrMaintenanceDevices": {
+      "label": "Thiết bị hỏng / cần bảo trì",
+      "value": 32,
+      "unit": "thiết bị",
+      "breakdown": {
+        "failed": 14,
+        "maintenance": 18
+      },
+      "delta": "-2 thiết bị lỗi so với tháng trước"
+    },
+    "availableExits": {
+      "label": "Lối thoát khả dụng",
+      "value": 21,
+      "unit": "lối thoát",
+      "total": 24,
+      "ratio": 87.5
+    },
+    "monthlyIncidents": {
+      "label": "Sự cố trong tháng",
+      "value": 9,
+      "unit": "sự cố",
+      "severityBreakdown": {
+        "critical": 1,
+        "high": 3,
+        "medium": 4,
+        "low": 1
+      },
+      "delta": "+1 so với tháng trước"
+    }
+  },
+  "buildingOverviewByFloor": [
+    {
+      "floor": "B1",
+      "floorLabel": "Tầng hầm B1",
+      "totalDevices": 22,
+      "healthyDevices": 14,
+      "failedDevices": 4,
+      "maintenanceDevices": 4,
+      "deviceHealthRatio": 63.6,
+      "availableExits": 3,
+      "totalExits": 4,
+      "incidentsThisMonth": 3,
+      "safetyScore": 66
+    },
+    {
+      "floor": "1",
+      "floorLabel": "Tầng 1",
+      "totalDevices": 20,
+      "healthyDevices": 16,
+      "failedDevices": 1,
+      "maintenanceDevices": 3,
+      "deviceHealthRatio": 80,
+      "availableExits": 4,
+      "totalExits": 4,
+      "incidentsThisMonth": 1,
+      "safetyScore": 82
+    },
+    {
+      "floor": "2",
+      "floorLabel": "Tầng 2",
+      "totalDevices": 19,
+      "healthyDevices": 14,
+      "failedDevices": 2,
+      "maintenanceDevices": 3,
+      "deviceHealthRatio": 73.7,
+      "availableExits": 3,
+      "totalExits": 4,
+      "incidentsThisMonth": 2,
+      "safetyScore": 78
+    },
+    {
+      "floor": "3",
+      "floorLabel": "Tầng 3",
+      "totalDevices": 18,
+      "healthyDevices": 13,
+      "failedDevices": 3,
+      "maintenanceDevices": 2,
+      "deviceHealthRatio": 72.2,
+      "availableExits": 3,
+      "totalExits": 4,
+      "incidentsThisMonth": 1,
+      "safetyScore": 75
+    },
+    {
+      "floor": "4",
+      "floorLabel": "Tầng 4",
+      "totalDevices": 17,
+      "healthyDevices": 12,
+      "failedDevices": 2,
+      "maintenanceDevices": 3,
+      "deviceHealthRatio": 70.6,
+      "availableExits": 3,
+      "totalExits": 4,
+      "incidentsThisMonth": 1,
+      "safetyScore": 74
+    },
+    {
+      "floor": "5",
+      "floorLabel": "Tầng 5",
+      "totalDevices": 16,
+      "healthyDevices": 14,
+      "failedDevices": 1,
+      "maintenanceDevices": 1,
+      "deviceHealthRatio": 87.5,
+      "availableExits": 3,
+      "totalExits": 3,
+      "incidentsThisMonth": 0,
+      "safetyScore": 88
+    },
+    {
+      "floor": "ROOF",
+      "floorLabel": "Mái kỹ thuật",
+      "totalDevices": 16,
+      "healthyDevices": 13,
+      "failedDevices": 1,
+      "maintenanceDevices": 2,
+      "deviceHealthRatio": 81.3,
+      "availableExits": 2,
+      "totalExits": 2,
+      "incidentsThisMonth": 1,
+      "safetyScore": 81
+    }
+  ],
+  "charts": {
+    "devicesByFloor": {
+      "title": "Số thiết bị theo tầng",
+      "type": "bar",
+      "xKey": "floorLabel",
+      "series": [
+        {
+          "key": "totalDevices",
+          "label": "Tổng thiết bị",
+          "color": "#146C94"
+        }
+      ],
+      "data": [
+        { "floor": "B1", "floorLabel": "B1", "totalDevices": 22 },
+        { "floor": "1", "floorLabel": "T1", "totalDevices": 20 },
+        { "floor": "2", "floorLabel": "T2", "totalDevices": 19 },
+        { "floor": "3", "floorLabel": "T3", "totalDevices": 18 },
+        { "floor": "4", "floorLabel": "T4", "totalDevices": 17 },
+        { "floor": "5", "floorLabel": "T5", "totalDevices": 16 },
+        { "floor": "ROOF", "floorLabel": "Mái", "totalDevices": 16 }
+      ]
+    },
+    "deviceHealthRatio": {
+      "title": "Tỷ lệ thiết bị tốt / hỏng / bảo trì",
+      "type": "donut",
+      "total": 128,
+      "segments": [
+        {
+          "key": "healthy",
+          "label": "Tốt",
+          "value": 96,
+          "color": "#2E7D32"
+        },
+        {
+          "key": "failed",
+          "label": "Hỏng",
+          "value": 14,
+          "color": "#C62828"
+        },
+        {
+          "key": "maintenance",
+          "label": "Bảo trì",
+          "value": 18,
+          "color": "#ED6C02"
+        }
+      ]
+    },
+    "incidentsOverTime": {
+      "title": "Số sự cố theo thời gian",
+      "type": "line",
+      "xKey": "month",
+      "series": [
+        {
+          "key": "incidentCount",
+          "label": "Sự cố",
+          "color": "#6A1B9A"
+        }
+      ],
+      "data": [
+        { "month": "2025-05", "incidentCount": 4 },
+        { "month": "2025-06", "incidentCount": 5 },
+        { "month": "2025-07", "incidentCount": 7 },
+        { "month": "2025-08", "incidentCount": 6 },
+        { "month": "2025-09", "incidentCount": 8 },
+        { "month": "2025-10", "incidentCount": 10 },
+        { "month": "2025-11", "incidentCount": 6 },
+        { "month": "2025-12", "incidentCount": 5 },
+        { "month": "2026-01", "incidentCount": 7 },
+        { "month": "2026-02", "incidentCount": 8 },
+        { "month": "2026-03", "incidentCount": 9 },
+        { "month": "2026-04", "incidentCount": 3 }
+      ]
+    },
+    "exitStatusByFloor": {
+      "title": "Trạng thái lối thoát theo tầng",
+      "type": "bar",
+      "stacked": true,
+      "xKey": "floorLabel",
+      "series": [
+        {
+          "key": "available",
+          "label": "Khả dụng",
+          "color": "#2E7D32"
+        },
+        {
+          "key": "inspection",
+          "label": "Cần kiểm tra",
+          "color": "#ED6C02"
+        },
+        {
+          "key": "unavailable",
+          "label": "Không khả dụng",
+          "color": "#C62828"
+        }
+      ],
+      "data": [
+        {
+          "floor": "B1",
+          "floorLabel": "B1",
+          "available": 3,
+          "inspection": 1,
+          "unavailable": 0
+        },
+        {
+          "floor": "1",
+          "floorLabel": "T1",
+          "available": 4,
+          "inspection": 0,
+          "unavailable": 0
+        },
+        {
+          "floor": "2",
+          "floorLabel": "T2",
+          "available": 3,
+          "inspection": 0,
+          "unavailable": 1
+        },
+        {
+          "floor": "3",
+          "floorLabel": "T3",
+          "available": 3,
+          "inspection": 1,
+          "unavailable": 0
+        },
+        {
+          "floor": "4",
+          "floorLabel": "T4",
+          "available": 3,
+          "inspection": 1,
+          "unavailable": 0
+        },
+        {
+          "floor": "5",
+          "floorLabel": "T5",
+          "available": 3,
+          "inspection": 0,
+          "unavailable": 0
+        },
+        {
+          "floor": "ROOF",
+          "floorLabel": "Mái",
+          "available": 2,
+          "inspection": 0,
+          "unavailable": 0
+        }
+      ]
+    }
+  },
+  "recentIncidents": [
+    {
+      "id": "INC-202604-001",
+      "occurredAt": "2026-04-02T14:20:00+07:00",
+      "floor": "B1",
+      "deviceType": "Cảm biến khói",
+      "incidentType": "Khói bất thường",
+      "severity": "high",
+      "status": "investigating",
+      "description": "Cảm biến khói khu đỗ xe báo mức khói vượt ngưỡng 2 lần liên tiếp.",
+      "assignedTo": "Đội trực ca 2"
+    },
+    {
+      "id": "INC-202604-002",
+      "occurredAt": "2026-04-01T09:05:00+07:00",
+      "floor": "2",
+      "deviceType": "Chuông báo cháy",
+      "incidentType": "Mất tín hiệu thiết bị",
+      "severity": "medium",
+      "status": "resolved",
+      "description": "Chuông báo cháy cụm B201 mất kết nối do pin dự phòng yếu.",
+      "assignedTo": "Kỹ thuật điện"
+    },
+    {
+      "id": "INC-202603-026",
+      "occurredAt": "2026-03-29T22:17:00+07:00",
+      "floor": "3",
+      "deviceType": "Vòi phun sprinkler",
+      "incidentType": "Áp suất thấp",
+      "severity": "high",
+      "status": "resolved",
+      "description": "Đường ống nhánh C3 tụt áp, tạm thời khoanh vùng và thay van.",
+      "assignedTo": "Đội bảo trì cơ điện"
+    },
+    {
+      "id": "INC-202603-024",
+      "occurredAt": "2026-03-27T11:42:00+07:00",
+      "floor": "ROOF",
+      "deviceType": "Tủ trung tâm báo cháy",
+      "incidentType": "Lỗi truyền thông",
+      "severity": "critical",
+      "status": "resolved",
+      "description": "Mất kết nối tạm thời giữa tủ trung tâm và cụm cảm biến tầng 4.",
+      "assignedTo": "Trung tâm vận hành"
+    },
+    {
+      "id": "INC-202603-019",
+      "occurredAt": "2026-03-21T16:03:00+07:00",
+      "floor": "1",
+      "deviceType": "Bình chữa cháy bột",
+      "incidentType": "Quá hạn bảo trì",
+      "severity": "low",
+      "status": "resolved",
+      "description": "Bình chữa cháy khu hành lang A105 quá hạn nạp lại 5 ngày.",
+      "assignedTo": "Bảo trì PCCC"
+    }
+  ],
+  "recentAlerts": [
+    {
+      "id": "ALERT-001",
+      "createdAt": "2026-04-03T08:05:00+07:00",
+      "floor": "4",
+      "source": "Cửa thoát hiểm phía Tây",
+      "alertType": "Lối thoát cần kiểm tra",
+      "priority": "medium",
+      "status": "open",
+      "message": "Bản lề cửa đóng chậm hơn tiêu chuẩn 2.5 giây."
+    },
+    {
+      "id": "ALERT-002",
+      "createdAt": "2026-04-03T07:40:00+07:00",
+      "floor": "B1",
+      "source": "Cảm biến khí gas",
+      "alertType": "Thiết bị lỗi",
+      "priority": "high",
+      "status": "in_progress",
+      "message": "Thiết bị báo lỗi tự kiểm tra liên tục trong 15 phút."
+    },
+    {
+      "id": "ALERT-003",
+      "createdAt": "2026-04-02T18:50:00+07:00",
+      "floor": "2",
+      "source": "Trung tâm báo cháy nhánh B",
+      "alertType": "Mất kết nối tạm thời",
+      "priority": "medium",
+      "status": "resolved",
+      "message": "Kênh truyền dữ liệu chập chờn, đã ổn định sau khi reset module."
+    },
+    {
+      "id": "ALERT-004",
+      "createdAt": "2026-04-02T09:12:00+07:00",
+      "floor": "5",
+      "source": "Đèn chỉ dẫn thoát hiểm",
+      "alertType": "Pin dự phòng thấp",
+      "priority": "low",
+      "status": "open",
+      "message": "Pin dự phòng còn 23%, đề xuất thay trong 48 giờ."
+    }
+  ],
+  "fireEventHistory": [
+    {
+      "eventId": "FE-202511-013",
+      "occurredAt": "2025-11-22T20:15:00+07:00",
+      "floor": "2",
+      "eventType": "Khói trong phòng điện",
+      "impactLevel": "high",
+      "result": "Dập tắt tại chỗ trong 6 phút",
+      "rootCause": "Quá tải ổ cắm phụ trợ"
+    },
+    {
+      "eventId": "FE-202601-004",
+      "occurredAt": "2026-01-14T13:44:00+07:00",
+      "floor": "B1",
+      "eventType": "Nhiệt độ tăng bất thường",
+      "impactLevel": "medium",
+      "result": "Không phát sinh cháy, chỉ cảnh báo sớm",
+      "rootCause": "Máy phát điện vận hành quá tải"
+    },
+    {
+      "eventId": "FE-202603-007",
+      "occurredAt": "2026-03-07T02:22:00+07:00",
+      "floor": "3",
+      "eventType": "Báo cháy giả",
+      "impactLevel": "low",
+      "result": "Không có thiệt hại",
+      "rootCause": "Cảm biến bụi bẩn chưa vệ sinh"
+    }
+  ],
+  "filters": {
+    "default": {
+      "timeRange": "last_30_days",
+      "floors": ["all"],
+      "deviceTypes": ["all"],
+      "incidentTypes": ["all"]
+    },
+    "options": {
+      "timeRange": [
+        { "value": "today", "label": "Hôm nay" },
+        { "value": "last_7_days", "label": "7 ngày gần đây" },
+        { "value": "last_30_days", "label": "30 ngày gần đây" },
+        { "value": "this_month", "label": "Tháng này" },
+        { "value": "last_3_months", "label": "3 tháng gần đây" },
+        { "value": "last_12_months", "label": "12 tháng gần đây" },
+        { "value": "custom", "label": "Tùy chọn" }
+      ],
+      "floors": [
+        { "value": "all", "label": "Tất cả tầng" },
+        { "value": "B1", "label": "Tầng hầm B1" },
+        { "value": "1", "label": "Tầng 1" },
+        { "value": "2", "label": "Tầng 2" },
+        { "value": "3", "label": "Tầng 3" },
+        { "value": "4", "label": "Tầng 4" },
+        { "value": "5", "label": "Tầng 5" },
+        { "value": "ROOF", "label": "Mái kỹ thuật" }
+      ],
+      "deviceTypes": [
+        { "value": "all", "label": "Tất cả loại thiết bị" },
+        { "value": "fire_extinguisher", "label": "Bình chữa cháy" },
+        { "value": "smoke_detector", "label": "Cảm biến khói" },
+        { "value": "sprinkler", "label": "Vòi phun sprinkler" },
+        { "value": "alarm_bell", "label": "Chuông báo cháy" },
+        { "value": "control_panel", "label": "Tủ trung tâm" },
+        { "value": "exit_sign", "label": "Biển chỉ dẫn thoát hiểm" }
+      ],
+      "incidentTypes": [
+        { "value": "all", "label": "Tất cả loại sự cố" },
+        { "value": "smoke_alert", "label": "Khói bất thường" },
+        { "value": "signal_loss", "label": "Mất tín hiệu" },
+        { "value": "low_pressure", "label": "Áp suất thấp" },
+        { "value": "maintenance_overdue", "label": "Quá hạn bảo trì" },
+        { "value": "escape_blocked", "label": "Lối thoát bị chặn" },
+        { "value": "communication_error", "label": "Lỗi truyền thông" }
+      ]
+    }
+  }
+}
