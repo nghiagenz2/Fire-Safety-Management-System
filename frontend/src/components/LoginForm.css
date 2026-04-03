@@ -235,12 +235,19 @@ input:focus {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   border-radius: 10px;
   border: 1px solid #d1d5db;
   background: #fff;
   font-size: 13px;
   cursor: pointer;
   font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.social-btn svg {
+  width: 18px;
+  height: 18px;
 }
 
 .social-btn:hover {
