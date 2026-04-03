@@ -68,7 +68,7 @@ function LoginForm() {
                 <input
                   id="email"
                   type="email"
-                  placeholder="example@company.com"
+                  placeholder="Nhập email"
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
