@@ -67,8 +67,8 @@
 
 .slide-image-wrapper {
   position: relative;
-  width: 240px;
-  height: 240px;
+  width: 260px;
+  height: 260px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -133,15 +133,17 @@
 }
 
 .next-button {
-  width: 140px;
-  height: 40px;
+  width: 220px;
+  max-width: 100%;
+  min-width: 200px;
+  height: 46px;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   background-color: var(--color-brand);
   color: #ffffff;
   cursor: pointer;
   padding: 0;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 16px;
   line-height: 1;
   transition: all 0.15s ease;
@@ -248,9 +250,11 @@
   }
 
   .next-button {
-    width: 130px;
-    height: 36px;
-    font-size: 14px;
+    width: 100%;
+    max-width: 220px;
+    min-width: auto;
+    height: 42px;
+    font-size: 15px;
   }
 }
 
@@ -282,10 +286,11 @@
   }
 
   .next-button {
-    width: 180px;
-    height: 46px;
+    width: calc(100% - 40px);
+    max-width: 280px;
+    height: 50px;
     font-size: 16px;
-    border-radius: 12px;
+    border-radius: 14px;
   }
 
   .skip-button {
