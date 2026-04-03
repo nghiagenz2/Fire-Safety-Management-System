@@ -282,14 +282,15 @@
   }
 
   .next-button {
-    width: 120px;
-    height: 34px;
-    font-size: 13px;
+    width: 155px;
+    height: 44px;
+    font-size: 15px;
+    border-radius: 12px;
   }
 
   .skip-button {
-    min-width: 64px;
-    height: 32px;
+    min-width: 70px;
+    height: 34px;
     font-size: 11px;
   }
 
