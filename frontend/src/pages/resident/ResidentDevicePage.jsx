@@ -3,6 +3,13 @@ import { Link } from 'react-router-dom';
 import ResidentBottomNav from '../../components/resident/ResidentBottomNav.jsx';
 import { fetchResidentDevices } from '../../services/mockResidentDevicesApi.js';
 
+const STATUS_FILTERS = [
+  { value: 'all', label: 'Tất cả' },
+  { value: 'safe', label: 'Hoạt động' },
+  { value: 'warning', label: 'Bảo trì' },
+  { value: 'danger', label: 'Lỗi/Hỏng' }
+];
+
 function ResidentDevicePage() {
   const [devices, setDevices] = useState([]);
   const [search, setSearch] = useState('');
@@ -46,13 +53,6 @@ function ResidentDevicePage() {
     });
   }, [devices, search, statusFilter]);
 
-  const statusFilters = [
-    { value: 'all', label: 'Tất cả' },
-    { value: 'safe', label: 'Hoạt động' },
-    { value: 'warning', label: 'Bảo trì' },
-    { value: 'danger', label: 'Lỗi/Hỏng' }
-  ];
-
   function handleStatusFilterChange(nextFilter) {
     setStatusFilter(nextFilter);
     if (nextFilter === 'all') {
@@ -82,7 +82,7 @@ function ResidentDevicePage() {
       </section>
 
       <section className="resident-filter-row" aria-label="Lọc trạng thái thiết bị">
-        {statusFilters.map((filter) => (
+        {STATUS_FILTERS.map((filter) => (
           <button
             key={filter.value}
             type="button"
