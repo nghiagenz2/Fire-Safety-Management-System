@@ -67,8 +67,8 @@
 
 .slide-image-wrapper {
   position: relative;
-  width: 200px;
-  height: 200px;
+  width: 220px;
+  height: 220px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -158,8 +158,8 @@
 
 @media (max-width: 1366px) {
   .slide-image-wrapper {
-    width: 200px;
-    height: 200px;
+    width: 220px;
+    height: 220px;
   }
 
   .icon-badge {
@@ -179,8 +179,8 @@
 
 @media (max-width: 992px) {
   .slide-image-wrapper {
-    width: 180px;
-    height: 180px;
+    width: 200px;
+    height: 200px;
   }
 
   .icon-badge {
@@ -217,8 +217,8 @@
   }
 
   .slide-image-wrapper {
-    width: 160px;
-    height: 160px;
+    width: 180px;
+    height: 180px;
   }
 
   .icon-badge {
@@ -260,13 +260,13 @@
   }
 
   .slide-image-wrapper {
-    width: 140px;
-    height: 140px;
+    width: 160px;
+    height: 160px;
   }
 
   .icon-badge {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     right: -6px;
     bottom: -8px;
   }
@@ -282,9 +282,9 @@
   }
 
   .next-button {
-    width: 155px;
-    height: 44px;
-    font-size: 15px;
+    width: 180px;
+    height: 46px;
+    font-size: 16px;
     border-radius: 12px;
   }
 
