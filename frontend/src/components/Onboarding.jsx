@@ -3,42 +3,42 @@ import { useNavigate } from 'react-router-dom';
 import { CheckSquare, Shield, Bell } from '@phosphor-icons/react';
 import './Onboarding.css';
 
+const slides = [
+  {
+    id: 1,
+    title: 'An Toàn Tuyệt Đối',
+    description: 'Hệ thống giám sát và quản lý an toàn cháy nổ toàn diện, bảo vệ tài sản và tính mạng con người.',
+    image: '/onboarding/hinh1.jpg',
+    fallbackImage:
+      'https://images.unsplash.com/photo-1561144257-e32e8efc6c4f?auto=format&fit=crop&w=820&q=80',
+    imagePosition: 'center center',
+    icon: 'shield',
+  },
+  {
+    id: 2,
+    title: 'Cảnh Báo Kịp Thời',
+    description: 'Nhận thông báo ngay lập tức khi phát hiện nguy cơ cháy nổ. Phản ứng nhanh chóng để giảm thiểu thiệt hại.',
+    image: '/onboarding/hinh2.jpg',
+    fallbackImage:
+      'https://images.unsplash.com/photo-1550109161-7262e652bf1d?auto=format&fit=crop&w=820&q=80',
+    imagePosition: 'center center',
+    icon: 'bell',
+  },
+  {
+    id: 3,
+    title: 'Quản Lý Hiệu Quả',
+    description: 'Theo dõi, kiểm tra và bảo trì thiết bị PCCC định kỳ. Đảm bảo tuân thủ các quy định an toàn.',
+    image: '/onboarding/hinh3.jpg',
+    fallbackImage:
+      'https://images.unsplash.com/photo-1573166364524-d9dbfd8bbf84?auto=format&fit=crop&w=820&q=80',
+    imagePosition: 'center center',
+    icon: 'task',
+  },
+];
+
 function Onboarding() {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
-
-  const slides = [
-    {
-      id: 1,
-      title: 'An Toàn Tuyệt Đối',
-      description: 'Hệ thống giám sát và quản lý an toàn cháy nổ toàn diện, bảo vệ tài sản và tính mạng con người.',
-      image: '/onboarding/hinh1.jpg',
-      fallbackImage:
-        'https://images.unsplash.com/photo-1561144257-e32e8efc6c4f?auto=format&fit=crop&w=820&q=80',
-      imagePosition: 'center center',
-      icon: 'shield',
-    },
-    {
-      id: 2,
-      title: 'Cảnh Báo Kịp Thời',
-      description: 'Nhận thông báo ngay lập tức khi phát hiện nguy cơ cháy nổ. Phản ứng nhanh chóng để giảm thiểu thiệt hại.',
-      image: '/onboarding/hinh2.jpg',
-      fallbackImage:
-        'https://images.unsplash.com/photo-1550109161-7262e652bf1d?auto=format&fit=crop&w=820&q=80',
-      imagePosition: 'center center',
-      icon: 'bell',
-    },
-    {
-      id: 3,
-      title: 'Quản Lý Hiệu Quả',
-      description: 'Theo dõi, kiểm tra và bảo trì thiết bị PCCC định kỳ. Đảm bảo tuân thủ các quy định an toàn.',
-      image: '/onboarding/hinh3.jpg',
-      fallbackImage:
-        'https://images.unsplash.com/photo-1573166364524-d9dbfd8bbf84?auto=format&fit=crop&w=820&q=80',
-      imagePosition: 'center center',
-      icon: 'task',
-    },
-  ];
 
   const slide = slides[currentSlide];
 

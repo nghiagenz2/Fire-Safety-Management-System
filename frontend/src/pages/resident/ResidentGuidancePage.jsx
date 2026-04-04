@@ -2,6 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import ResidentBottomNav from '../../components/resident/ResidentBottomNav.jsx';
 import { fetchResidentGuides } from '../../services/mockResidentGuidesApi.js';
 
+const CATEGORIES = [
+  { value: 'all', label: 'Tất cả' },
+  { value: 'escape', label: 'Thoát hiểm' },
+  { value: 'device', label: 'Thiết bị' },
+  { value: 'emergency', label: 'Khẩn cấp' }
+];
+
 function ResidentGuidancePage() {
   const [guideItems, setGuideItems] = useState([]);
   const [search, setSearch] = useState('');
@@ -28,13 +35,6 @@ function ResidentGuidancePage() {
       isMounted = false;
     };
   }, []);
-
-  const categories = [
-    { value: 'all', label: 'Tất cả' },
-    { value: 'escape', label: 'Thoát hiểm' },
-    { value: 'device', label: 'Thiết bị' },
-    { value: 'emergency', label: 'Khẩn cấp' }
-  ];
 
   function handleCategoryFilterChange(nextFilter) {
     setCategoryFilter(nextFilter);
@@ -118,7 +118,7 @@ function ResidentGuidancePage() {
       </section>
 
       <section className="resident-filter-row" aria-label="Lọc danh mục hướng dẫn">
-        {categories.map((category) => (
+        {CATEGORIES.map((category) => (
           <button
             key={category.value}
             type="button"
