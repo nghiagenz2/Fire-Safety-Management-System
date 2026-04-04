@@ -352,6 +352,23 @@
 	cursor: pointer;
 }
 
+.page-header-section {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-bottom: 16px;
+}
+
+.page-header-section p {
+	margin: 0;
+	color: var(--text-secondary);
+}
+
+.page-header-section h1 {
+	margin: 0;
+	color: var(--text-primary);
+}
+
 .manager-device-empty {
 	text-align: center;
 	color: #64748b;
@@ -422,5 +439,17 @@
 		margin: 0 auto;
 		padding-left: 20px;
 		padding-right: 20px;
+	}
+}
+
+
+
+@media (max-width: 640px) {
+	.page-header-section {
+		margin-bottom: 12px;
+	}
+
+	.page-header-section h1 {
+		font-size: 20px;
 	}
 }
