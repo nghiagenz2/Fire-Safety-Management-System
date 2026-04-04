@@ -1,0 +1,775 @@
+{
+  "floors": [
+    {
+      "id": "FLOOR-B1",
+      "name": "Tầng hầm B1",
+      "level": -1,
+      "area": "Bãi đỗ xe & Phòng kỹ thuật",
+      "safetyLevel": "danger",
+      "safetyLevelLabel": "Nguy hiểm",
+      "safetyScore": 42,
+      "summary": {
+        "totalDevices": 14,
+        "activeDevices": 6,
+        "warningDevices": 3,
+        "brokenDevices": 5,
+        "totalExits": 3,
+        "availableExits": 2,
+        "hasHazardZone": true,
+        "hazardZoneCount": 2
+      },
+      "hazardZones": [
+        {
+          "id": "HZ-B1-001",
+          "name": "Khu vực bồn xăng dự phòng",
+          "type": "Chất dễ cháy",
+          "riskLevel": "critical",
+          "riskLevelLabel": "Cực kỳ nguy hiểm",
+          "position": { "x": 12.5, "y": 8.0 },
+          "note": "Bồn xăng 500L chưa được di dời theo quy định PCCC mới nhất."
+        },
+        {
+          "id": "HZ-B1-002",
+          "name": "Tủ điện tổng khu hầm",
+          "type": "Nguy cơ điện",
+          "riskLevel": "high",
+          "riskLevelLabel": "Nguy hiểm cao",
+          "position": { "x": 4.0, "y": 18.0 },
+          "note": "Phát hiện tia lửa điện tần suất thấp, đang chờ kỹ thuật xử lý."
+        }
+      ],
+      "exits": [
+        {
+          "id": "EXIT-B1-001",
+          "type": "Cầu thang bộ thoát hiểm",
+          "location": "Góc Đông Bắc",
+          "status": "available",
+          "statusLabel": "Khả dụng",
+          "lastInspection": "2026-03-20"
+        },
+        {
+          "id": "EXIT-B1-002",
+          "type": "Cầu thang bộ thoát hiểm",
+          "location": "Góc Tây Nam",
+          "status": "available",
+          "statusLabel": "Khả dụng",
+          "lastInspection": "2026-03-20"
+        },
+        {
+          "id": "EXIT-B1-003",
+          "type": "Cửa thoát hiểm xe",
+          "location": "Lối ra dốc xe phía Nam",
+          "status": "blocked",
+          "statusLabel": "Bị chặn",
+          "lastInspection": "2026-03-15",
+          "note": "Xe tải đỗ chặn lối thoát, đã thông báo chủ xe."
+        }
+      ],
+      "devices": [
+        {
+          "id": "EXT-B1-001",
+          "type": "Bình chữa cháy CO2",
+          "model": "CO2-5KG-A1",
+          "room": "Phòng máy bơm",
+          "location": "Cạnh tủ điều khiển bơm",
+          "status": "active",
+          "statusLabel": "Hoạt động tốt",
+          "lastInspection": "2026-03-18",
+          "maintenanceDue": "2026-09-18",
+          "condition": "Áp suất ổn định, niêm phong còn nguyên"
+        },
+        {
+          "id": "ALARM-B1-001",
+          "type": "Còi báo cháy",
+          "model": "ALARM-24V-C2",
+          "room": "B1-101",
+          "location": "Sảnh thang máy tầng hầm",
+          "status": "danger",
+          "statusLabel": "Hỏng",
+          "lastInspection": "2026-02-10",
+          "maintenanceDue": "2026-03-01",
+          "condition": "Mất nguồn điện dự phòng, không phát tín hiệu"
+        },
+        {
+          "id": "SMOKE-B1-001",
+          "type": "Cảm biến khói",
+          "model": "SMOKE-ION-S1",
+          "room": "B1-102",
+          "location": "Trần bãi đỗ xe khu A",
+          "status": "warning",
+          "statusLabel": "Cảnh báo",
+          "lastInspection": "2026-03-05",
+          "maintenanceDue": "2026-04-05",
+          "condition": "Độ nhạy giảm, cần hiệu chỉnh"
+        },
+        {
+          "id": "SPRINK-B1-001",
+          "type": "Vòi phun sprinkler",
+          "model": "SPRINK-AUTO-D2",
+          "room": "B1-103",
+          "location": "Trần hành lang kỹ thuật",
+          "status": "danger",
+          "statusLabel": "Hỏng",
+          "lastInspection": "2026-02-28",
+          "maintenanceDue": "2026-03-28",
+          "condition": "Tắc nghẽn đường ống, áp suất không đạt"
+        },
+        {
+          "id": "EXIT-SIGN-B1-001",
+          "type": "Biển chỉ dẫn thoát hiểm",
+          "model": "EXIT-LED-E2",
+          "room": "B1-Hành lang",
+          "location": "Hành lang trung tâm phía Đông",
+          "status": "active",
+          "statusLabel": "Hoạt động tốt",
+          "lastInspection": "2026-03-22",
+          "maintenanceDue": "2026-09-22",
+          "condition": "LED sáng đầy đủ, pin dự phòng 95%"
+        },
+        {
+          "id": "HYDRANT-B1-001",
+          "type": "Họng nước chữa cháy",
+          "model": "HYD-65A-OUTDOOR",
+          "room": "B1-Sảnh xe",
+          "location": "Lối vào dốc xe khu B1",
+          "status": "warning",
+          "statusLabel": "Cảnh báo",
+          "lastInspection": "2026-03-01",
+          "maintenanceDue": "2026-04-01",
+          "condition": "Van rò rỉ nhẹ, cần thay gioăng"
+        },
+        {
+          "id": "GAS-DET-B1-001",
+          "type": "Cảm biến khí gas",
+          "model": "GAS-SENS-LPG-01",
+          "room": "B1-Phòng kỹ thuật",
+          "location": "Sát sàn phòng máy phát điện",
+          "status": "danger",
+          "statusLabel": "Hỏng",
+          "lastInspection": "2026-02-15",
+          "maintenanceDue": "2026-03-15",
+          "condition": "Cảm biến báo lỗi liên tục, cần thay thế"
+        },
+        {
+          "id": "FIRE-DOOR-B1-001",
+          "type": "Cửa chống cháy",
+          "model": "FIRE-DOOR-F60",
+          "room": "B1-110",
+          "location": "Ngăn cách khu kỹ thuật và bãi đỗ xe",
+          "status": "active",
+          "statusLabel": "Hoạt động tốt",
+          "lastInspection": "2026-03-20",
+          "maintenanceDue": "2026-09-20",
+          "condition": "Khóa từ hoạt động tốt, cửa đóng kín"
+        }
+      ]
+    },
+    {
+      "id": "FLOOR-1",
+      "name": "Tầng 1",
+      "level": 1,
+      "area": "Sảnh chính & Khu dịch vụ",
+      "safetyLevel": "warning",
+      "safetyLevelLabel": "Cảnh báo",
+      "safetyScore": 68,
+      "summary": {
+        "totalDevices": 18,
+        "activeDevices": 13,
+        "warningDevices": 4,
+        "brokenDevices": 1,
+        "totalExits": 4,
+        "availableExits": 4,
+        "hasHazardZone": false,
+        "hazardZoneCount": 0
+      },
+      "hazardZones": [],
+      "exits": [
+        {
+          "id": "EXIT-F1-MAIN",
+          "type": "Cửa thoát hiểm chính",
+          "location": "Mặt tiền phía Bắc",
+          "status": "available",
+          "statusLabel": "Khả dụng",
+          "lastInspection": "2026-03-20"
+        },
+        {
+          "id": "EXIT-F1-BACK",
+          "type": "Cửa thoát hiểm phụ",
+          "location": "Phía Nam, lối ra sau",
+          "status": "available",
+          "statusLabel": "Khả dụng",
+          "lastInspection": "2026-03-21"
+        },
+        {
+          "id": "STAIRS-F1-F2-EAST",
+          "type": "Thang bộ thoát hiểm",
+          "location": "Góc Đông, kết nối Tầng 1 – Tầng 2",
+          "status": "available",
+          "statusLabel": "Khả dụng",
+          "lastInspection": "2026-03-18"
+        },
+        {
+          "id": "STAIRS-F1-F2-WEST",
+          "type": "Thang bộ thoát hiểm",
+          "location": "Góc Tây, kết nối Tầng 1 – Tầng 2",
+          "status": "available",
+          "statusLabel": "Khả dụng",
+          "lastInspection": "2026-03-19"
+        }
+      ],
+      "devices": [
+        {
+          "id": "EXT-F1-001",
+          "type": "Bình chữa cháy CO2",
+          "model": "CO2-5KG-A1",
+          "room": "A101",
+          "location": "Sảnh lễ tân, cạnh bàn tiếp tân",
+          "status": "active",
+          "statusLabel": "Hoạt động tốt",
+          "lastInspection": "2026-03-12",
+          "maintenanceDue": "2026-06-15",
+          "condition": "Mới, còn niêm phong"
+        },
+        {
+          "id": "EXT-F1-002",
+          "type": "Bình chữa cháy bột ABC",
+          "model": "ABC-8KG-B2",
+          "room": "A105",
+          "location": "Hành lang phía Đông",
+          "status": "warning",
+          "statusLabel": "Cảnh báo",
+          "lastInspection": "2026-03-01",
+          "maintenanceDue": "2026-04-01",
+          "condition": "Áp suất cận ngưỡng thấp"
+        },
+        {
+          "id": "ALARM-F1-001",
+          "type": "Còi báo cháy",
+          "model": "ALARM-24V-C1",
+          "room": "A110",
+          "location": "Sảnh chính giữa, gần thang máy",
+          "status": "active",
+          "statusLabel": "Hoạt động tốt",
+          "lastInspection": "2026-03-15",
+          "maintenanceDue": "2026-09-15",
+          "condition": "Âm lượng đạt chuẩn 85dB"
+        },
+        {
+          "id": "SMOKE-F1-001",
+          "type": "Cảm biến khói quang học",
+          "model": "SMOKE-OPT-P2",
+          "room": "A103",
+          "location": "Trần sảnh tiếp tân",
+          "status": "active",
+          "statusLabel": "Hoạt động tốt",
+          "lastInspection": "2026-03-18",
+          "maintenanceDue": "2026-09-18",
+          "condition": "Độ nhạy ổn định"
+        },
+        {
+          "id": "HYDRANT-F1-001",
+          "type": "Họng nước chữa cháy vách tường",
+          "model": "HYD-65A-INDOOR",
+          "room": "Sảnh trung tâm",
+          "location": "Tủ PCCC khu lễ tân",
+          "status": "active",
+          "statusLabel": "Hoạt động tốt",
+          "lastInspection": "2026-03-18",
+          "maintenanceDue": "2026-09-18",
+          "condition": "Lưu lượng đạt chuẩn, không rò rỉ"
+        },
+        {
+          "id": "EXIT-SIGN-F1-001",
+          "type": "Biển chỉ dẫn thoát hiểm",
+          "model": "EXIT-LED-E1",
+          "room": "A-Hành lang",
+          "location": "Hành lang A, cạnh thang bộ Đông",
+          "status": "active",
+          "statusLabel": "Hoạt động tốt",
+          "lastInspection": "2026-03-18",
+          "maintenanceDue": "2026-08-01",
+          "condition": "LED sáng bình thường, pin dự phòng 100%"
+        },
+        {
+          "id": "SPRINK-F1-001",
+          "type": "Vòi phun sprinkler tự động",
+          "model": "SPRINK-AUTO-D1",
+          "room": "A115",
+          "location": "Trần sảnh ăn uống",
+          "status": "warning",
+          "statusLabel": "Cảnh báo",
+          "lastInspection": "2026-03-08",
+          "maintenanceDue": "2026-04-08",
+          "condition": "Áp suất thấp hơn mức tiêu chuẩn 5%"
+        },
+        {
+          "id": "FIRE-DOOR-F1-001",
+          "type": "Cửa chống cháy tự đóng",
+          "model": "FIRE-DOOR-F30",
+          "room": "A120",
+          "location": "Lối vào kho thiết bị",
+          "status": "warning",
+          "statusLabel": "Cảnh báo",
+          "lastInspection": "2026-02-20",
+          "maintenanceDue": "2026-04-15",
+          "condition": "Bản lề cần bôi trơn, cửa không tự đóng hoàn toàn"
+        },
+        {
+          "id": "MCP-F1-001",
+          "type": "Nút nhấn khẩn báo cháy",
+          "model": "MCP-24V-R1",
+          "room": "A-Hành lang",
+          "location": "Gần cửa thoát hiểm phía Nam",
+          "status": "danger",
+          "statusLabel": "Hỏng",
+          "lastInspection": "2026-02-28",
+          "maintenanceDue": "Đang xử lý",
+          "condition": "Nút bị kẹt, không nhấn được"
+        },
+        {
+          "id": "HEAT-DET-F1-001",
+          "type": "Cảm biến nhiệt",
+          "model": "HEAT-FIXED-57C",
+          "room": "A-Bếp",
+          "location": "Trần khu vực bếp dịch vụ",
+          "status": "active",
+          "statusLabel": "Hoạt động tốt",
+          "lastInspection": "2026-03-21",
+          "maintenanceDue": "2026-09-21",
+          "condition": "Ngưỡng kích hoạt 57°C, đang ổn định"
+        }
+      ]
+    },
+    {
+      "id": "FLOOR-2",
+      "name": "Tầng 2",
+      "level": 2,
+      "area": "Khu văn phòng & Phòng họp",
+      "safetyLevel": "warning",
+      "safetyLevelLabel": "Cảnh báo",
+      "safetyScore": 74,
+      "summary": {
+        "totalDevices": 16,
+        "activeDevices": 12,
+        "warningDevices": 3,
+        "brokenDevices": 1,
+        "totalExits": 3,
+        "availableExits": 3,
+        "hasHazardZone": false,
+        "hazardZoneCount": 0
+      },
+      "hazardZones": [],
+      "exits": [
+        {
+          "id": "STAIRS-F2-F1-EAST",
+          "type": "Thang bộ thoát hiểm",
+          "location": "Góc Đông, kết nối Tầng 2 – Tầng 1",
+          "status": "available",
+          "statusLabel": "Khả dụng",
+          "lastInspection": "2026-03-18"
+        },
+        {
+          "id": "STAIRS-F2-F3",
+          "type": "Thang bộ thoát hiểm",
+          "location": "Góc Tây, kết nối Tầng 2 – Tầng 3",
+          "status": "available",
+          "statusLabel": "Khả dụng",
+          "lastInspection": "2026-03-19"
+        },
+        {
+          "id": "EMERG-F2-001",
+          "type": "Thang thoát hiểm ngoài trời",
+          "location": "Mặt Đông toà nhà",
+          "status": "available",
+          "statusLabel": "Khả dụng",
+          "lastInspection": "2026-03-15"
+        }
+      ],
+      "devices": [
+        {
+          "id": "EXT-F2-001",
+          "type": "Bình chữa cháy CO2",
+          "model": "CO2-3KG-A2",
+          "room": "B201",
+          "location": "Hành lang B, trước phòng họp lớn",
+          "status": "active",
+          "statusLabel": "Hoạt động tốt",
+          "lastInspection": "2026-03-15",
+          "maintenanceDue": "2026-07-15",
+          "condition": "Áp suất ổn định"
+        },
+        {
+          "id": "EXT-F2-002",
+          "type": "Bình chữa cháy bột ABC",
+          "model": "ABC-8KG-B2",
+          "room": "B205",
+          "location": "Hành lang B, gần cửa thoát hiểm Đông",
+          "status": "warning",
+          "statusLabel": "Cảnh báo",
+          "lastInspection": "2026-03-01",
+          "maintenanceDue": "2026-04-01",
+          "condition": "Áp suất cận ngưỡng thấp"
+        },
+        {
+          "id": "ALARM-F2-001",
+          "type": "Chuông báo cháy",
+          "model": "ALARM-24V-C1",
+          "room": "B201",
+          "location": "Hành lang trung tâm tầng 2",
+          "status": "danger",
+          "statusLabel": "Hỏng",
+          "lastInspection": "2026-02-15",
+          "maintenanceDue": "2026-05-20",
+          "condition": "Mất điện, cần thay pin"
+        },
+        {
+          "id": "EXT-F2-003",
+          "type": "Bình chữa cháy CO2",
+          "model": "CO2-3KG-A2",
+          "room": "B210",
+          "location": "Phòng server",
+          "status": "maintenance",
+          "statusLabel": "Bảo trì",
+          "lastInspection": "2026-03-10",
+          "maintenanceDue": "2026-03-25",
+          "condition": "Đang được kiểm tra định kỳ"
+        },
+        {
+          "id": "FIRE-DOOR-F2-001",
+          "type": "Cửa chống cháy tự đóng",
+          "model": "FIRE-DOOR-F30",
+          "room": "B220",
+          "location": "Cửa ngăn cách hành lang B và khu văn phòng",
+          "status": "warning",
+          "statusLabel": "Cảnh báo",
+          "lastInspection": "2026-02-28",
+          "maintenanceDue": "2026-04-15",
+          "condition": "Bản lề cần bôi trơn, khóa an toàn cần kiểm tra"
+        },
+        {
+          "id": "SPRINK-F2-001",
+          "type": "Đầu phun sprinkler tự động",
+          "model": "SP-68C-BLOCK-B",
+          "room": "B210",
+          "location": "Trần hành lang B, trước cụm văn phòng",
+          "status": "active",
+          "statusLabel": "Hoạt động tốt",
+          "lastInspection": "2026-03-16",
+          "maintenanceDue": "2026-07-22",
+          "condition": "Nhiệt ngưỡng kích hoạt đúng chuẩn"
+        },
+        {
+          "id": "SMOKE-F2-001",
+          "type": "Cảm biến khói ion hóa",
+          "model": "SMOKE-ION-I1",
+          "room": "B215",
+          "location": "Trần phòng lưu trữ hồ sơ",
+          "status": "active",
+          "statusLabel": "Hoạt động tốt",
+          "lastInspection": "2026-03-17",
+          "maintenanceDue": "2026-09-17",
+          "condition": "Độ nhạy ổn định, không có báo động giả"
+        },
+        {
+          "id": "EXIT-SIGN-F2-001",
+          "type": "Biển chỉ dẫn thoát hiểm",
+          "model": "EXIT-LED-E1",
+          "room": "B-Hành lang",
+          "location": "Hành lang B, trước thang thoát hiểm ngoài",
+          "status": "active",
+          "statusLabel": "Hoạt động tốt",
+          "lastInspection": "2026-03-20",
+          "maintenanceDue": "2026-08-20",
+          "condition": "LED sáng bình thường, pin dự phòng 98%"
+        },
+        {
+          "id": "MCP-F2-001",
+          "type": "Nút nhấn khẩn báo cháy",
+          "model": "MCP-24V-R2",
+          "room": "B-Hành lang",
+          "location": "Gần cửa thang bộ phía Đông",
+          "status": "warning",
+          "statusLabel": "Cảnh báo",
+          "lastInspection": "2026-03-05",
+          "maintenanceDue": "2026-04-05",
+          "condition": "Kính bảo vệ bị nứt, cần thay thế"
+        }
+      ]
+    },
+    {
+      "id": "FLOOR-3",
+      "name": "Tầng 3",
+      "level": 3,
+      "area": "Khu căn hộ & Phòng ở",
+      "safetyLevel": "safe",
+      "safetyLevelLabel": "An toàn",
+      "safetyScore": 91,
+      "summary": {
+        "totalDevices": 20,
+        "activeDevices": 18,
+        "warningDevices": 2,
+        "brokenDevices": 0,
+        "totalExits": 3,
+        "availableExits": 2,
+        "hasHazardZone": false,
+        "hazardZoneCount": 0
+      },
+      "hazardZones": [],
+      "exits": [
+        {
+          "id": "STAIRS-F3-F2",
+          "type": "Thang bộ thoát hiểm",
+          "location": "Góc Đông, kết nối Tầng 3 – Tầng 2",
+          "status": "available",
+          "statusLabel": "Khả dụng",
+          "lastInspection": "2026-03-22"
+        },
+        {
+          "id": "STAIRS-F3-ROOF",
+          "type": "Thang bộ lên mái",
+          "location": "Trung tâm, kết nối Tầng 3 – Sân thượng",
+          "status": "available",
+          "statusLabel": "Khả dụng",
+          "lastInspection": "2026-03-20"
+        },
+        {
+          "id": "EXIT-F3-SIDE",
+          "type": "Cửa thoát hiểm phụ",
+          "location": "Góc Tây Nam",
+          "status": "inspection",
+          "statusLabel": "Cần kiểm tra",
+          "lastInspection": "2026-02-25",
+          "note": "Cửa cần kiểm tra khẩn cấp theo lịch định kỳ quý"
+        }
+      ],
+      "devices": [
+        {
+          "id": "SPRINK-F3-001",
+          "type": "Vòi phun nước tự động",
+          "model": "SPRINK-AUTO-D1",
+          "room": "C301",
+          "location": "Trần hành lang khu căn hộ A",
+          "status": "active",
+          "statusLabel": "Hoạt động tốt",
+          "lastInspection": "2026-03-20",
+          "maintenanceDue": "2026-07-10",
+          "condition": "Áp suất ổn định, van cấp nước bình thường"
+        },
+        {
+          "id": "EXT-F3-001",
+          "type": "Bình chữa cháy gel",
+          "model": "GEL-6L-G1",
+          "room": "C310",
+          "location": "Hành lang C, trước căn hộ 310-315",
+          "status": "active",
+          "statusLabel": "Hoạt động tốt",
+          "lastInspection": "2026-03-22",
+          "maintenanceDue": "2026-09-05",
+          "condition": "Mới lắp đặt, trong điều kiện tốt"
+        },
+        {
+          "id": "ALM-F3-001",
+          "type": "Nút nhấn khẩn báo cháy",
+          "model": "MCP-24V-R3",
+          "room": "C308",
+          "location": "Hành lang C, cạnh cửa thang bộ",
+          "status": "active",
+          "statusLabel": "Hoạt động tốt",
+          "lastInspection": "2026-03-18",
+          "maintenanceDue": "2026-06-18",
+          "condition": "Tín hiệu ổn định, kết nối trung tâm tốt"
+        },
+        {
+          "id": "SMOKE-F3-001",
+          "type": "Cảm biến khói quang học",
+          "model": "SMOKE-OPT-P2",
+          "room": "C305",
+          "location": "Trần hành lang khu căn hộ B",
+          "status": "active",
+          "statusLabel": "Hoạt động tốt",
+          "lastInspection": "2026-03-19",
+          "maintenanceDue": "2026-09-19",
+          "condition": "Độ nhạy tốt, không có báo động giả"
+        },
+        {
+          "id": "HEAT-DET-F3-001",
+          "type": "Cảm biến nhiệt định điểm",
+          "model": "HEAT-FIXED-57C",
+          "room": "C320",
+          "location": "Trần phòng giặt ủi tầng 3",
+          "status": "warning",
+          "statusLabel": "Cảnh báo",
+          "lastInspection": "2026-03-10",
+          "maintenanceDue": "2026-04-10",
+          "condition": "Ngưỡng kích hoạt lệch 3°C, cần hiệu chỉnh"
+        },
+        {
+          "id": "EXIT-SIGN-F3-001",
+          "type": "Biển chỉ dẫn thoát hiểm",
+          "model": "EXIT-LED-E1",
+          "room": "C-Hành lang",
+          "location": "Hành lang C, 4 điểm dọc tuyến",
+          "status": "active",
+          "statusLabel": "Hoạt động tốt",
+          "lastInspection": "2026-03-21",
+          "maintenanceDue": "2026-08-21",
+          "condition": "Tất cả 4 biển sáng hoàn toàn"
+        },
+        {
+          "id": "FIRE-DOOR-F3-001",
+          "type": "Cửa chống cháy tự đóng",
+          "model": "FIRE-DOOR-F30",
+          "room": "C330",
+          "location": "Ngăn cách khu căn hộ A và B",
+          "status": "active",
+          "statusLabel": "Hoạt động tốt",
+          "lastInspection": "2026-03-22",
+          "maintenanceDue": "2026-09-22",
+          "condition": "Khóa từ và bản lề hoàn hảo"
+        },
+        {
+          "id": "HYDRANT-F3-001",
+          "type": "Họng nước chữa cháy vách tường",
+          "model": "HYD-65A-INDOOR",
+          "room": "C-Sảnh thang",
+          "location": "Tủ PCCC khu thang bộ Đông",
+          "status": "warning",
+          "statusLabel": "Cảnh báo",
+          "lastInspection": "2026-03-08",
+          "maintenanceDue": "2026-04-08",
+          "condition": "Vòi có vết xước nhỏ, cần kiểm tra tính toàn vẹn"
+        }
+      ]
+    },
+    {
+      "id": "FLOOR-ROOF",
+      "name": "Sân thượng",
+      "level": 4,
+      "area": "Sân thượng & Phòng kỹ thuật mái",
+      "safetyLevel": "safe",
+      "safetyLevelLabel": "An toàn",
+      "safetyScore": 87,
+      "summary": {
+        "totalDevices": 8,
+        "activeDevices": 7,
+        "warningDevices": 1,
+        "brokenDevices": 0,
+        "totalExits": 2,
+        "availableExits": 2,
+        "hasHazardZone": false,
+        "hazardZoneCount": 0
+      },
+      "hazardZones": [],
+      "exits": [
+        {
+          "id": "STAIRS-ROOF-F3",
+          "type": "Thang bộ xuống Tầng 3",
+          "location": "Trung tâm sân thượng",
+          "status": "available",
+          "statusLabel": "Khả dụng",
+          "lastInspection": "2026-03-22"
+        },
+        {
+          "id": "LADDER-ROOF-EXT",
+          "type": "Thang thoát hiểm ngoài trời",
+          "location": "Mặt Bắc toà nhà",
+          "status": "available",
+          "statusLabel": "Khả dụng",
+          "lastInspection": "2026-03-18"
+        }
+      ],
+      "devices": [
+        {
+          "id": "EXT-ROOF-001",
+          "type": "Bình chữa cháy CO2",
+          "model": "CO2-5KG-A1",
+          "room": "Phòng kỹ thuật mái",
+          "location": "Cạnh tủ điều khiển hệ thống HVAC",
+          "status": "active",
+          "statusLabel": "Hoạt động tốt",
+          "lastInspection": "2026-03-20",
+          "maintenanceDue": "2026-09-20",
+          "condition": "Áp suất ổn định, niêm phong còn nguyên"
+        },
+        {
+          "id": "ALARM-ROOF-001",
+          "type": "Còi báo cháy ngoài trời",
+          "model": "ALARM-OUTDOOR-IP65",
+          "room": "Sân thượng",
+          "location": "Góc Tây Bắc sân thượng",
+          "status": "active",
+          "statusLabel": "Hoạt động tốt",
+          "lastInspection": "2026-03-19",
+          "maintenanceDue": "2026-09-19",
+          "condition": "Chịu thời tiết tốt, âm lượng đạt chuẩn"
+        },
+        {
+          "id": "SMOKE-ROOF-001",
+          "type": "Cảm biến khói dạng chùm tia",
+          "model": "BEAM-SMOKE-30M",
+          "room": "Phòng kỹ thuật mái",
+          "location": "Trần phòng máy bơm mái",
+          "status": "active",
+          "statusLabel": "Hoạt động tốt",
+          "lastInspection": "2026-03-18",
+          "maintenanceDue": "2026-09-18",
+          "condition": "Căn chỉnh tia đúng, không sai lệch"
+        },
+        {
+          "id": "LIGHTNING-ROOF-001",
+          "type": "Hệ thống chống sét",
+          "model": "LIGHTNING-ROD-ESE",
+          "room": "Mái nhà",
+          "location": "Điểm cao nhất toà nhà",
+          "status": "warning",
+          "statusLabel": "Cảnh báo",
+          "lastInspection": "2026-03-01",
+          "maintenanceDue": "2026-04-01",
+          "condition": "Dây tiếp đất cần kiểm tra điện trở"
+        }
+      ]
+    }
+  ],
+  "buildingInfo": {
+    "name": "Tòa nhà An Khánh",
+    "address": "123 Đường Nguyễn Văn Linh, Quận 7, TP.HCM",
+    "totalFloors": 5,
+    "manager": "Nguyễn Thị Mai",
+    "lastFullInspection": "2026-03-22",
+    "nextScheduledInspection": "2026-06-22",
+    "overallSafetyLevel": "warning",
+    "overallSafetyLevelLabel": "Cảnh báo",
+    "overallSafetyScore": 72,
+    "totalDevices": 76,
+    "totalActiveDevices": 56,
+    "totalWarningDevices": 13,
+    "totalBrokenDevices": 6,
+    "totalExits": 15,
+    "totalAvailableExits": 13,
+    "hasAnyHazardZone": true
+  },
+  "deviceTypes": [
+    { "id": "extinguisher", "label": "Bình chữa cháy", "icon": "fire-extinguisher" },
+    { "id": "alarm", "label": "Chuông / Còi báo cháy", "icon": "bell" },
+    { "id": "smoke", "label": "Cảm biến khói", "icon": "wind" },
+    { "id": "heat", "label": "Cảm biến nhiệt", "icon": "thermometer" },
+    { "id": "sprinkler", "label": "Vòi phun sprinkler", "icon": "droplets" },
+    { "id": "hydrant", "label": "Họng nước chữa cháy", "icon": "pipette" },
+    { "id": "exit-sign", "label": "Biển chỉ dẫn thoát hiểm", "icon": "sign-post" },
+    { "id": "fire-door", "label": "Cửa chống cháy", "icon": "door-closed" },
+    { "id": "mcp", "label": "Nút nhấn khẩn báo cháy", "icon": "alert-circle" },
+    { "id": "gas-detector", "label": "Cảm biến khí gas", "icon": "atom" }
+  ],
+  "safetyLevels": [
+    { "id": "safe", "label": "An toàn", "color": "#22c55e", "scoreRange": [80, 100] },
+    { "id": "warning", "label": "Cảnh báo", "color": "#f59e0b", "scoreRange": [50, 79] },
+    { "id": "danger", "label": "Nguy hiểm", "color": "#ef4444", "scoreRange": [0, 49] }
+  ],
+  "deviceStatuses": [
+    { "id": "active", "label": "Hoạt động tốt", "color": "#22c55e" },
+    { "id": "warning", "label": "Cảnh báo", "color": "#f59e0b" },
+    { "id": "danger", "label": "Hỏng", "color": "#ef4444" },
+    { "id": "maintenance", "label": "Bảo trì", "color": "#6366f1" },
+    { "id": "inspection", "label": "Cần kiểm tra", "color": "#0ea5e9" }
+  ]
+}

@@ -376,6 +376,10 @@
 }
 
 @media (max-width: 1024px) {
+	.manager-screen {
+		padding-bottom: 146px;
+	}
+
 	.manager-device-filter {
 		grid-template-columns: 1fr;
 	}
