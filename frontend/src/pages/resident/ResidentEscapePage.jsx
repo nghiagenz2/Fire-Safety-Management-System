@@ -6,16 +6,14 @@ function ResidentEscapePage() {
   return (
     <main className="resident-screen">
       <Header />
-      
+      <div className="app-header-spacer" aria-hidden="true"></div>
       <div>
-        
         <header className="resident-topbar">
           <div>
             <p className="typo-label text-secondary resident-overline">Cư dân - Ứng phó khẩn cấp</p>
             <h1 className="typo-h1 resident-title">Lối thoát hiểm</h1>
           </div>
         </header>
-
         {/* Khối Sơ đồ lối thoát (Placeholder) */}
         <section className="resident-list-section">
           <div className="resident-section-heading">

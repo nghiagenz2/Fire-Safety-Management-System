@@ -7,16 +7,14 @@ function ResidentHomePage() {
   return (
     <main className="resident-screen">
       <Header />
-
+      <div className="app-header-spacer" aria-hidden="true"></div>
       <div>
-
         <header className="resident-topbar">
           <div>
             <p className="typo-label text-secondary resident-overline">Cư dân - Trung tâm vận hành</p>
             <h1 className="typo-h1 resident-title">Trang chủ 3D</h1>
           </div>
         </header>
-
         {/* Khối Mô hình 3D (Placeholder rỗng) */}
         <section
           className="resident-panel resident-3d-placeholder"
@@ -24,7 +22,6 @@ function ResidentHomePage() {
         >
           <p className="typo-h2 text-secondary">Mô hình 3D hiện tại chưa có</p>
         </section>
-
         {/* Khối Thống kê */}
         <section className="resident-stats-grid">
 

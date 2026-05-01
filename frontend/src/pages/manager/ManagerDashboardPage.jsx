@@ -294,26 +294,7 @@ function DonutChart({ segments = [] }) {
           Thiết bị
         </text>
       </svg>
-      <ul className="md-donut-legend">
-        {segments.map((segment) => {
-          const value = Number(segment.value || 0);
-          const percent = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-          return (
-            <li key={segment.key}>
-              <span
-                className="md-legend-dot"
-                style={{ backgroundColor: segment.color }}
-              />
-              <div className="md-legend-info">
-                <span className="typo-body-md">{segment.label}</span>
-                <span className="typo-label text-secondary">
-                  {formatNumber(value)} ({percent}%)
-                </span>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+      
     </div>
   );
 }
@@ -525,7 +506,7 @@ function ManagerDashboardPage() {
   return (
     <main className="manager-screen">
       <Header roleLabel="Ban quản lý" homePath="/manager/home" />
-
+      <div className="app-header-spacer" aria-hidden="true"></div>
       <section className="manager-device-shell">
         <header className="manager-device-head">
           <div>
@@ -779,7 +760,7 @@ function ManagerDashboardPage() {
                 <LineChart data={charts.incidentsOverTime?.data || []} />
               </article>
 
-              <article className="manager-panel md-chart-card">
+              <article className="manager-panel md-chart-card md-chart-card-wide">
                 <header className="md-chart-head">
                   <h2 className="typo-h2">{charts.exitStatusByFloor?.title}</h2>
                 </header>

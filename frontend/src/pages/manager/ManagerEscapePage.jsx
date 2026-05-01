@@ -69,7 +69,7 @@ function ManagerEscapePage() {
 	return (
 		<main className="manager-screen">
 			<Header roleLabel="Ban quản lý" homePath="/manager/home" />
-			
+			<div className="app-header-spacer" aria-hidden="true"></div>
 			<section className="manager-device-shell">
 				<header className="manager-device-head">
 					<div>

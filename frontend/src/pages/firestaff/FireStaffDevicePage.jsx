@@ -8,6 +8,7 @@ import {
   reportFireStaffDeviceBroken,
   updateFireStaffDeviceStatus,
 } from "../../services/mockFireStaffDevicesApi.js";
+import Header from "../../components/Header";
 import FireStaffBottomNav from "../../components/firestaff/FireStaffBottomNav.jsx";
 
 const DEFAULT_FILTERS = {
@@ -232,6 +233,8 @@ function FireStaffDevicePage() {
 
   return (
     <main className="firestaff-screen">
+      <Header roleLabel="Nhân viên PCCC" homePath="/firestaff/home" />
+      <div className="app-header-spacer" aria-hidden="true"></div>
       <header className="firestaff-sim-hero firestaff-device-header">
         <div>
           <h1 className="typo-h1">Quản lý thiết bị PCCC</h1>

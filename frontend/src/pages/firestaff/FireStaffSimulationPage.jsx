@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Fire, Play } from '@phosphor-icons/react';
+import Header from '../../components/Header';
 import FireStaffBottomNav from '../../components/firestaff/FireStaffBottomNav.jsx';
 import { fetchFireStaffSimulationConfig } from '../../services/mockFireStaffSimulationApi.js';
 
@@ -93,6 +94,8 @@ function FireStaffSimulationPage() {
 
 	return (
 		<main className="firestaff-screen">
+			<Header roleLabel="Nhân viên PCCC" homePath="/firestaff/home" />
+			<div className="app-header-spacer" aria-hidden="true"></div>
 			<header className="firestaff-sim-hero">
 				<div>
 					<h1 className="typo-h1">Mô phỏng tình huống cháy</h1>

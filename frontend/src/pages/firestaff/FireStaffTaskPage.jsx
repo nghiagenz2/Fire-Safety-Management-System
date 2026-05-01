@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import Header from "../../components/Header";
 import FireStaffBottomNav from "../../components/firestaff/FireStaffBottomNav.jsx";
 import {
   fetchFireStaffTaskFilterOptions,
@@ -153,6 +154,8 @@ function FireStaffTaskPage() {
 
   return (
     <main className="firestaff-screen">
+      <Header roleLabel="Nhân viên PCCC" homePath="/firestaff/home" />
+      <div className="app-header-spacer" aria-hidden="true"></div>
       <header className="firestaff-sim-hero firestaff-task-header">
         <div>
           <h1 className="typo-h1">Nhiệm vụ kiểm tra / bảo trì</h1>

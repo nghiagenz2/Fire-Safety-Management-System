@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import Header from '../../components/Header';
 import ResidentBottomNav from '../../components/resident/ResidentBottomNav.jsx';
 import { fetchResidentDevices } from '../../services/mockResidentDevicesApi.js';
 
@@ -62,6 +63,8 @@ function ResidentDevicePage() {
 
   return (
     <main className="resident-screen">
+      <Header />
+      <div className="app-header-spacer" aria-hidden="true"></div>
       <header className="resident-topbar">
         <div>
           <p className="typo-label text-secondary resident-overline">Cư dân - Tra cứu nhanh</p>
@@ -70,7 +73,6 @@ function ResidentDevicePage() {
         </div>
         <span className="resident-floor-chip typo-label">Tầng hiện tại: 3</span>
       </header>
-
       <section className="resident-search-wrap">
         <input
           className="resident-search-input typo-body-md"

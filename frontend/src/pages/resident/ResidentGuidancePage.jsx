@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import Header from '../../components/Header';
 import ResidentBottomNav from '../../components/resident/ResidentBottomNav.jsx';
 import { fetchResidentGuides } from '../../services/mockResidentGuidesApi.js';
 
@@ -63,6 +64,8 @@ function ResidentGuidancePage() {
 
   return (
     <main className="resident-screen">
+      <Header />
+      <div className="app-header-spacer" aria-hidden="true"></div>
       <header className="resident-topbar">
         <div>
           <p className="typo-label text-secondary resident-overline">Cư dân - Thư viện an toàn</p>

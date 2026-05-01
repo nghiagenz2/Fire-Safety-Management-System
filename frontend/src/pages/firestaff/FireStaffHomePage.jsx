@@ -1,16 +1,17 @@
 import Header from '../../components/Header';
-import ManagerBottomNav from '../../components/manager/ManagerBottomNav';
+import FireStaffBottomNav from '../../components/firestaff/FireStaffBottomNav';
 import { Cube, DoorOpen, CheckCircle } from '@phosphor-icons/react';
 import '../../styles/ResidentHome.css';
 
-function ManagerHomePage() {
-		return (
-			<main className="resident-screen">
-				<Header roleLabel="Ban quản lý" homePath="/manager/home" />
-				<div className="app-header-spacer" aria-hidden="true"></div>
-				<div>				<header className="resident-topbar">
+function FireStaffHomePage() {
+	return (
+		<main className="resident-screen">
+			<Header roleLabel="Nhân viên PCCC" homePath="/firestaff/home" />
+			<div className="app-header-spacer" aria-hidden="true"></div>
+			<div>
+				<header className="resident-topbar">
 					<div>
-						<p className="typo-label text-secondary resident-overline">Ban quản lý - Trung tâm vận hành</p>
+						<p className="typo-label text-secondary resident-overline">Nhân viên PCCC - Trung tâm vận hành</p>
 						<h1 className="typo-h1 resident-title">Trang chủ 3D</h1>
 					</div>
 				</header>
@@ -58,9 +59,9 @@ function ManagerHomePage() {
 
 			</div>
 
-			<ManagerBottomNav />
+			<FireStaffBottomNav />
 		</main>
 	);
 }
 
-export default ManagerHomePage;
+export default FireStaffHomePage;

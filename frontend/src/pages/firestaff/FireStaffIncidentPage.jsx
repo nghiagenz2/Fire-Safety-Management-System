@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Clock, MapPin, NotePencil, User, WarningCircle } from '@phosphor-icons/react';
+import Header from '../../components/Header';
 import FireStaffBottomNav from '../../components/firestaff/FireStaffBottomNav.jsx';
 import {
 	fetchFireStaffIncidents,
@@ -100,6 +101,8 @@ function FireStaffIncidentPage() {
 
 	return (
 		<main className="firestaff-screen">
+			<Header roleLabel="Nhân viên PCCC" homePath="/firestaff/home" />
+			<div className="app-header-spacer" aria-hidden="true"></div>
 			<header className="firestaff-sim-hero">
 				<div>
 					<h1 className="typo-h1">Xử lý Sự cố</h1>

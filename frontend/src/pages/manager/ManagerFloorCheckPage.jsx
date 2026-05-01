@@ -292,7 +292,7 @@ function ManagerFloorCheckPage() {
 	return (
 		<main className="manager-screen">
 			<Header roleLabel="Ban quản lý" homePath="/manager/home" />
-
+			<div className="app-header-spacer" aria-hidden="true"></div>
 			<section className="floor-check-shell manager-device-shell">
 				{/* ── Page header ── */}
 				<header className="manager-device-head">

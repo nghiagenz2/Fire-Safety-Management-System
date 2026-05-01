@@ -14,6 +14,7 @@ import FireStaffIncidentPage from "./pages/firestaff/FireStaffIncidentPage.jsx";
 import FireStaffSimulationPage from "./pages/firestaff/FireStaffSimulationPage.jsx";
 import FireStaffDevicePage from "./pages/firestaff/FireStaffDevicePage.jsx";
 import FireStaffTaskPage from "./pages/firestaff/FireStaffTaskPage.jsx";
+import FireStaffHomePage from "./pages/firestaff/FireStaffHomePage.jsx";
 import ManagerHomePage from "./pages/manager/ManagerHomePage.jsx";
 import ManagerDevicePage from "./pages/manager/ManagerDevicePage.jsx";
 import ManagerEscapePage from "./pages/manager/ManagerEscapePage.jsx";
@@ -35,10 +36,7 @@ function App() {
         <Route path="/splash" element={<Splash />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/login" element={<LoginForm />} />
-        <Route
-          path="/firestaff/home"
-          element={<Navigate to="/firestaff/simulation" replace />}
-        />
+        <Route path="/firestaff/home" element={<FireStaffHomePage />} />
         <Route path="/firestaff/devices" element={<FireStaffDevicePage />} />
         <Route path="/firestaff/tasks" element={<FireStaffTaskPage />} />
         <Route

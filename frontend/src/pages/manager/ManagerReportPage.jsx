@@ -38,7 +38,7 @@ function ManagerReportPage() {
   return (
     <div className="manager-screen">
       <Header roleLabel="Ban quản lý" homePath="/manager/home" />
-
+      <div className="app-header-spacer" aria-hidden="true"></div>
       <div className="report-shell">
         {/* Page Title Section */}
         <div className="page-header-section">
