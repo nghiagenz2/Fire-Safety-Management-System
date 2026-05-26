@@ -26,11 +26,13 @@ function ManagerDevicePage() {
 	const [statusFilter, setStatusFilter] = useState('all');
 	const [floorFilter, setFloorFilter] = useState('all');
 	const [isLoading, setIsLoading] = useState(true);
+	const [loadError, setLoadError] = useState('');
 
 	useEffect(() => {
 		const loadData = async () => {
 			try {
 				setIsLoading(true);
+				setLoadError('');
 				const [devicesData, floorsData] = await Promise.all([
 					getManagerDevices(),
 					getFloors()
@@ -41,6 +43,7 @@ function ManagerDevicePage() {
 				console.error('Failed to load manager devices:', error);
 				setDevices([]);
 				setFloors([]);
+				setLoadError('Không đọc được dữ liệu thiết bị từ BconCity.glb.');
 			} finally {
 				setIsLoading(false);
 			}
@@ -60,7 +63,9 @@ function ManagerDevicePage() {
 			const isMatchingKeyword =
 				keyword.length === 0 ||
 				device.id.toLowerCase().includes(keyword) ||
-				device.type.toLowerCase().includes(keyword);
+				device.type.toLowerCase().includes(keyword) ||
+				device.location.toLowerCase().includes(keyword) ||
+				device.glbNodeName?.toLowerCase().includes(keyword);
 
 			return isMatchingStatus && isMatchingFloor && isMatchingKeyword;
 		});
@@ -150,7 +155,23 @@ function ManagerDevicePage() {
 						</thead>
 
 						<tbody>
-							{filteredDevices.map((device) => (
+							{isLoading && (
+								<tr>
+									<td className="manager-device-empty typo-body-lg" colSpan={7}>
+										Đang đọc thiết bị từ mô hình BconCity.glb...
+									</td>
+								</tr>
+							)}
+
+							{!isLoading && loadError && (
+								<tr>
+									<td className="manager-device-empty typo-body-lg" colSpan={7}>
+										{loadError}
+									</td>
+								</tr>
+							)}
+
+							{!isLoading && !loadError && filteredDevices.map((device) => (
 								<tr key={device.id}>
 									<td className="manager-device-id">{device.id}</td>
 									<td>{device.type}</td>
@@ -178,7 +199,7 @@ function ManagerDevicePage() {
 								</tr>
 							))}
 
-							{filteredDevices.length === 0 && (
+							{!isLoading && !loadError && filteredDevices.length === 0 && (
 								<tr>
 									<td className="manager-device-empty typo-body-lg" colSpan={7}>
 										Không tìm thấy thiết bị phù hợp bộ lọc hiện tại.

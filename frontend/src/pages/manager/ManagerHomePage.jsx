@@ -2,28 +2,28 @@ import Header from '../../components/Header';
 import ManagerBottomNav from '../../components/manager/ManagerBottomNav';
 import { Cube, DoorOpen, CheckCircle } from '@phosphor-icons/react';
 import '../../styles/ResidentHome.css';
+import BuildingModelViewer from '../../components/three/BuildingModelViewer.jsx';
 
 function ManagerHomePage() {
-		return (
-			<main className="resident-screen">
-				<Header roleLabel="Ban quản lý" homePath="/manager/home" />
-				<div className="app-header-spacer" aria-hidden="true"></div>
-				<div>				<header className="resident-topbar">
+	return (
+		<main className="manager-screen">
+			<Header roleLabel="Ban quản lý" homePath="/manager/home" />
+			<div className="app-header-spacer" aria-hidden="true"></div>
+
+			<div className="manager-device-shell">
+				<header className="manager-topbar">
 					<div>
-						<p className="typo-label text-secondary resident-overline">Ban quản lý - Trung tâm vận hành</p>
-						<h1 className="typo-h1 resident-title">Trang chủ 3D</h1>
+						<p className="typo-label text-secondary manager-overline">Ban quản lý - Trung tâm vận hành</p>
+						<h1 className="typo-h1 manager-title">Mô hình 3D tổng quan</h1>
+						<p className="typo-body-md text-secondary">
+							Quan sát mô hình tòa nhà trực tiếp, xoay góc nhìn và kiểm tra tổng thể nhanh hơn.
+						</p>
 					</div>
 				</header>
 
-				<section
-					className="resident-panel resident-3d-placeholder"
-					aria-label="Khu vực mô hình 3D"
-				>
-					<p className="typo-h2 text-secondary">Mô hình 3D hiện tại chưa có</p>
-				</section>
+				<BuildingModelViewer />
 
-				<section className="resident-stats-grid">
-
+				<section className="resident-stats-grid" aria-label="Thống kê tổng quan">
 					<div className="resident-panel stat-card-item bg-light-safe">
 						<div className="stat-icon-wrapper green">
 							<Cube size={24} weight="fill" />
@@ -53,9 +53,7 @@ function ManagerHomePage() {
 							<p className="typo-body-md text-secondary stat-card-label">Trạng thái tòa nhà</p>
 						</div>
 					</div>
-
 				</section>
-
 			</div>
 
 			<ManagerBottomNav />
