@@ -7,6 +7,9 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 const MODEL_URL = '/model/BconCity.glb';
 const FLOOR_27_IDS = new Set(['Tang 27', 'floor_27']);
 const FLOOR_27_HIDDEN_MESH_NAMES = new Set(['San_Vien_Ngoai.049']);
+const NORMALIZED_FLOOR_27_HIDDEN_MESH_NAMES = new Set(
+	[...FLOOR_27_HIDDEN_MESH_NAMES].map((name) => normalizeObjectName(name)),
+);
 const MODEL_NAME = MODEL_URL.split('/').pop() || 'BconCity.glb';
 
 const sharedDracoLoader = new DRACOLoader();
@@ -54,15 +57,11 @@ function hasObjectNameInAncestors(object, normalizedTargetNames) {
 }
 
 function markFloor27HiddenMeshes(gltf) {
-	const normalizedHiddenNames = new Set(
-		[...FLOOR_27_HIDDEN_MESH_NAMES].map((name) => normalizeObjectName(name)),
-	);
-
 	const floor27 = gltf.scene.getObjectByName('Tang 27');
 	const searchRoot = floor27 ?? gltf.scene;
 
 	searchRoot.traverse((child) => {
-		if (hasObjectNameInAncestors(child, normalizedHiddenNames)) {
+		if (hasObjectNameInAncestors(child, NORMALIZED_FLOOR_27_HIDDEN_MESH_NAMES)) {
 			child.traverse((subChild) => {
 				if (subChild.isMesh) {
 					subChild.userData.hideWhenViewingFloor27 = true;
@@ -70,6 +69,17 @@ function markFloor27HiddenMeshes(gltf) {
 			});
 		}
 	});
+}
+
+function isFloor27Selected(selectedId) {
+	return FLOOR_27_IDS.has(selectedId) || normalizeObjectName(selectedId).includes('27');
+}
+
+function isHiddenWhenViewingFloor27(object) {
+	return (
+		object.userData.hideWhenViewingFloor27 === true ||
+		hasObjectNameInAncestors(object, NORMALIZED_FLOOR_27_HIDDEN_MESH_NAMES)
+	);
 }
 
 function countMeshes(object) {
@@ -329,8 +339,8 @@ function applyFloorVisibility(gltf, selectedId) {
 			}
 			const isSelectedFloorMesh = child.userData.floorId === selectedId;
 			const isHiddenFloor27Ceiling =
-				FLOOR_27_IDS.has(selectedId) &&
-				child.userData.hideWhenViewingFloor27 === true;
+				isFloor27Selected(selectedId) &&
+				isHiddenWhenViewingFloor27(child);
 
 			child.visible = isSelectedFloorMesh && !isHiddenFloor27Ceiling;
 		}

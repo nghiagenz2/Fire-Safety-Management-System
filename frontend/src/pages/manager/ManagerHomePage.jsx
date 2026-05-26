@@ -1,10 +1,35 @@
+import { useEffect, useState } from 'react';
 import Header from '../../components/Header';
 import ManagerBottomNav from '../../components/manager/ManagerBottomNav';
 import { Cube, DoorOpen, CheckCircle } from '@phosphor-icons/react';
 import '../../styles/ResidentHome.css';
 import BuildingModelViewer from '../../components/three/BuildingModelViewer.jsx';
+import { getDeviceStatistics } from '../../services/mockManagerDevicesApi.js';
 
 function ManagerHomePage() {
+	const [deviceTotal, setDeviceTotal] = useState('--');
+
+	useEffect(() => {
+		let isMounted = true;
+
+		getDeviceStatistics()
+			.then((stats) => {
+				if (isMounted) {
+					setDeviceTotal(stats.total);
+				}
+			})
+			.catch((error) => {
+				console.error('Failed to load device statistics:', error);
+				if (isMounted) {
+					setDeviceTotal('--');
+				}
+			});
+
+		return () => {
+			isMounted = false;
+		};
+	}, []);
+
 	return (
 		<main className="manager-screen">
 			<Header roleLabel="Ban quản lý" homePath="/manager/home" />
@@ -29,8 +54,8 @@ function ManagerHomePage() {
 							<Cube size={24} weight="fill" />
 						</div>
 						<div>
-							<p className="typo-h1 status-safe stat-card-value">38</p>
-							<p className="typo-body-md text-secondary stat-card-label">Thiết bị hoạt động tốt</p>
+							<p className="typo-h1 status-safe stat-card-value">{deviceTotal}</p>
+							<p className="typo-body-md text-secondary stat-card-label">Tổng thiết bị</p>
 						</div>
 					</div>
 

@@ -19,6 +19,10 @@ const statusFilters = [
 	{ value: 'maintenance', label: 'Bảo trì' }
 ];
 
+function getDisplayLocation(device) {
+	return device.floor || device.location?.split(',')[0]?.trim() || '--';
+}
+
 function ManagerDevicePage() {
 	const [devices, setDevices] = useState([]);
 	const [floors, setFloors] = useState([]);
@@ -175,7 +179,7 @@ function ManagerDevicePage() {
 								<tr key={device.id}>
 									<td className="manager-device-id">{device.id}</td>
 									<td>{device.type}</td>
-									<td>{device.location}</td>
+									<td>{getDisplayLocation(device)}</td>
 									<td>
 										<span className={`manager-device-status status-${device.status}`}>
 											{device.statusLabel}
