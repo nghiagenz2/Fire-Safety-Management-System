@@ -5,6 +5,10 @@
   margin-top: 16px;
 }
 
+.resident-home-screen {
+  width: 100%;
+}
+
 .stat-card-item {
   display: flex;
   align-items: center;
@@ -50,6 +54,29 @@
   background-color: #f8fafc;
 }
 
+.resident-home-model {
+  margin-top: 16px;
+  padding: 12px;
+}
+
+.resident-home-model .manager-model-controls {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.resident-home-model .manager-floor-dropdown-wrap {
+  max-width: 280px;
+}
+
+.resident-home-model .manager-model-stage,
+.resident-home-model .manager-model-canvas {
+  min-height: 520px;
+}
+
+.resident-home-model .manager-model-canvas {
+  border-radius: 14px;
+}
+
 .stat-card-value {
   margin: 0;
   line-height: 1;
@@ -67,5 +94,19 @@
   .resident-stats-grid {
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+
+  .resident-home-model .manager-model-stage,
+  .resident-home-model .manager-model-canvas {
+    min-height: 340px;
+  }
+}
+
+@media (min-width: 1025px) {
+  .resident-home-screen {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding-left: 20px;
+    padding-right: 20px;
   }
 }

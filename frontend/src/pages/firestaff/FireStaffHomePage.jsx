@@ -1,11 +1,12 @@
 import Header from '../../components/Header';
 import FireStaffBottomNav from '../../components/firestaff/FireStaffBottomNav';
+import BuildingModelViewer from '../../components/three/BuildingModelViewer.jsx';
 import { Cube, DoorOpen, CheckCircle } from '@phosphor-icons/react';
 import '../../styles/ResidentHome.css';
 
 function FireStaffHomePage() {
 	return (
-		<main className="resident-screen">
+		<main className="resident-screen resident-home-screen">
 			<Header roleLabel="Nhân viên PCCC" homePath="/firestaff/home" />
 			<div className="app-header-spacer" aria-hidden="true"></div>
 			<div>
@@ -16,15 +17,14 @@ function FireStaffHomePage() {
 					</div>
 				</header>
 
-				<section
-					className="resident-panel resident-3d-placeholder"
-					aria-label="Khu vực mô hình 3D"
-				>
-					<p className="typo-h2 text-secondary">Mô hình 3D hiện tại chưa có</p>
-				</section>
+				<BuildingModelViewer
+					className="resident-home-model"
+					showHeader={false}
+					showCaption={false}
+					ariaLabel="Khu vực mô hình 3D"
+				/>
 
 				<section className="resident-stats-grid">
-
 					<div className="resident-panel stat-card-item bg-light-safe">
 						<div className="stat-icon-wrapper green">
 							<Cube size={24} weight="fill" />
@@ -54,9 +54,7 @@ function FireStaffHomePage() {
 							<p className="typo-body-md text-secondary stat-card-label">Trạng thái tòa nhà</p>
 						</div>
 					</div>
-
 				</section>
-
 			</div>
 
 			<FireStaffBottomNav />

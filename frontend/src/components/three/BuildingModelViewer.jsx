@@ -7,6 +7,36 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 const MODEL_URL = '/model/BconCity.glb';
 const FLOOR_27_IDS = new Set(['Tang 27', 'floor_27']);
 const FLOOR_27_HIDDEN_MESH_NAMES = new Set(['San_Vien_Ngoai.049']);
+const MODEL_NAME = MODEL_URL.split('/').pop() || 'BconCity.glb';
+
+const sharedDracoLoader = new DRACOLoader();
+sharedDracoLoader.setDecoderPath('/draco/');
+
+const sharedGltfLoader = new GLTFLoader();
+sharedGltfLoader.setDRACOLoader(sharedDracoLoader);
+
+const modelCache = {
+	gltf: null,
+	promise: null,
+	floors: null,
+	summary: null,
+	hasMarkedFloor27: false,
+};
+
+function loadCachedModel() {
+	if (modelCache.gltf) {
+		return Promise.resolve(modelCache.gltf);
+	}
+
+	if (!modelCache.promise) {
+		modelCache.promise = sharedGltfLoader.loadAsync(MODEL_URL).then((gltf) => {
+			modelCache.gltf = gltf;
+			return gltf;
+		});
+	}
+
+	return modelCache.promise;
+}
 
 function normalizeObjectName(name = '') {
 	return name.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -325,16 +355,22 @@ function fitCameraToObject(camera, controls, object) {
 	controls.update();
 }
 
-function BuildingModelViewer() {
+function BuildingModelViewer({
+	className = '',
+	showHeader = true,
+	showCaption = true,
+	title = 'Mô hình 3D tòa nhà',
+	ariaLabel = 'Mô hình 3D tòa nhà',
+}) {
 	const canvasHostRef = useRef(null);
 	const modelRootRef = useRef(null);
 	const gltfRef = useRef(null);
 	const needsRenderRef = useRef(true);
-	const [isLoading, setIsLoading] = useState(true);
+	const [isLoading, setIsLoading] = useState(!modelCache.gltf);
 	const [loadingError, setLoadingError] = useState('');
-	const [floorNodes, setFloorNodes] = useState([]);
+	const [floorNodes, setFloorNodes] = useState(modelCache.floors || []);
 	const [selectedFloorId, setSelectedFloorId] = useState('all');
-	const [modelSummary, setModelSummary] = useState({ name: MODEL_URL.split('/').pop() || 'BconCity.glb', meshCount: 0 });
+	const [modelSummary, setModelSummary] = useState(modelCache.summary || { name: MODEL_NAME, meshCount: 0 });
 
 	const selectedFloor = useMemo(
 		() => floorNodes.find((floorNode) => floorNode.id === selectedFloorId) ?? null,
@@ -359,7 +395,7 @@ function BuildingModelViewer() {
 
 		const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 2000);
 		const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 		renderer.outputColorSpace = THREE.SRGBColorSpace;
 		renderer.shadowMap.enabled = false;
 		hostElement.appendChild(renderer.domElement);
@@ -383,13 +419,9 @@ function BuildingModelViewer() {
 			needsRenderRef.current = true;
 		});
 
-		const gltfLoader = new GLTFLoader();
-		const dracoLoader = new DRACOLoader();
-		dracoLoader.setDecoderPath('/draco/');
-		gltfLoader.setDRACOLoader(dracoLoader);
-
 		let modelRoot = null;
 		let animationFrameId = 0;
+		let loadTimerId = 0;
 		let disposed = false;
 		let resizeObserver = null;
 
@@ -416,10 +448,10 @@ function BuildingModelViewer() {
 
 		const loadModel = async () => {
 			try {
-				setIsLoading(true);
+				setIsLoading(!modelCache.gltf);
 				setLoadingError('');
 
-				const gltf = await gltfLoader.loadAsync(MODEL_URL);
+				const gltf = await loadCachedModel();
 				if (disposed) {
 					return;
 				}
@@ -429,27 +461,43 @@ function BuildingModelViewer() {
 				gltfRef.current = gltf;
 
 				scene.add(modelRoot);
+				applyFloorVisibility(gltf, 'all');
 
-				const floors = getFloorNodes(gltf);
-				markFloor27HiddenMeshes(gltf);
-				console.log('Floors detected:', floors);
+				if (!modelCache.floors) {
+					modelCache.floors = getFloorNodes(gltf);
+				}
+
+				if (!modelCache.hasMarkedFloor27) {
+					markFloor27HiddenMeshes(gltf);
+					modelCache.hasMarkedFloor27 = true;
+				}
+
+				if (!modelCache.summary) {
+					modelCache.summary = {
+						name: MODEL_NAME,
+						meshCount: countMeshes(modelRoot),
+					};
+				}
+
+				const floors = modelCache.floors;
 				setFloorNodes(floors);
-				setModelSummary({
-					name: MODEL_URL.split('/').pop() ?? 'BconCity.glb',
-					meshCount: countMeshes(modelRoot),
-				});
+				setModelSummary(modelCache.summary);
 
 				fitCameraToObject(camera, controls, modelRoot);
 				handleResize();
 				needsRenderRef.current = true;
 			} catch (error) {
-				setLoadingError(`Không tải được model 3D. Kiểm tra lại file ${MODEL_URL.split('/').pop()}.`);
+				setLoadingError(`Không tải được model 3D. Kiểm tra lại file ${MODEL_NAME}.`);
 			} finally {
 				setIsLoading(false);
 			}
 		};
 
-		loadModel();
+		if (modelCache.gltf) {
+			loadModel();
+		} else {
+			loadTimerId = window.setTimeout(loadModel, 80);
+		}
 		animate();
 
 		if (typeof ResizeObserver !== 'undefined') {
@@ -461,9 +509,11 @@ function BuildingModelViewer() {
 
 		return () => {
 			disposed = true;
+			if (loadTimerId) {
+				window.clearTimeout(loadTimerId);
+			}
 			window.cancelAnimationFrame(animationFrameId);
 			controls.dispose();
-			dracoLoader.dispose();
 			renderer.dispose();
 			if (modelRoot) {
 				scene.remove(modelRoot);
@@ -474,18 +524,22 @@ function BuildingModelViewer() {
 			} else {
 				window.removeEventListener('resize', handleResize);
 			}
-			hostElement.removeChild(renderer.domElement);
+			if (renderer.domElement.parentNode === hostElement) {
+				hostElement.removeChild(renderer.domElement);
+			}
 		};
 	}, []);
 
 	return (
-		<section className="manager-panel manager-model-card" aria-label="Mô hình 3D tòa nhà">
-			<div className="manager-model-header">
-				<div>
-					<h2 className="typo-h2 manager-title">Mô hình 3D tòa nhà</h2>
+		<section className={`manager-panel manager-model-card ${className}`.trim()} aria-label={ariaLabel}>
+			{showHeader ? (
+				<div className="manager-model-header">
+					<div>
+						<h2 className="typo-h2 manager-title">{title}</h2>
+					</div>
+					<span className="manager-model-badge">{floorNodes.length > 0 ? `${floorNodes.length} tầng` : 'GLB'}</span>
 				</div>
-				<span className="manager-model-badge">{floorNodes.length > 0 ? `${floorNodes.length} tầng` : 'GLB'}</span>
-			</div>
+			) : null}
 
 			<div className="manager-model-controls">
 				<div className="manager-floor-dropdown-wrap">
@@ -513,9 +567,11 @@ function BuildingModelViewer() {
 				</div>
 			</div>
 
-			<p className="manager-model-caption">
-				Bạn có thể xoay, phóng to, hoặc chọn từng tầng hiển thị của tòa nhà.
-			</p>
+			{showCaption ? (
+				<p className="manager-model-caption">
+					Bạn có thể xoay, phóng to, hoặc chọn từng tầng hiển thị của tòa nhà.
+				</p>
+			) : null}
 		</section>
 	);
 }
