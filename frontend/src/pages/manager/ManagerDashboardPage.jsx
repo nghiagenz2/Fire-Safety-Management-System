@@ -4,7 +4,7 @@ import ManagerBottomNav from "../../components/manager/ManagerBottomNav";
 import {
   getManagerDashboardData,
   getManagerDashboardFilterOptions,
-} from "../../services/mockManagerDashboardApi";
+} from "../../services/managerDashboardApi";
 import "../../styles/manager-shell.css";
 import "../../styles/manager-dashboard.css";
 
@@ -517,8 +517,7 @@ function ManagerDashboardPage() {
               Dashboard Dữ liệu PCCC
             </h1>
             <p className="typo-body-lg text-secondary manager-device-subtitle">
-              Theo dõi tổng quan thiết bị, lối thoát và sự cố theo thời gian
-              thực mock data.
+              Theo dõi tổng quan thiết bị, lối thoát và sự cố theo thời gian thực.
             </p>
           </div>
         </header>
