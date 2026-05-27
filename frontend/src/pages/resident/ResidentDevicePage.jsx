@@ -40,6 +40,7 @@ function ResidentDevicePage() {
 
   const filteredDevices = useMemo(() => {
     return devices.filter((device) => {
+      const matchFloor = device.floor === 'Tầng 3';
       const matchStatus = statusFilter === 'all' || device.status === statusFilter;
       const keyword = search.trim().toLowerCase();
       const matchSearch =
@@ -50,7 +51,7 @@ function ResidentDevicePage() {
         device.floor.toLowerCase().includes(keyword) ||
         device.room.toLowerCase().includes(keyword);
 
-      return matchStatus && matchSearch;
+      return matchFloor && matchStatus && matchSearch;
     });
   }, [devices, search, statusFilter]);
 
@@ -134,7 +135,7 @@ function ResidentDevicePage() {
                 </div>
 
                 <h3 className="typo-h2 resident-device-type">{device.type}</h3>
-                <p className="typo-body-md text-secondary">{device.floor}, {device.room} - {device.location}</p>
+                <p className="typo-body-md text-secondary">{device.floor}, {device.room}{device.location && device.location !== device.floor ? ` - ${device.location}` : ''}</p>
                 <p className="typo-label text-secondary">Lối thoát gần nhất: {device.nearestExit} | Cách bạn: {device.distanceToResident}m</p>
                 <p className="typo-label text-secondary">Hạn bảo trì: {device.maintenanceDue}</p>
 
@@ -171,9 +172,8 @@ function ResidentDevicePage() {
             </header>
 
             <p className="typo-label text-secondary">Mã: {selectedDevice.id}</p>
-            <p className="typo-label text-secondary">Model: {selectedDevice.model}</p>
             <p className="typo-label text-secondary">Vị trí: {selectedDevice.location}</p>
-            <p className="typo-label text-secondary">Tầng/Phòng: {selectedDevice.floor}, {selectedDevice.room}</p>
+            <p className="typo-label text-secondary">Phòng: {selectedDevice.room}</p>
             <p className="typo-label text-secondary">Trạng thái: {selectedDevice.statusLabel}</p>
             <p className="typo-label text-secondary">Lần kiểm tra gần nhất: {selectedDevice.lastInspection}</p>
             <p className="typo-label text-secondary">Phạm vi sử dụng: {selectedDevice.usageScope}</p>

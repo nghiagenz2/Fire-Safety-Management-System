@@ -70,7 +70,7 @@ function nodeToDevice(node, floorName, indexInFloor) {
   return {
     id: makeDeviceId(node.name, floorName, indexInFloor),
     type: getDeviceType(node.name),
-    location: `${floor}, ${node.name}`,
+    location: floor,
     status: 'active',
     status_label: STATUS_LABEL.active,
     maintenance_due: '--',

@@ -365,6 +365,59 @@ function fitCameraToObject(camera, controls, object) {
 	controls.update();
 }
 
+// WebGL Singleton Context
+const globalContext = {
+	renderer: null,
+	scene: null,
+	camera: null,
+	controls: null,
+	modelRoot: null,
+	isModelInitialized: false,
+	needsRender: true,
+	currentHost: null,
+};
+
+function initGlobalWebGL() {
+	if (globalContext.renderer) {
+		return globalContext;
+	}
+
+	const scene = new THREE.Scene();
+	scene.background = new THREE.Color('#111827');
+
+	const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 2000);
+	
+	const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+	renderer.outputColorSpace = THREE.SRGBColorSpace;
+	renderer.shadowMap.enabled = false;
+
+	const ambientLight = new THREE.AmbientLight(0xffffff, 1.25);
+	const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
+	directionalLight.position.set(12, 18, 10);
+	directionalLight.castShadow = false;
+	const rimLight = new THREE.DirectionalLight(0x93c5fd, 1.0);
+	rimLight.position.set(-10, 8, -12);
+	scene.add(ambientLight, directionalLight, rimLight);
+
+	const controls = new OrbitControls(camera, renderer.domElement);
+	controls.enableDamping = true;
+	controls.dampingFactor = 0.08;
+	controls.minDistance = 2;
+	controls.maxDistance = 250;
+
+	controls.addEventListener('change', () => {
+		globalContext.needsRender = true;
+	});
+
+	globalContext.renderer = renderer;
+	globalContext.scene = scene;
+	globalContext.camera = camera;
+	globalContext.controls = controls;
+
+	return globalContext;
+}
+
 function BuildingModelViewer({
 	className = '',
 	showHeader = true,
@@ -373,24 +426,17 @@ function BuildingModelViewer({
 	ariaLabel = 'Mô hình 3D tòa nhà',
 }) {
 	const canvasHostRef = useRef(null);
-	const modelRootRef = useRef(null);
 	const gltfRef = useRef(null);
-	const needsRenderRef = useRef(true);
 	const [isLoading, setIsLoading] = useState(!modelCache.gltf);
 	const [loadingError, setLoadingError] = useState('');
 	const [floorNodes, setFloorNodes] = useState(modelCache.floors || []);
 	const [selectedFloorId, setSelectedFloorId] = useState('all');
 	const [modelSummary, setModelSummary] = useState(modelCache.summary || { name: MODEL_NAME, meshCount: 0 });
 
-	const selectedFloor = useMemo(
-		() => floorNodes.find((floorNode) => floorNode.id === selectedFloorId) ?? null,
-		[floorNodes, selectedFloorId],
-	);
-
 	useEffect(() => {
 		if (gltfRef.current) {
 			applyFloorVisibility(gltfRef.current, selectedFloorId);
-			needsRenderRef.current = true;
+			globalContext.needsRender = true;
 		}
 	}, [selectedFloorId]);
 
@@ -400,36 +446,14 @@ function BuildingModelViewer({
 			return undefined;
 		}
 
-		const scene = new THREE.Scene();
-		scene.background = new THREE.Color('#111827');
+		const ctx = initGlobalWebGL();
+		const { renderer, scene, camera, controls } = ctx;
 
-		const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 2000);
-		const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-		renderer.outputColorSpace = THREE.SRGBColorSpace;
-		renderer.shadowMap.enabled = false;
+		// Attach renderer's canvas to current host container
 		hostElement.appendChild(renderer.domElement);
+		ctx.currentHost = hostElement;
+		ctx.needsRender = true;
 
-		const ambientLight = new THREE.AmbientLight(0xffffff, 1.25);
-		const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
-		directionalLight.position.set(12, 18, 10);
-		directionalLight.castShadow = false;
-		const rimLight = new THREE.DirectionalLight(0x93c5fd, 1.0);
-		rimLight.position.set(-10, 8, -12);
-		scene.add(ambientLight, directionalLight, rimLight);
-
-		const controls = new OrbitControls(camera, renderer.domElement);
-		controls.enableDamping = true;
-		controls.dampingFactor = 0.08;
-		controls.minDistance = 2;
-		controls.maxDistance = 250;
-
-		// Chỉ render khi camera di chuyển
-		controls.addEventListener('change', () => {
-			needsRenderRef.current = true;
-		});
-
-		let modelRoot = null;
 		let animationFrameId = 0;
 		let loadTimerId = 0;
 		let disposed = false;
@@ -444,14 +468,14 @@ function BuildingModelViewer({
 			camera.aspect = clientWidth / clientHeight;
 			camera.updateProjectionMatrix();
 			renderer.setSize(clientWidth, clientHeight, false);
-			needsRenderRef.current = true;
+			ctx.needsRender = true;
 		};
 
 		const animate = () => {
 			const controlsUpdated = controls.update();
-			if (controlsUpdated || needsRenderRef.current) {
+			if (controlsUpdated || ctx.needsRender) {
 				renderer.render(scene, camera);
-				needsRenderRef.current = false;
+				ctx.needsRender = false;
 			}
 			animationFrameId = window.requestAnimationFrame(animate);
 		};
@@ -466,48 +490,63 @@ function BuildingModelViewer({
 					return;
 				}
 
-				modelRoot = gltf.scene;
-				modelRootRef.current = modelRoot;
 				gltfRef.current = gltf;
 
-				scene.add(modelRoot);
-				applyFloorVisibility(gltf, 'all');
+				if (!ctx.isModelInitialized) {
+					ctx.modelRoot = gltf.scene;
+					scene.add(ctx.modelRoot);
 
-				if (!modelCache.floors) {
-					modelCache.floors = getFloorNodes(gltf);
+					if (!modelCache.floors) {
+						modelCache.floors = getFloorNodes(gltf);
+					}
+
+					if (!modelCache.hasMarkedFloor27) {
+						markFloor27HiddenMeshes(gltf);
+						modelCache.hasMarkedFloor27 = true;
+					}
+
+					if (!modelCache.summary) {
+						modelCache.summary = {
+							name: MODEL_NAME,
+							meshCount: countMeshes(ctx.modelRoot),
+						};
+					}
+
+					fitCameraToObject(camera, controls, ctx.modelRoot);
+					ctx.isModelInitialized = true;
 				}
 
-				if (!modelCache.hasMarkedFloor27) {
-					markFloor27HiddenMeshes(gltf);
-					modelCache.hasMarkedFloor27 = true;
-				}
+				applyFloorVisibility(gltf, selectedFloorId);
 
-				if (!modelCache.summary) {
-					modelCache.summary = {
-						name: MODEL_NAME,
-						meshCount: countMeshes(modelRoot),
-					};
-				}
-
-				const floors = modelCache.floors;
-				setFloorNodes(floors);
+				setFloorNodes(modelCache.floors);
 				setModelSummary(modelCache.summary);
 
-				fitCameraToObject(camera, controls, modelRoot);
 				handleResize();
-				needsRenderRef.current = true;
+				ctx.needsRender = true;
 			} catch (error) {
+				console.error(error);
 				setLoadingError(`Không tải được model 3D. Kiểm tra lại file ${MODEL_NAME}.`);
 			} finally {
 				setIsLoading(false);
 			}
 		};
 
-		if (modelCache.gltf) {
-			loadModel();
+		if (modelCache.gltf && ctx.isModelInitialized) {
+			gltfRef.current = modelCache.gltf;
+			applyFloorVisibility(modelCache.gltf, selectedFloorId);
+			setFloorNodes(modelCache.floors);
+			setModelSummary(modelCache.summary);
+			handleResize();
+			ctx.needsRender = true;
+			setIsLoading(false);
 		} else {
-			loadTimerId = window.setTimeout(loadModel, 80);
+			if (modelCache.gltf) {
+				loadModel();
+			} else {
+				loadTimerId = window.setTimeout(loadModel, 80);
+			}
 		}
+
 		animate();
 
 		if (typeof ResizeObserver !== 'undefined') {
@@ -523,19 +562,18 @@ function BuildingModelViewer({
 				window.clearTimeout(loadTimerId);
 			}
 			window.cancelAnimationFrame(animationFrameId);
-			controls.dispose();
-			renderer.dispose();
-			if (modelRoot) {
-				scene.remove(modelRoot);
-			}
-			modelRootRef.current = null;
+
 			if (resizeObserver) {
 				resizeObserver.disconnect();
 			} else {
 				window.removeEventListener('resize', handleResize);
 			}
+
 			if (renderer.domElement.parentNode === hostElement) {
 				hostElement.removeChild(renderer.domElement);
+			}
+			if (ctx.currentHost === hostElement) {
+				ctx.currentHost = null;
 			}
 		};
 	}, []);

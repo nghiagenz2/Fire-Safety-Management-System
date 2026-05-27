@@ -1,6 +1,6 @@
 import fireStaffDevices from "../mocks/fireStaffDevices.json";
 
-const MOCK_LATENCY_MS = 400;
+const API_BASE = '/api/devices';
 
 const STATUS_LABEL = {
   safe: "Hoạt động tốt",
@@ -8,22 +8,35 @@ const STATUS_LABEL = {
   danger: "Hỏng/Lỗi",
 };
 
-let devicesStore = (fireStaffDevices || []).map((item) => ({
-  ...item,
-  inspectorName: item.inspectorName || item.assignedTeam || "Chưa ghi nhận",
-  attachments: item.attachments || [],
-  inspectionLogs: item.inspectionLogs || [],
-  brokenReports: item.brokenReports || [],
-}));
+// Local session cache for logs and attachments (since DB doesn't have these columns)
+const sessionCache = {
+  attachments: {},
+  inspectionLogs: {},
+  brokenReports: {},
+};
 
-function resolveAfterDelay(data) {
-  return new Promise((resolve) => {
-    window.setTimeout(() => resolve(data), MOCK_LATENCY_MS);
-  });
-}
-
-function clone(data) {
-  return JSON.parse(JSON.stringify(data));
+async function fetchAllDbDevices() {
+  try {
+    const response = await fetch(API_BASE);
+    const payload = await response.json();
+    if (!response.ok || !payload.success) {
+      throw new Error('Không tải được dữ liệu thiết bị.');
+    }
+    return payload.data;
+  } catch (error) {
+    console.error('Failed to fetch from backend, falling back to mock data:', error);
+    return fireStaffDevices.map(item => ({
+      id: item.id,
+      type: item.type,
+      location: item.location,
+      status: item.status === 'safe' ? 'active' : (item.status === 'danger' ? 'danger' : 'warning'),
+      status_label: STATUS_LABEL[item.status] || 'Chưa rõ',
+      maintenance_due: item.maintenanceDue,
+      owner_name: item.inspectorName || item.assignedTeam,
+      last_inspection: item.lastInspection,
+      glb_node_index: 1,
+    }));
+  }
 }
 
 function parseDDMMYYYY(value) {
@@ -48,14 +61,6 @@ function formatDDMMYYYY(date) {
   return `${dd}/${mm}/${yyyy}`;
 }
 
-function findDeviceById(deviceId) {
-  const device = devicesStore.find((item) => item.id === deviceId);
-  if (!device) {
-    throw new Error(`Không tìm thấy thiết bị ${deviceId}`);
-  }
-  return device;
-}
-
 function getMaintenanceCategory(maintenanceDue) {
   const dueDate = parseDDMMYYYY(maintenanceDue);
   if (!dueDate) {
@@ -76,6 +81,52 @@ function getMaintenanceCategory(maintenanceDue) {
     return "due_90_days";
   }
   return "future";
+}
+
+function sortFloors(floors) {
+  return [...floors].sort((a, b) => {
+    if (a === 'Tầng trệt') return -1;
+    if (b === 'Tầng trệt') return 1;
+    const numA = parseInt(a.replace(/\D/g, ''), 10) || 0;
+    const numB = parseInt(b.replace(/\D/g, ''), 10) || 0;
+    return numA - numB;
+  });
+}
+
+function dbDeviceToFireStaff(device) {
+  const nodeIndexStr = device.glbNodeName?.match(/\d+/)?.[0] || device.id?.match(/\d+$/)?.[0] || '01';
+  const floorNum = device.floor?.match(/\d+/)?.[0] || 'G';
+  const room = floorNum === 'G' ? 'Sảnh trệt' : `Phòng ${floorNum}${nodeIndexStr.padStart(2, '0')}`;
+
+  let fireStaffStatus = 'warning';
+  if (device.status === 'active') {
+    fireStaffStatus = 'safe';
+  } else if (device.status === 'danger') {
+    fireStaffStatus = 'danger';
+  } else if (device.status === 'warning') {
+    fireStaffStatus = 'warning';
+  }
+
+  const fireStaffStatusLabel = STATUS_LABEL[fireStaffStatus] || device.statusLabel || 'Chưa rõ';
+
+  return {
+    id: device.id,
+    type: device.type,
+    floor: device.floor || 'Tầng 1',
+    room: room,
+    location: device.location || '',
+    status: fireStaffStatus,
+    statusLabel: fireStaffStatusLabel,
+    maintenanceDue: device.maintenanceDue || '--',
+    lastInspection: device.lastInspection || '--',
+    inspectorName: device.owner || 'Chưa ghi nhận',
+    glbNodeName: device.glbNodeName,
+    glbNodeIndex: device.glbNodeIndex,
+    glbTranslation: device.glbTranslation,
+    attachments: sessionCache.attachments[device.id] || [],
+    inspectionLogs: sessionCache.inspectionLogs[device.id] || [],
+    brokenReports: sessionCache.brokenReports[device.id] || [],
+  };
 }
 
 function applyFilters(devices, filters = {}) {
@@ -123,7 +174,7 @@ function toTableRow(device) {
     floor: device.floor,
     areaOrRoom: device.room,
     status: device.status,
-    statusLabel: device.statusLabel || STATUS_LABEL[device.status] || "Chưa rõ",
+    statusLabel: device.statusLabel,
     maintenanceDue: device.maintenanceDue,
     lastInspection: device.lastInspection,
     inspectorName: device.inspectorName,
@@ -136,10 +187,16 @@ function toTableRow(device) {
   };
 }
 
-export function fetchFireStaffDeviceFilterOptions() {
-  return resolveAfterDelay({
-    floors: [...new Set(devicesStore.map((item) => item.floor))],
-    types: [...new Set(devicesStore.map((item) => item.type))],
+export async function fetchFireStaffDeviceFilterOptions() {
+  const dbDevices = await fetchAllDbDevices();
+  const fireStaffDevices = dbDevices.map(dbDeviceToFireStaff);
+
+  const uniqueFloors = [...new Set(fireStaffDevices.map((item) => item.floor))];
+  const sortedFloors = sortFloors(uniqueFloors);
+
+  return {
+    floors: sortedFloors,
+    types: [...new Set(fireStaffDevices.map((item) => item.type))],
     statuses: [
       { value: "safe", label: STATUS_LABEL.safe },
       { value: "warning", label: STATUS_LABEL.warning },
@@ -152,57 +209,83 @@ export function fetchFireStaffDeviceFilterOptions() {
       { value: "due_90_days", label: "Trong 90 ngày" },
       { value: "no_schedule", label: "Chưa có lịch" },
     ],
-  });
+  };
 }
 
-export function fetchFireStaffDeviceTableData(filters = {}) {
-  const filtered = applyFilters(devicesStore, filters).map(toTableRow);
-  return resolveAfterDelay({
-    total: devicesStore.length,
+export async function fetchFireStaffDeviceTableData(filters = {}) {
+  const dbDevices = await fetchAllDbDevices();
+  const fireStaffDevices = dbDevices.map(dbDeviceToFireStaff);
+  const filtered = applyFilters(fireStaffDevices, filters).map(toTableRow);
+
+  return {
+    total: fireStaffDevices.length,
     filtered: filtered.length,
-    items: clone(filtered),
-  });
+    items: filtered,
+  };
 }
 
-export function fetchFireStaffDevice3DData(filters = {}) {
+export async function fetchFireStaffDevice3DData(filters = {}) {
+  const dbDevices = await fetchAllDbDevices();
+  const fireStaffDevices = dbDevices.map(dbDeviceToFireStaff);
   const filteredIds = new Set(
-    applyFilters(devicesStore, filters).map((item) => item.id),
+    applyFilters(fireStaffDevices, filters).map((item) => item.id)
   );
-  const nodes = devicesStore.map((device, index) => ({
-    deviceId: device.id,
-    floor: device.floor,
-    room: device.room,
-    type: device.type,
-    status: device.status,
-    highlight: filteredIds.has(device.id),
-    position: {
-      x: (index % 3) * 3 - 3,
-      y: Number(device.floor.replace(/[^0-9]/g, "")) || 1,
-      z: Math.floor(index / 3) * 3 - 3,
-    },
-  }));
 
-  return resolveAfterDelay({
-    nodes: clone(nodes),
-    highlightedIds: [...filteredIds],
+  const floorCounts = {};
+  const nodes = fireStaffDevices.map((device) => {
+    const fl = device.floor;
+    if (floorCounts[fl] === undefined) {
+      floorCounts[fl] = 0;
+    }
+    const idx = floorCounts[fl];
+    floorCounts[fl] += 1;
+
+    return {
+      deviceId: device.id,
+      floor: device.floor,
+      room: device.room,
+      type: device.type,
+      status: device.status,
+      highlight: filteredIds.has(device.id),
+      position: {
+        x: (idx % 6) * 3 - 7,
+        y: Number(device.floor.replace(/[^0-9]/g, "")) || 1,
+        z: Math.floor(idx / 6) * 3 - 7,
+      },
+    };
   });
+
+  return {
+    nodes,
+    highlightedIds: [...filteredIds],
+  };
 }
 
-export function updateFireStaffDeviceStatus(deviceId, payload = {}) {
-  const device = findDeviceById(deviceId);
+export async function updateFireStaffDeviceStatus(deviceId, payload = {}) {
   const nextStatus = payload.status;
-
   if (!STATUS_LABEL[nextStatus]) {
-    return Promise.reject(new Error("Trạng thái không hợp lệ"));
+    throw new Error("Trạng thái không hợp lệ");
   }
 
-  device.status = nextStatus;
-  device.statusLabel = payload.statusLabel || STATUS_LABEL[nextStatus];
-  return resolveAfterDelay(clone(toTableRow(device)));
+  const dbStatus = nextStatus === 'safe' ? 'active' : nextStatus;
+  const dbStatusLabel = dbStatus === 'active' ? 'Hoạt động tốt' : (dbStatus === 'danger' ? 'Hỏng' : 'Cảnh báo');
+
+  const response = await fetch(`${API_BASE}/${encodeURIComponent(deviceId)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: dbStatus, statusLabel: dbStatusLabel })
+  });
+
+  const resPayload = await response.json();
+  if (!response.ok || !resPayload.success) {
+    throw new Error('Không thể cập nhật trạng thái lên server.');
+  }
+
+  const device = dbDeviceToFireStaff(resPayload.data);
+  return toTableRow(device);
 }
 
-export function recordFireStaffDeviceInspection(deviceId, payload = {}) {
-  const device = findDeviceById(deviceId);
+export async function recordFireStaffDeviceInspection(deviceId, payload = {}) {
   const inspectorName = payload.inspectorName || "Nhân viên chưa xác định";
   const inspectedAt = payload.inspectedAt || formatDDMMYYYY(new Date());
 
@@ -214,15 +297,30 @@ export function recordFireStaffDeviceInspection(deviceId, payload = {}) {
     inspectedAt,
   };
 
-  device.inspectorName = inspectorName;
-  device.lastInspection = inspectedAt;
-  device.inspectionLogs.unshift(log);
+  if (!sessionCache.inspectionLogs[deviceId]) {
+    sessionCache.inspectionLogs[deviceId] = [];
+  }
+  sessionCache.inspectionLogs[deviceId].unshift(log);
 
-  return resolveAfterDelay(clone(log));
+  // Update inspection status on database
+  const response = await fetch(`${API_BASE}/${encodeURIComponent(deviceId)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      lastInspection: inspectedAt,
+      owner: inspectorName
+    })
+  });
+
+  const resPayload = await response.json();
+  if (!response.ok || !resPayload.success) {
+    console.error('Failed to update inspection date in db:', resPayload.message);
+  }
+
+  return log;
 }
 
-export function reportFireStaffDeviceBroken(deviceId, payload = {}) {
-  const device = findDeviceById(deviceId);
+export async function reportFireStaffDeviceBroken(deviceId, payload = {}) {
   const report = {
     id: `RPT-${Date.now()}`,
     reporterName: payload.reporterName || "Nhân viên chưa xác định",
@@ -231,15 +329,30 @@ export function reportFireStaffDeviceBroken(deviceId, payload = {}) {
     createdAt: new Date().toISOString(),
   };
 
-  device.status = "danger";
-  device.statusLabel = STATUS_LABEL.danger;
-  device.brokenReports.unshift(report);
+  if (!sessionCache.brokenReports[deviceId]) {
+    sessionCache.brokenReports[deviceId] = [];
+  }
+  sessionCache.brokenReports[deviceId].unshift(report);
 
-  return resolveAfterDelay(clone(report));
+  // Update status to danger in database
+  const response = await fetch(`${API_BASE}/${encodeURIComponent(deviceId)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      status: 'danger',
+      statusLabel: 'Hỏng'
+    })
+  });
+
+  const resPayload = await response.json();
+  if (!response.ok || !resPayload.success) {
+    throw new Error('Không thể báo cáo hỏng lên server.');
+  }
+
+  return report;
 }
 
-export function attachFireStaffDeviceInspectionImage(deviceId, payload = {}) {
-  const device = findDeviceById(deviceId);
+export async function attachFireStaffDeviceInspectionImage(deviceId, payload = {}) {
   const now = Date.now();
   const fileName = payload.fileName || `inspection-${now}.jpg`;
 
@@ -252,18 +365,17 @@ export function attachFireStaffDeviceInspectionImage(deviceId, payload = {}) {
     url: `/mock/firestaff/${deviceId}/${fileName}`,
   };
 
-  device.attachments.unshift(attachment);
-  return resolveAfterDelay(clone(attachment));
+  if (!sessionCache.attachments[deviceId]) {
+    sessionCache.attachments[deviceId] = [];
+  }
+  sessionCache.attachments[deviceId].unshift(attachment);
+
+  return attachment;
 }
 
-export function resetFireStaffDevicesMockState() {
-  devicesStore = (fireStaffDevices || []).map((item) => ({
-    ...item,
-    inspectorName: item.inspectorName || item.assignedTeam || "Chưa ghi nhận",
-    attachments: item.attachments || [],
-    inspectionLogs: item.inspectionLogs || [],
-    brokenReports: item.brokenReports || [],
-  }));
-
-  return resolveAfterDelay(true);
+export async function resetFireStaffDevicesMockState() {
+  sessionCache.attachments = {};
+  sessionCache.inspectionLogs = {};
+  sessionCache.brokenReports = {};
+  return true;
 }

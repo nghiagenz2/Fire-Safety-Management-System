@@ -475,66 +475,6 @@ function FireStaffDevicePage() {
             </table>
           </div>
         </article>
-
-        <article className="firestaff-panel firestaff-device-model-card">
-          <header className="firestaff-device-card-header">
-            <h2 className="typo-h2">Mô hình 3D vị trí thiết bị</h2>
-            <p className="typo-label text-secondary">
-              Nhấn vào hàng dữ liệu để làm nổi bật trên mô hình.
-            </p>
-          </header>
-
-          <div
-            className="firestaff-device-3d-stage"
-            aria-label="Mô hình 3D hiển thị vị trí thiết bị"
-          >
-            {groupedModelNodes.map(([floorName, floorNodes]) => (
-              <section key={floorName} className="firestaff-device-3d-floor">
-                <h3 className="typo-label">{floorName}</h3>
-                <div className="firestaff-device-3d-plane">
-                  {floorNodes.map((node) => {
-                    const isSelected = node.deviceId === selectedDeviceId;
-                    const className = `firestaff-device-3d-node status-${node.status} ${
-                      node.highlight ? "is-highlight" : ""
-                    } ${isSelected ? "is-selected" : ""}`;
-
-                    return (
-                      <button
-                        key={node.deviceId}
-                        type="button"
-                        className={className}
-                        style={{
-                          transform: `translate3d(${node.position.x * 12}px, ${-node.position.z * 8}px, 0)`,
-                        }}
-                        onClick={() => setSelectedDeviceId(node.deviceId)}
-                      >
-                        {node.deviceId.split("-").slice(-1)[0]}
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-            ))}
-          </div>
-
-          {selectedDevice && (
-            <div className="firestaff-device-selection-info typo-body-md">
-              <p>
-                <strong>Thiết bị:</strong> {selectedDevice.code}
-              </p>
-              <p>
-                <strong>Loại:</strong> {selectedDevice.type}
-              </p>
-              <p>
-                <strong>Khu vực:</strong> {selectedDevice.floor} -{" "}
-                {selectedDevice.areaOrRoom}
-              </p>
-              <p>
-                <strong>Trạng thái:</strong> {selectedDevice.statusLabel}
-              </p>
-            </div>
-          )}
-        </article>
       </section>
 
       {statusModalDevice && (

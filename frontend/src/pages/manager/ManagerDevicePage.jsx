@@ -63,7 +63,7 @@ function ManagerDevicePage() {
 			const isMatchingStatus =
 				statusFilter === 'all' || device.status === statusFilter;
 			const isMatchingFloor =
-				floorFilter === 'all' || device.location.startsWith(floorFilter);
+				floorFilter === 'all' || device.floor === floorFilter;
 			const isMatchingKeyword =
 				keyword.length === 0 ||
 				device.id.toLowerCase().includes(keyword) ||
