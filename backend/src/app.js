@@ -2,6 +2,7 @@ const express = require("express");
 const env = require("./config/env");
 const routes = require("./routes");
 const { testConnection } = require("./config/db");
+const { ensureManagerTables } = require("./config/schema");
 const notFound = require("./middlewares/notFound.middleware");
 const errorHandler = require("./middlewares/errorHandler.middleware");
 
@@ -21,6 +22,7 @@ app.listen(env.PORT, async () => {
 
   try {
     const db = await testConnection();
+    await ensureManagerTables();
     console.log(`Database connected: ${env.DB_NAME} (${db.now.toISOString()})`);
   } catch (error) {
     console.error("Database connection failed:", error.message);
