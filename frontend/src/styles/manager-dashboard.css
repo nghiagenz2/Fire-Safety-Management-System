@@ -1,7 +1,7 @@
 .md-filter-panel {
   padding: 16px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -14,7 +14,7 @@
 
 .md-summary-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -281,6 +281,7 @@
 }
 
 @media (max-width: 900px) {
+
   .md-chart-grid,
   .md-table-grid,
   .md-custom-range,

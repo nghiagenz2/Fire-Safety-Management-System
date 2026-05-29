@@ -1,22 +1,44 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { MagnifyingGlass, FunnelSimple } from '@phosphor-icons/react';
 import Header from '../../components/Header';
 import ManagerBottomNav from '../../components/manager/ManagerBottomNav';
 import ManagerIncidentCard from '../../components/manager/ManagerIncidentCard';
-import incidentsData from '../../mocks/managerIncidents.json';
 import './ManagerIncidentPage.css';
 
 function ManagerIncidentPage() {
-  const [incidents, setIncidents] = useState(incidentsData.incidents);
+  const [incidents, setIncidents] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedIncident, setSelectedIncident] = useState(null);
 
+  // Gọi API lấy dữ liệu sự cố thật từ Database
+  useEffect(() => {
+    const fetchIncidents = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/incidents');
+        const data = (response.data?.data || []).map(inc => ({
+          ...inc,
+          // Chuyển đổi trạng thái từ Tiếng Anh (DB) sang Tiếng Việt (UI)
+          status: inc.status === 'resolved' ? 'Dập tắt' : 'Đang xử lý'
+        }));
+        setIncidents(data);
+      } catch (error) {
+        console.error("Lỗi API sự cố:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchIncidents();
+  }, []);
+
   const filteredIncidents = incidents.filter((incident) => {
+    const searchLower = (searchTerm || '').toLowerCase();
     const matchesSearch =
-      incident.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      incident.id.includes(searchTerm) ||
-      incident.location.toLowerCase().includes(searchTerm.toLowerCase());
+      (incident.title || '').toLowerCase().includes(searchLower) ||
+      (incident.id || '').toLowerCase().includes(searchLower) ||
+      (incident.location || '').toLowerCase().includes(searchLower);
 
     const matchesStatus = filterStatus === 'all' || incident.status === filterStatus;
 
@@ -28,7 +50,7 @@ function ManagerIncidentPage() {
       total: incidents.length,
       active: incidents.filter((i) => i.status === 'Đang xử lý').length,
       resolved: incidents.filter((i) => i.status === 'Dập tắt').length,
-      false: incidents.filter((i) => i.status === 'Xác nhận sai').length
+      falseAlarm: incidents.filter((i) => i.status === 'Xác nhận sai').length
     };
   };
 
@@ -60,7 +82,7 @@ function ManagerIncidentPage() {
           </div>
           <div className="stat-card stat-false">
             <div className="stat-label typo-label">Báo động giả</div>
-            <div className="stat-value typo-h1">{stats.false}</div>
+            <div className="stat-value typo-h1">{stats.falseAlarm}</div>
           </div>
         </div>
 
@@ -96,7 +118,9 @@ function ManagerIncidentPage() {
 
         {/* Incidents List */}
         <div className="incidents-container">
-          {filteredIncidents.length > 0 ? (
+          {isLoading ? (
+            <div className="p-8 text-center text-xl font-bold">Đang tải dữ liệu sự cố...</div>
+          ) : filteredIncidents.length > 0 ? (
             <div className="incidents-grid">
               {filteredIncidents.map((incident) => (
                 <ManagerIncidentCard
