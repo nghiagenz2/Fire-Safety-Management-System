@@ -24,7 +24,16 @@ const modelCache = {
 	floors: null,
 	summary: null,
 	hasMarkedFloor27: false,
+	buildingCenter: null,
 };
+
+const highlightMaterial = new THREE.MeshStandardMaterial({
+	color: new THREE.Color('#10b981'), // Vibrant emerald green
+	emissive: new THREE.Color('#047857'), // Glowing green
+	roughness: 0.2,
+	metalness: 0.8,
+});
+
 
 function loadCachedModel() {
 	if (modelCache.gltf) {
@@ -80,6 +89,26 @@ function isHiddenWhenViewingFloor27(object) {
 		object.userData.hideWhenViewingFloor27 === true ||
 		hasObjectNameInAncestors(object, NORMALIZED_FLOOR_27_HIDDEN_MESH_NAMES)
 	);
+}
+
+function matchFloorId(idA, idB) {
+	if (!idA || !idB) return false;
+	if (idA === idB) return true;
+
+	const normA = idA.toLowerCase().replace(/[^a-z0-9]/g, '');
+	const normB = idB.toLowerCase().replace(/[^a-z0-9]/g, '');
+	if (normA === normB) return true;
+
+	const getFloorNum = (s) => {
+		// After non-ascii stripping, "trệt" → "trt", "tret" stays "tret"
+		if (s.includes('tret') || s.includes('trt')) return 0;
+		const m = s.match(/\d+/);
+		return m ? parseInt(m[0], 10) : null;
+	};
+
+	const numA = getFloorNum(normA);
+	const numB = getFloorNum(normB);
+	return numA !== null && numB !== null && numA === numB;
 }
 
 function countMeshes(object) {
@@ -337,7 +366,7 @@ function applyFloorVisibility(gltf, selectedId) {
 				child.visible = true;
 				return;
 			}
-			const isSelectedFloorMesh = child.userData.floorId === selectedId;
+			const isSelectedFloorMesh = matchFloorId(child.userData.floorId, selectedId);
 			const isHiddenFloor27Ceiling =
 				isFloor27Selected(selectedId) &&
 				isHiddenWhenViewingFloor27(child);
@@ -351,6 +380,121 @@ function fitCameraToObject(camera, controls, object) {
 	const box = new THREE.Box3().setFromObject(object);
 	const size = box.getSize(new THREE.Vector3());
 	const center = box.getCenter(new THREE.Vector3());
+	const maxDim = Math.max(size.x, size.y, size.z);
+	const fov = (camera.fov * Math.PI) / 180;
+	let cameraDistance = Math.abs(maxDim / (2 * Math.tan(fov / 2)));
+	cameraDistance *= 1.35;
+
+	camera.position.set(center.x + cameraDistance, center.y + cameraDistance * 0.5, center.z + cameraDistance);
+	camera.near = Math.max(maxDim / 100, 0.01);
+	camera.far = Math.max(maxDim * 100, 1000);
+	camera.updateProjectionMatrix();
+
+	controls.target.copy(center);
+	controls.update();
+}
+
+/**
+ * Positions camera to have a clear frontal view of a specific 3D node (escape door).
+ * Uses the building center to determine the outward-facing direction so the camera
+ * is always placed OUTSIDE the building relative to the door, looking directly at it.
+ *
+ * @param {THREE.Camera} camera
+ * @param {OrbitControls} controls
+ * @param {THREE.Object3D} object - the escape door node
+ * @param {THREE.Vector3|null} buildingCenter - cached center of the whole building model
+ */
+function zoomToNode(camera, controls, object, buildingCenter) {
+	console.log('zoomToNode called for object:', object.name);
+
+	object.updateWorldMatrix(true, true);
+	const box = new THREE.Box3().setFromObject(object);
+	if (box.isEmpty()) {
+		console.warn('zoomToNode: bounding box empty, falling back to world-matrix position.');
+		// Use world position directly
+		const worldPos = new THREE.Vector3();
+		object.getWorldPosition(worldPos);
+		box.setFromCenterAndSize(worldPos, new THREE.Vector3(1, 2.2, 0.2));
+	}
+
+	const size = box.getSize(new THREE.Vector3());
+	const center = box.getCenter(new THREE.Vector3());
+	const maxDim = Math.max(size.x, size.y, size.z);
+	console.log('Object center:', center, 'size:', size);
+
+	const fov = (camera.fov * Math.PI) / 180;
+	let cameraDistance = Math.abs(maxDim / (2 * Math.tan(fov / 2)));
+	// Zoom in close enough to clearly see the door, but not too tight
+	cameraDistance = Math.max(cameraDistance * 3.5, 8.0);
+
+	// ── Determine outward-facing direction ──────────────────────────────────
+	// The optimal camera position is on the OUTSIDE of the building relative
+	// to this door, so we always see the door face-on.
+	let outwardDir = new THREE.Vector3();
+
+	if (buildingCenter) {
+		// Vector from building center → door center on the XZ plane
+		const xzOut = new THREE.Vector2(
+			center.x - buildingCenter.x,
+			center.z - buildingCenter.z,
+		);
+		if (xzOut.length() > 0.3) {
+			xzOut.normalize();
+			outwardDir.set(xzOut.x, 0, xzOut.y);
+		}
+	}
+
+	if (outwardDir.lengthSq() < 0.01) {
+		// Fallback: extract local Z axis from object's world matrix (faces outward for doors)
+		const worldMat = new THREE.Matrix4();
+		worldMat.copy(object.matrixWorld);
+		outwardDir.setFromMatrixColumn(worldMat, 2); // local +Z
+		outwardDir.y = 0;
+		if (outwardDir.lengthSq() < 0.001) {
+			// Last resort diagonal
+			outwardDir.set(1, 0, 1).normalize();
+		} else {
+			outwardDir.normalize();
+		}
+	}
+
+	// ── Position camera on the outward side, slightly elevated ────────────
+	const elevationRatio = 0.35; // subtle upward tilt to show context
+	const cameraPos = new THREE.Vector3(
+		center.x + outwardDir.x * cameraDistance,
+		center.y + cameraDistance * elevationRatio,
+		center.z + outwardDir.z * cameraDistance,
+	);
+
+	camera.position.copy(cameraPos);
+	camera.near = 0.05;
+	camera.far = 1000;
+	camera.updateProjectionMatrix();
+
+	controls.target.copy(center);
+	controls.update();
+}
+
+function fitCameraToVisibleMeshes(camera, controls, rootObject) {
+	const visibleBox = new THREE.Box3();
+	let hasVisibleMesh = false;
+
+	rootObject.traverse((child) => {
+		if (!child.isMesh || !child.visible) {
+			return;
+		}
+
+		visibleBox.expandByObject(child);
+		hasVisibleMesh = true;
+	});
+
+	if (!hasVisibleMesh || visibleBox.isEmpty()) {
+		fitCameraToObject(camera, controls, rootObject);
+		return;
+	}
+
+	const size = visibleBox.getSize(new THREE.Vector3());
+	const center = visibleBox.getCenter(new THREE.Vector3());
 	const maxDim = Math.max(size.x, size.y, size.z);
 	const fov = (camera.fov * Math.PI) / 180;
 	let cameraDistance = Math.abs(maxDim / (2 * Math.tan(fov / 2)));
@@ -383,7 +527,7 @@ function initGlobalWebGL() {
 	}
 
 	const scene = new THREE.Scene();
-	scene.background = new THREE.Color('#111827');
+	scene.background = new THREE.Color('#eef2ff');
 
 	const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 2000);
 	
@@ -393,12 +537,17 @@ function initGlobalWebGL() {
 	renderer.shadowMap.enabled = false;
 
 	const ambientLight = new THREE.AmbientLight(0xffffff, 1.25);
+	const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xc7d2fe, 1.15);
 	const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
 	directionalLight.position.set(12, 18, 10);
 	directionalLight.castShadow = false;
 	const rimLight = new THREE.DirectionalLight(0x93c5fd, 1.0);
 	rimLight.position.set(-10, 8, -12);
-	scene.add(ambientLight, directionalLight, rimLight);
+	const gridHelper = new THREE.GridHelper(240, 24, 0x94a3b8, 0xdbeafe);
+	gridHelper.material.transparent = true;
+	gridHelper.material.opacity = 0.35;
+	gridHelper.position.y = -1;
+	scene.add(ambientLight, hemisphereLight, directionalLight, rimLight, gridHelper);
 
 	const controls = new OrbitControls(camera, renderer.domElement);
 	controls.enableDamping = true;
@@ -422,23 +571,115 @@ function BuildingModelViewer({
 	className = '',
 	showHeader = true,
 	showCaption = true,
+	showFloorSelector = true,
 	title = 'Mô hình 3D tòa nhà',
 	ariaLabel = 'Mô hình 3D tòa nhà',
+	selectedFloorId: selectedFloorIdProp,
+	highlightedEscape,
+	onSelectedFloorChange,
+	onFloorsLoaded,
 }) {
 	const canvasHostRef = useRef(null);
 	const gltfRef = useRef(null);
 	const [isLoading, setIsLoading] = useState(!modelCache.gltf);
 	const [loadingError, setLoadingError] = useState('');
 	const [floorNodes, setFloorNodes] = useState(modelCache.floors || []);
-	const [selectedFloorId, setSelectedFloorId] = useState('all');
+	const [internalSelectedFloorId, setInternalSelectedFloorId] = useState('all');
 	const [modelSummary, setModelSummary] = useState(modelCache.summary || { name: MODEL_NAME, meshCount: 0 });
+	const selectedFloorId = selectedFloorIdProp ?? internalSelectedFloorId;
+
+	function handleSelectedFloorChange(nextFloorId) {
+		if (typeof onSelectedFloorChange === 'function') {
+			onSelectedFloorChange(nextFloorId);
+		}
+
+		if (selectedFloorIdProp === undefined) {
+			setInternalSelectedFloorId(nextFloorId);
+		}
+	}
 
 	useEffect(() => {
 		if (gltfRef.current) {
 			applyFloorVisibility(gltfRef.current, selectedFloorId);
+
+			// Avoid resetting camera if currently focusing a node on this floor
+			const targetFloorId = highlightedEscape && (highlightedEscape.glbFloorId || floorLabelToModelFloorId(highlightedEscape.floor));
+			const isFocusingNodeOnSelectedFloor = targetFloorId && matchFloorId(targetFloorId, selectedFloorId);
+
+			if (!isFocusingNodeOnSelectedFloor) {
+				fitCameraToVisibleMeshes(globalContext.camera, globalContext.controls, gltfRef.current.scene);
+			}
 			globalContext.needsRender = true;
 		}
-	}, [selectedFloorId]);
+	}, [selectedFloorId, highlightedEscape]);
+
+	useEffect(() => {
+		if (!gltfRef.current) return;
+
+		// Clear previous highlights
+		gltfRef.current.scene.traverse((child) => {
+			if (child.isMesh && child.userData.originalMaterial) {
+				child.material = child.userData.originalMaterial;
+				delete child.userData.originalMaterial;
+			}
+		});
+
+		console.log("highlightedEscape effect triggered. Escape details:", highlightedEscape);
+		if (!highlightedEscape) {
+			globalContext.needsRender = true;
+			return;
+		}
+
+		const { glbNodeName } = highlightedEscape;
+		console.log("glbNodeName to find:", glbNodeName);
+		if (!glbNodeName) {
+			console.warn("highlightedEscape has no glbNodeName!");
+			return;
+		}
+
+		const canonicalTarget = glbNodeName.toLowerCase().replace(/[^a-z0-9]/g, "");
+		let targetNode = null;
+
+		gltfRef.current.scene.traverse((child) => {
+			if (child.name) {
+				const canonicalChild = child.name.toLowerCase().replace(/[^a-z0-9]/g, "");
+				if (canonicalChild === canonicalTarget) {
+					targetNode = child;
+				}
+			}
+		});
+
+		if (!targetNode) {
+			console.log("Exact canonical match not found. Trying partial canonical match...");
+			gltfRef.current.scene.traverse((child) => {
+				if (child.name) {
+					const canonicalChild = child.name.toLowerCase().replace(/[^a-z0-9]/g, "");
+					if (canonicalChild.includes(canonicalTarget) || canonicalTarget.includes(canonicalChild)) {
+						targetNode = child;
+					}
+				}
+			});
+		}
+
+		if (targetNode) {
+			console.log("Found targetNode:", targetNode.name, targetNode);
+			// Apply highlight material
+			targetNode.traverse((child) => {
+				if (child.isMesh) {
+					if (!child.userData.originalMaterial) {
+						child.userData.originalMaterial = child.material;
+					}
+					child.material = highlightMaterial;
+				}
+			});
+
+		// Zoom to the target node using smart outward-facing camera angle
+			zoomToNode(globalContext.camera, globalContext.controls, targetNode, modelCache.buildingCenter);
+			globalContext.needsRender = true;
+		} else {
+			console.warn("Could not find targetNode in scene for name/canonicalTarget:", glbNodeName, canonicalTarget);
+		}
+	}, [highlightedEscape]);
 
 	useEffect(() => {
 		const hostElement = canvasHostRef.current;
@@ -472,10 +713,19 @@ function BuildingModelViewer({
 		};
 
 		const animate = () => {
-			const controlsUpdated = controls.update();
-			if (controlsUpdated || ctx.needsRender) {
-				renderer.render(scene, camera);
-				ctx.needsRender = false;
+			if (disposed) {
+				return;
+			}
+			try {
+				const controlsUpdated = controls.update();
+				if (controlsUpdated || ctx.needsRender) {
+					if (renderer && scene && camera) {
+						renderer.render(scene, camera);
+					}
+					ctx.needsRender = false;
+				}
+			} catch (err) {
+				console.error('WebGL render loop error:', err);
 			}
 			animationFrameId = window.requestAnimationFrame(animate);
 		};
@@ -526,13 +776,26 @@ function BuildingModelViewer({
 						};
 					}
 
+					// Cache the building center for smart camera angle computation
+					if (!modelCache.buildingCenter) {
+						const buildingBox = new THREE.Box3().setFromObject(ctx.modelRoot);
+						if (!buildingBox.isEmpty()) {
+							modelCache.buildingCenter = buildingBox.getCenter(new THREE.Vector3());
+							console.log('Building center cached:', modelCache.buildingCenter);
+						}
+					}
+
 					fitCameraToObject(camera, controls, ctx.modelRoot);
 					ctx.isModelInitialized = true;
 				}
 
 				applyFloorVisibility(gltf, selectedFloorId);
+					fitCameraToVisibleMeshes(camera, controls, gltf.scene);
 
 				setFloorNodes(modelCache.floors);
+				if (typeof onFloorsLoaded === 'function' && modelCache.floors) {
+					onFloorsLoaded(modelCache.floors.map((f) => ({ id: f.id, name: f.name })));
+				}
 				setModelSummary(modelCache.summary);
 
 				handleResize();
@@ -548,7 +811,11 @@ function BuildingModelViewer({
 		if (modelCache.gltf && ctx.isModelInitialized) {
 			gltfRef.current = modelCache.gltf;
 			applyFloorVisibility(modelCache.gltf, selectedFloorId);
+			fitCameraToVisibleMeshes(camera, controls, modelCache.gltf.scene);
 			setFloorNodes(modelCache.floors);
+			if (typeof onFloorsLoaded === 'function' && modelCache.floors) {
+					onFloorsLoaded(modelCache.floors.map((f) => ({ id: f.id, name: f.name })));
+			}
 			setModelSummary(modelCache.summary);
 			handleResize();
 			ctx.needsRender = true;
@@ -603,24 +870,26 @@ function BuildingModelViewer({
 				</div>
 			) : null}
 
-			<div className="manager-model-controls">
-				<div className="manager-floor-dropdown-wrap">
-					<label htmlFor="floor-select" className="typo-label text-secondary">Chọn tầng hiển thị</label>
-					<select
-						id="floor-select"
-						className="manager-filter-select manager-floor-select"
-						value={selectedFloorId}
-						onChange={(e) => setSelectedFloorId(e.target.value)}
-					>
-						<option value="all">Tất cả tầng (Hiển thị toàn bộ)</option>
-						{floorNodes.map((floorNode) => (
-							<option key={floorNode.id} value={floorNode.id}>
-								{floorNode.name}
-							</option>
-						))}
-					</select>
+			{showFloorSelector ? (
+				<div className="manager-model-controls">
+					<div className="manager-floor-dropdown-wrap">
+						<label htmlFor="floor-select" className="typo-label text-secondary">Chọn tầng hiển thị</label>
+						<select
+							id="floor-select"
+							className="manager-filter-select manager-floor-select"
+							value={selectedFloorId === 'all' ? 'all' : (floorNodes.find((fn) => matchFloorId(fn.id, selectedFloorId))?.id || selectedFloorId)}
+							onChange={(e) => handleSelectedFloorChange(e.target.value)}
+						>
+							<option value="all">Tất cả tầng (Hiển thị toàn bộ)</option>
+							{floorNodes.map((floorNode) => (
+								<option key={floorNode.id} value={floorNode.id}>
+									{floorNode.name}
+								</option>
+							))}
+						</select>
+					</div>
 				</div>
-			</div>
+			) : null}
 
 			<div className="manager-model-stage">
 				<div className="manager-model-canvas" ref={canvasHostRef}>

@@ -1,3 +1,97 @@
+.resident-escape-shell {
+  padding: 16px;
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  flex: 1;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 1280px;
+}
+
+.resident-floor-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.resident-floor-summary {
+  margin: 0;
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.resident-floor-summary p {
+  margin: 0;
+}
+
+.resident-floor-summary-title {
+  color: #0f172a;
+}
+
+.resident-floor-summary-copy {
+  margin-top: 2px;
+}
+
+.resident-model-wrap {
+  margin-top: 16px;
+}
+
+.resident-escape-state-card {
+  padding: 24px;
+}
+
+.resident-escape-state-copy {
+  margin: 0;
+}
+
+.resident-route-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.resident-route-icon {
+  flex-shrink: 0;
+}
+
+.resident-route-title {
+  margin: 0 0 4px;
+}
+
+.resident-route-floor {
+  margin: 0;
+}
+
+.resident-route-metrics {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.resident-route-metric {
+  margin: 0;
+  padding: 12px;
+}
+
+.resident-route-metric-label,
+.resident-route-metric-value {
+  margin: 0;
+}
+
+.resident-route-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.resident-route-footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .route-connect-text {
   margin: 6px 0 0 0;
   color: var(--text-secondary, #6b7280);
@@ -22,4 +116,21 @@
 
 .emergency-list-item:last-child {
   margin-bottom: 0;
+}
+
+.resident-escape-emergency-panel {
+  margin-top: 24px;
+}
+
+.resident-steps {
+  color: #991b1b;
+  margin: 12px 0 0;
+  padding-left: 20px;
+}
+
+@media (max-width: 900px) {
+  .resident-escape-shell {
+    padding: 12px;
+    gap: 12px;
+  }
 }

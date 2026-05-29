@@ -13,6 +13,82 @@ let escapesStore = (managerEscapes || []).map((item) => ({
   statusLabel: item.statusLabel || STATUS_LABEL[item.status] || 'Chưa xác định'
 }));
 
+// Automatically generate sample escapes for floors 4 to 27
+for (let f = 4; f <= 27; f++) {
+  escapesStore.push({
+    id: `STAIRS-F${f}-UP`,
+    type: "Thang bộ thoát hiểm",
+    location: `Tầng ${f}`,
+    room: `Hành lang tầng ${f}`,
+    status: f % 7 === 0 ? "inspection" : "available",
+    statusLabel: f % 7 === 0 ? "Cần kiểm tra" : "Khả dụng",
+    floor: `Tầng ${f}`,
+    level: `Lối thoát hiểm Tầng ${f}`,
+    connectedTo: `Cầu thang bộ trục B`,
+    lastInspection: `2026-04-${10 + (f % 15)}`,
+    owner: f % 2 === 0 ? "Nguyễn Văn A" : "Trần Văn B"
+  });
+  escapesStore.push({
+    id: `EXIT-F${f}-A`,
+    type: "Cửa thoát hiểm",
+    location: `Tầng ${f}`,
+    room: `Phòng kỹ thuật tầng ${f}`,
+    status: "available",
+    statusLabel: "Khả dụng",
+    floor: `Tầng ${f}`,
+    level: `Lối thoát hiểm Tầng ${f}`,
+    connectedTo: `Lối ra thoát hiểm hành lang`,
+    lastInspection: `2026-04-${12 + (f % 15)}`,
+    owner: f % 2 === 0 ? "Trần Văn B" : "Nguyễn Văn A"
+  });
+}
+
+// Ground floor (Tầng trệt) escape data
+escapesStore.push({
+  id: "EXIT-TRET-MAIN",
+  type: "Cửa thoát hiểm chính",
+  location: "Tầng trệt",
+  room: "Sảnh chính",
+  status: "available",
+  statusLabel: "Khả dụng",
+  floor: "Tầng trệt",
+  level: "Tầng trệt",
+  connectedTo: "Lối ra ngoài tòa nhà",
+  width: "2.4 m",
+  clearHeight: "2.4 m",
+  lastInspection: "2026-04-01",
+  owner: "Nguyễn Văn A"
+});
+escapesStore.push({
+  id: "EXIT-TRET-SIDE",
+  type: "Cửa thoát hiểm phụ",
+  location: "Tầng trệt",
+  room: "Lối vào phía sau",
+  status: "available",
+  statusLabel: "Khả dụng",
+  floor: "Tầng trệt",
+  level: "Tầng trệt",
+  connectedTo: "Lối thoát ra sân sau",
+  width: "1.8 m",
+  clearHeight: "2.2 m",
+  lastInspection: "2026-04-05",
+  owner: "Trần Văn B"
+});
+escapesStore.push({
+  id: "STAIRS-TRET-UP",
+  type: "Thang bộ thoát hiểm",
+  location: "Tầng trệt",
+  room: "Hành lang tầng trệt",
+  status: "available",
+  statusLabel: "Khả dụng",
+  floor: "Tầng trệt",
+  level: "Tầng trệt",
+  connectedTo: "Cầu thang bộ trục A",
+  lastInspection: "2026-04-03",
+  owner: "Nguyễn Văn A"
+});
+
+
 function resolveAfterDelay(data) {
   return new Promise((resolve) => {
     window.setTimeout(() => resolve(data), MOCK_LATENCY_MS);

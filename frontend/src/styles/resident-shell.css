@@ -1,6 +1,6 @@
 .resident-screen {
   min-height: 100vh;
-  padding: 18px 14px 96px;
+  padding: 18px 14px 180px;
   background:
     radial-gradient(circle at 12% -20%, rgba(255, 193, 7, 0.32), transparent 45%),
     radial-gradient(circle at 90% 10%, rgba(0, 82, 204, 0.14), transparent 40%),
@@ -155,7 +155,7 @@
 }
 
 .resident-section-heading h2 {
-  margin: 0;
+  margin: 10px;
 }
 
 .resident-ghost-btn,
@@ -201,6 +201,16 @@
 
 .resident-device-type {
   margin: 0;
+}
+
+/* Prevent long text from overflowing cards */
+.resident-device-card .typo-body-lg,
+.resident-device-card .typo-body-md,
+.resident-device-card .typo-label,
+.resident-device-card .resident-device-type {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .resident-primary-btn {
