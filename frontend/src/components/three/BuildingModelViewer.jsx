@@ -388,7 +388,7 @@ function initGlobalWebGL() {
 	const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 2000);
 	
 	const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0));
 	renderer.outputColorSpace = THREE.SRGBColorSpace;
 	renderer.shadowMap.enabled = false;
 
@@ -495,6 +495,20 @@ function BuildingModelViewer({
 				if (!ctx.isModelInitialized) {
 					ctx.modelRoot = gltf.scene;
 					scene.add(ctx.modelRoot);
+
+					// Bật bộ lọc anisotropic filtering để giữ vân bề mặt (texture) sắc nét ở góc nghiêng
+					const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
+					ctx.modelRoot.traverse((child) => {
+						if (child.isMesh && child.material) {
+							const materials = Array.isArray(child.material) ? child.material : [child.material];
+							materials.forEach((mat) => {
+								if (mat.map) {
+									mat.map.anisotropy = maxAnisotropy;
+									mat.map.needsUpdate = true;
+								}
+							});
+						}
+					});
 
 					if (!modelCache.floors) {
 						modelCache.floors = getFloorNodes(gltf);
