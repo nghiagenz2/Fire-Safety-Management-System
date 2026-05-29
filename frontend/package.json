@@ -18,7 +18,7 @@
     "react-is": "^19.2.6",
     "react-router-dom": "^7.13.2",
     "recharts": "^3.8.1",
-    "three": "^0.184.0"
+    "three": "^0.182.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
