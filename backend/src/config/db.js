@@ -10,8 +10,16 @@ const pool = new Pool({
 });
 
 async function testConnection() {
-  const result = await pool.query('SELECT NOW() AS now, PostGIS_Version() AS postgis_version');
-  return result.rows[0];
+  try {
+    const result = await pool.query('SELECT NOW() AS now, PostGIS_Version() AS postgis_version');
+    return result.rows[0];
+  } catch (err) {
+    const result = await pool.query('SELECT NOW() AS now');
+    return {
+      now: result.rows[0].now,
+      postgis_version: 'Not Used/Not Installed'
+    };
+  }
 }
 
 module.exports = {

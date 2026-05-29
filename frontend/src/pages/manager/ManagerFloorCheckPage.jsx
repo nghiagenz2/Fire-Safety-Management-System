@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
 	ArrowLeft,
 	Buildings,
@@ -22,12 +23,10 @@ import ManagerBottomNav from '../../components/manager/ManagerBottomNav';
 import {
 	getFloorList,
 	getFloorById,
-	getFloorSafetySummary,
-	filterDevicesByFloor,
 	getDeviceTypes,
 	generateFloorReport,
 	getBuildingInfo,
-} from '../../services/mockManagerFloorsApi';
+} from '../../services/managerFloorsApi';
 import '../../styles/manager-shell.css';
 import '../../styles/manager-floor-check.css';
 
@@ -176,6 +175,7 @@ function DeviceDetailModal({ device, onClose }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 function ManagerFloorCheckPage() {
+	const navigate = useNavigate();
 	const [floorList, setFloorList] = useState([]);
 	const [buildingInfo, setBuildingInfo] = useState(null);
 	const [selectedFloorId, setSelectedFloorId] = useState(null);
@@ -207,7 +207,6 @@ function ManagerFloorCheckPage() {
 				setFloorList(list);
 				setBuildingInfo(info);
 				setDeviceTypes(types);
-				if (list.length > 0) setSelectedFloorId(list[0].id);
 			} catch (err) {
 				console.error('Failed to load floors:', err);
 			} finally {
@@ -343,7 +342,7 @@ function ManagerFloorCheckPage() {
 							id="btn-view-3d-floor"
 							type="button"
 							className="manager-device-add-btn typo-body-md"
-							disabled={!floorDetail}
+							onClick={() => navigate('/manager/home')}
 						>
 							<CubeFocus size={17} weight="bold" />
 							<span>Xem 3D</span>
@@ -385,10 +384,18 @@ function ManagerFloorCheckPage() {
 												<span className="floor-list-item-name typo-body-md">
 													{floor.name}
 												</span>
-												<span className={`floor-safety-badge floor-safety-badge--${floor.safetyLevel}`}>
-													{SAFETY_ICON[floor.safetyLevel]}
-													{floor.safetyLevelLabel}
-												</span>
+												<div className="floor-list-badges">
+													{floor.summary?.hasHazardZone && (
+														<span className="floor-hazard-tag floor-hazard-tag--amber typo-label">
+															<Warning size={11} weight="fill" />
+															Khu vực cần lưu ý
+														</span>
+													)}
+													<span className={`floor-safety-badge floor-safety-badge--${floor.safetyLevel}`}>
+														{SAFETY_ICON[floor.safetyLevel]}
+														{floor.safetyLevelLabel}
+													</span>
+												</div>
 											</div>
 											<div className="floor-list-item-bottom">
 												<span className="typo-label text-secondary">{floor.area}</span>
@@ -398,12 +405,6 @@ function ManagerFloorCheckPage() {
 													{floor.safetyScore}/100
 												</span>
 											</div>
-											{floor.summary?.hasHazardZone && (
-												<span className="floor-hazard-tag typo-label">
-													<Fire size={11} weight="fill" />
-													Khu vực nguy hiểm
-												</span>
-											)}
 										</button>
 									</li>
 								))}

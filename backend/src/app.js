@@ -19,6 +19,9 @@ app.use("/api/manager/dashboard", dashboardRoute);
 const incidentsRoute = require("./routes/incidents.route");
 app.use("/api/manager/incidents", incidentsRoute);
 
+const floorsRoute = require("./routes/floors.route");
+app.use("/api/manager/floors", floorsRoute);
+
 app.use(notFound);
 app.use(errorHandler);
 
