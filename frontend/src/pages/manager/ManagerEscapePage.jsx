@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
+import axios from 'axios';
 import {
 	MagnifyingGlass,
 	MapPin,
@@ -8,7 +9,6 @@ import {
 } from '@phosphor-icons/react';
 import Header from '../../components/Header';
 import ManagerBottomNav from '../../components/manager/ManagerBottomNav';
-import { getManagerEscapes, getEscapeFloors } from '../../services/mockManagerEscapesApi';
 import '../../styles/manager-shell.css';
 
 const statusFilters = [
@@ -30,12 +30,12 @@ function ManagerEscapePage() {
 		const loadData = async () => {
 			try {
 				setIsLoading(true);
-				const [escapesData, floorsData] = await Promise.all([
-					getManagerEscapes(),
-					getEscapeFloors()
+				const [escapesRes, floorsRes] = await Promise.all([
+					axios.get('http://localhost:5000/api/escapes'),
+					axios.get('http://localhost:5000/api/escapes/floors')
 				]);
-				setEscapes(escapesData);
-				setFloors(floorsData);
+				setEscapes(escapesRes.data?.data || []);
+				setFloors(floorsRes.data?.data || []);
 			} catch (error) {
 				console.error('Failed to load manager escapes:', error);
 				setEscapes([]);

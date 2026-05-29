@@ -1,8 +1,34 @@
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import Header from '../../components/Header';
 import ResidentBottomNav from '../../components/resident/ResidentBottomNav';
 import '../../styles/ResidentEscape.css';
 
+function getStatusClass(status) {
+  if (status === 'available') return 'status-safe';
+  if (status === 'inspection') return 'status-warning';
+  return 'status-danger';
+}
+
 function ResidentEscapePage() {
+  const [escapes, setEscapes] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEscapes = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get('http://localhost:5000/api/escapes');
+        setEscapes(response.data?.data || []);
+      } catch (error) {
+        console.error('Failed to fetch escapes for resident:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchEscapes();
+  }, []);
+
   return (
     <main className="resident-screen">
       <Header />
@@ -40,50 +66,39 @@ function ResidentEscapePage() {
             <h2 className="typo-h2">Danh sách lối thoát</h2>
           </div>
           
-          <ul className="resident-device-list">
-            <li className="resident-panel resident-device-card">
-              <div className="resident-device-row">
-                <p className="typo-label text-secondary">EXIT-F1-MAIN</p>
-                <span className="resident-status-badge status-safe">Khả dụng</span>
-              </div>
-              <h3 className="typo-h2 resident-device-type">Cửa thoát hiểm</h3>
-              <p className="typo-body-md text-secondary" style={{ margin: 0 }}>Tầng 1</p>
-              <p className="typo-label route-connect-text">Kết nối đến: Lối ra chính</p>
-            </li>
+          {isLoading ? (
+            <div className="p-8 text-center typo-body-lg text-secondary">Đang tải dữ liệu lối thoát hiểm...</div>
+          ) : (
+            <ul className="resident-device-list">
+              {escapes.map((escape) => (
+                <li key={escape.id} className="resident-panel resident-device-card">
+                  <div className="resident-device-row">
+                    <p className="typo-label text-secondary">{escape.id}</p>
+                    <span className={`resident-status-badge ${getStatusClass(escape.status)}`}>
+                      {escape.statusLabel}
+                    </span>
+                  </div>
+                  <h3 className="typo-h2 resident-device-type">{escape.type}</h3>
+                  <p className="typo-body-md text-secondary" style={{ margin: 0 }}>{escape.location}</p>
+                  <p className="typo-label route-connect-text">Kết nối đến: {escape.connectedTo}</p>
+                  
+                  {escape.status !== 'available' && (
+                    <div className="route-warning-box">
+                      <p className="typo-body-md route-warning-text">
+                        {escape.status === 'inspection' ? 'Cần kiểm tra cửa/lối đi' : 'Lối thoát bị chặn hoặc không an toàn'}
+                      </p>
+                    </div>
+                  )}
+                </li>
+              ))}
 
-            <li className="resident-panel resident-device-card">
-              <div className="resident-device-row">
-                <p className="typo-label text-secondary">STAIRS-F1-F2</p>
-                <span className="resident-status-badge status-safe">Khả dụng</span>
-              </div>
-              <h3 className="typo-h2 resident-device-type">Thang bộ</h3>
-              <p className="typo-body-md text-secondary" style={{ margin: 0 }}>Tầng 1</p>
-              <p className="typo-label route-connect-text">Kết nối đến: Tầng 2</p>
-            </li>
-
-            <li className="resident-panel resident-device-card">
-              <div className="resident-device-row">
-                <p className="typo-label text-secondary">EMERG-F2-001</p>
-                <span className="resident-status-badge status-safe">Khả dụng</span>
-              </div>
-              <h3 className="typo-h2 resident-device-type">Thang thoát hiểm</h3>
-              <p className="typo-body-md text-secondary" style={{ margin: 0 }}>Tầng 2</p>
-              <p className="typo-label route-connect-text">Kết nối đến: Thang thoát hiểm ngoài</p>
-            </li>
-
-            <li className="resident-panel resident-device-card">
-              <div className="resident-device-row">
-                <p className="typo-label text-secondary">EXIT-F3-SIDE</p>
-                <span className="resident-status-badge status-warning">Cần kiểm tra</span>
-              </div>
-              <h3 className="typo-h2 resident-device-type">Cửa thoát hiểm</h3>
-              <p className="typo-body-md text-secondary" style={{ margin: 0 }}>Tầng 3</p>
-              <p className="typo-label route-connect-text">Kết nối đến: Lối ra phụ</p>
-              <div className="route-warning-box">
-                <p className="typo-body-md route-warning-text">Cần kiểm tra khóa cửa</p>
-              </div>
-            </li>
-          </ul>
+              {escapes.length === 0 && (
+                <div className="p-8 text-center typo-body-lg text-secondary">
+                  Không tìm thấy lối thoát hiểm nào.
+                </div>
+              )}
+            </ul>
+          )}
         </section>
 
         {/* Khung hướng dẫn khẩn cấp */}
