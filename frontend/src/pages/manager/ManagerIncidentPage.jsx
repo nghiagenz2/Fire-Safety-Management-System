@@ -18,11 +18,25 @@ function ManagerIncidentPage() {
     const fetchIncidents = async () => {
       try {
         const response = await axios.get('http://localhost:5000/api/incidents');
-        const data = (response.data?.data || []).map(inc => ({
-          ...inc,
-          // Chuyển đổi trạng thái từ Tiếng Anh (DB) sang Tiếng Việt (UI)
-          status: inc.status === 'resolved' ? 'Dập tắt' : 'Đang xử lý'
-        }));
+        const data = (response.data?.data || []).map(inc => {
+          let startTime = '—';
+          if (inc.occurredAt) {
+            const date = new Date(inc.occurredAt);
+            if (!isNaN(date.getTime())) {
+              startTime = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+            }
+          }
+          return {
+            ...inc,
+            // Chuyển đổi trạng thái từ Tiếng Anh (DB) sang Tiếng Việt (UI)
+            status: inc.status === 'resolved' ? 'Dập tắt' : (inc.status === 'open' || inc.status === 'in_progress' ? 'Đang xử lý' : 'Xác nhận sai'),
+            severity: inc.severity || 'Trung bình',
+            startTime: startTime,
+            resourcesDeployed: inc.resourcesDeployed || [],
+            affectedArea: inc.affectedArea || [inc.location || inc.floor || '—'],
+            description: inc.description || 'Không có mô tả chi tiết.'
+          };
+        });
         setIncidents(data);
       } catch (error) {
         console.error("Lỗi API sự cố:", error);

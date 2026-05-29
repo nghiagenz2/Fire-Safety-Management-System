@@ -11,8 +11,12 @@ function getFloorOrder(floorName) {
 exports.getFilterOptions = async (req, res) => {
   try {
     // Truy vấn dữ liệu thực tế cho bộ lọc
-    const floorRes = await pool.query("SELECT DISTINCT floor FROM devices");
-    const deviceTypeRes = await pool.query("SELECT DISTINCT type FROM devices");
+    const floorRes = await pool.query(
+      "SELECT DISTINCT floor FROM devices WHERE type IN ('Bình chữa cháy', 'Tủ chữa cháy')"
+    );
+    const deviceTypeRes = await pool.query(
+      "SELECT DISTINCT type FROM devices WHERE type IN ('Bình chữa cháy', 'Tủ chữa cháy')"
+    );
     const incidentTypeRes = await pool.query(
       "SELECT DISTINCT incident_type FROM incidents",
     );
@@ -71,7 +75,7 @@ exports.getDashboardData = async (req, res) => {
     const { floor, deviceType } = req.body;
 
     // 1. Xây dựng điều kiện lọc cho Thiết bị (Devices)
-    let deviceConditions = [];
+    let deviceConditions = ["type IN ('Bình chữa cháy', 'Tủ chữa cháy')"];
     let deviceParams = [];
     if (floor && floor !== "all") {
       deviceParams.push(floor);
@@ -81,10 +85,7 @@ exports.getDashboardData = async (req, res) => {
       deviceParams.push(deviceType);
       deviceConditions.push(`type = $${deviceParams.length}`);
     }
-    let deviceWhere =
-      deviceConditions.length > 0
-        ? "WHERE " + deviceConditions.join(" AND ")
-        : "";
+    let deviceWhere = "WHERE " + deviceConditions.join(" AND ");
 
     // 2. Xây dựng điều kiện lọc cho Sự cố (Incidents)
     let incidentConditions = [];
@@ -181,7 +182,7 @@ exports.getDashboardData = async (req, res) => {
       { key: "healthy", label: "Tốt", value: healthy, color: "#2E7D32" },
       { key: "warning", label: "Cảnh báo", value: warning, color: "#f59e0b" },
       { key: "danger", label: "Hỏng", value: danger, color: "#C62828" },
-    ];
+    ].filter(s => s.value > 0);
 
     if (total === 0) {
       segments = [
