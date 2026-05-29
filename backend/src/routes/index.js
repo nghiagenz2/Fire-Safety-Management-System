@@ -1,6 +1,7 @@
 const express = require('express');
 const healthRoutes = require('./health.routes');
 const devicesRoutes = require('./devices.routes');
+const escapesRoutes = require('./escapes.routes');
 
 const router = express.Router();
 
@@ -13,5 +14,6 @@ router.get('/', (req, res) => {
 
 router.use('/health', healthRoutes);
 router.use('/devices', devicesRoutes);
+router.use('/escapes', escapesRoutes);
 
 module.exports = router;
