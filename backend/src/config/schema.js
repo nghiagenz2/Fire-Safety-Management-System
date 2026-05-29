@@ -21,6 +21,7 @@ async function ensureManagerTables() {
       "CreatorID" int,
       "ReportType" varchar,
       "FilePath" varchar,
+      "Status" varchar DEFAULT 'Hoàn thành',
       "CreatedDate" timestamp
     )
   `);

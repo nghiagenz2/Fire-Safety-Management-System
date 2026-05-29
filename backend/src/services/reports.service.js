@@ -8,6 +8,8 @@ const REPORT_TYPE_LABEL = {
   risk_assessment: 'Báo cáo đánh giá rủi ro'
 };
 
+const REPORT_STATUSES = ['Hoàn thành', 'Chờ phê duyệt', 'Đã từ chối'];
+
 function formatDate(value) {
   if (!value) return '';
 
@@ -30,7 +32,8 @@ function decorateReport(report) {
     title: `${typeLabel} ${report.id}`,
     period: createdDate || '--',
     createdDate,
-    status: 'Hoàn thành',
+    createdAt: report.createdDate,
+    status: report.status || 'Hoàn thành',
     type,
     summary: report.filePath ? `Tệp báo cáo: ${report.filePath}` : 'Chưa có tệp báo cáo đính kèm',
     stats: {},
@@ -48,6 +51,7 @@ function normalizeReportInput(input = {}) {
     creatorId: input.creatorId,
     reportType: input.reportType || input.type || 'monthly',
     filePath: input.filePath || '',
+    status: input.status || 'Hoàn thành',
     createdDate: input.createdDate || new Date().toISOString()
   };
 }
@@ -60,19 +64,17 @@ function normalizeReportUpdates(input = {}) {
   if (Object.prototype.hasOwnProperty.call(input, 'reportType')) updates.reportType = input.reportType;
   if (Object.prototype.hasOwnProperty.call(input, 'type')) updates.reportType = input.type;
   if (Object.prototype.hasOwnProperty.call(input, 'filePath')) updates.filePath = input.filePath;
+  if (Object.prototype.hasOwnProperty.call(input, 'status')) updates.status = input.status;
   if (Object.prototype.hasOwnProperty.call(input, 'createdDate')) updates.createdDate = input.createdDate;
 
   return updates;
 }
 
 async function getReports(filters = {}) {
-  if (filters.status && filters.status !== 'all' && filters.status !== 'Hoàn thành') {
-    return [];
-  }
-
   const reports = await reportsRepository.findAll({
     search: filters.search || filters.keyword,
-    type: filters.type
+    type: filters.type,
+    status: filters.status
   });
 
   return reports.map(decorateReport);
@@ -96,7 +98,7 @@ async function deleteReport(id) {
 
 function getReportFilters() {
   return {
-    statuses: ['Hoàn thành'],
+    statuses: REPORT_STATUSES,
     types: Object.keys(REPORT_TYPE_LABEL),
     periods: ['Tháng', 'Quý', 'Năm']
   };

@@ -22,11 +22,12 @@ function toReport(row) {
     creatorName: row.CreatorName || '',
     reportType: row.ReportType || 'monthly',
     filePath: row.FilePath || '',
+    status: row.Status || 'Hoàn thành',
     createdDate: row.CreatedDate
   };
 }
 
-async function findAll({ search, type } = {}) {
+async function findAll({ search, type, status } = {}) {
   const values = [];
   const conditions = [];
 
@@ -36,6 +37,7 @@ async function findAll({ search, type } = {}) {
       CAST(r."ReportID" AS text) ILIKE $${values.length}
       OR r."ReportType" ILIKE $${values.length}
       OR r."FilePath" ILIKE $${values.length}
+      OR r."Status" ILIKE $${values.length}
       OR u."FullName" ILIKE $${values.length}
     )`);
   }
@@ -43,6 +45,11 @@ async function findAll({ search, type } = {}) {
   if (type && type !== 'all') {
     values.push(type);
     conditions.push(`r."ReportType" = $${values.length}`);
+  }
+
+  if (status && status !== 'all') {
+    values.push(status);
+    conditions.push(`r."Status" = $${values.length}`);
   }
 
   const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -87,9 +94,9 @@ async function create(report) {
   const result = await pool.query(
     `
       INSERT INTO "REPORT" (
-        "ReportID", "FireID", "CreatorID", "ReportType", "FilePath", "CreatedDate"
+        "ReportID", "FireID", "CreatorID", "ReportType", "FilePath", "Status", "CreatedDate"
       )
-      VALUES ($1, $2, $3, $4, $5, $6)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
     `,
     [
@@ -98,6 +105,7 @@ async function create(report) {
       report.creatorId || null,
       report.reportType,
       report.filePath,
+      report.status,
       report.createdDate
     ]
   );
@@ -122,7 +130,8 @@ async function update(id, updates) {
         "CreatorID" = $3,
         "ReportType" = $4,
         "FilePath" = $5,
-        "CreatedDate" = $6
+        "Status" = $6,
+        "CreatedDate" = $7
       WHERE "ReportID" = $1
       RETURNING *
     `,
@@ -132,6 +141,7 @@ async function update(id, updates) {
       next.creatorId || null,
       next.reportType,
       next.filePath,
+      next.status,
       next.createdDate
     ]
   );
