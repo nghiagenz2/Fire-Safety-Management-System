@@ -26,6 +26,31 @@ import ManagerReportPage from "./pages/manager/ManagerReportPage.jsx";
 
 import ResidentHomePage from "./pages/resident/ResidentHomePage.jsx";
 import ResidentEscapePage from "./pages/resident/ResidentEscapePage.jsx";
+import { canAccessRole, getCurrentUser, getHomePathForRole } from "./services/authApi.js";
+
+function ProtectedRoute({ requiredRole, children }) {
+  const user = getCurrentUser();
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!canAccessRole(user.role, requiredRole)) {
+    return <Navigate to={getHomePathForRole(user.role)} replace />;
+  }
+
+  return children;
+}
+
+function PublicOnlyRoute({ children }) {
+  const user = getCurrentUser();
+
+  if (user) {
+    return <Navigate to={getHomePathForRole(user.role)} replace />;
+  }
+
+  return children;
+}
 
 function App() {
   return (
@@ -35,36 +60,36 @@ function App() {
         {/* Auth Flow */}
         <Route path="/splash" element={<Splash />} />
         <Route path="/onboarding" element={<Onboarding />} />
-        <Route path="/login" element={<LoginForm />} />
-        <Route path="/firestaff/home" element={<FireStaffHomePage />} />
-        <Route path="/firestaff/devices" element={<FireStaffDevicePage />} />
-        <Route path="/firestaff/tasks" element={<FireStaffTaskPage />} />
+        <Route path="/login" element={<PublicOnlyRoute><LoginForm /></PublicOnlyRoute>} />
+        <Route path="/firestaff/home" element={<ProtectedRoute requiredRole="firestaff"><FireStaffHomePage /></ProtectedRoute>} />
+        <Route path="/firestaff/devices" element={<ProtectedRoute requiredRole="firestaff"><FireStaffDevicePage /></ProtectedRoute>} />
+        <Route path="/firestaff/tasks" element={<ProtectedRoute requiredRole="firestaff"><FireStaffTaskPage /></ProtectedRoute>} />
         <Route
           path="/firestaff/simulation"
-          element={<FireStaffSimulationPage />}
+          element={<ProtectedRoute requiredRole="firestaff"><FireStaffSimulationPage /></ProtectedRoute>}
         />
         <Route
           path="/firestaff/incidents"
-          element={<FireStaffIncidentPage />}
+          element={<ProtectedRoute requiredRole="firestaff"><FireStaffIncidentPage /></ProtectedRoute>}
         />
-        <Route path="/firestaff/profile" element={<ProfilePage actor="firestaff" />} />
+        <Route path="/firestaff/profile" element={<ProtectedRoute requiredRole="firestaff"><ProfilePage actor="firestaff" /></ProtectedRoute>} />
 
-        <Route path="/manager/home" element={<ManagerHomePage />} />
-        <Route path="/manager/devices" element={<ManagerDevicePage />} />
-        <Route path="/manager/escape" element={<ManagerEscapePage />} />
-        <Route path="/manager/floor-check" element={<ManagerFloorCheckPage />} />
-        <Route path="/manager/dashboard" element={<ManagerDashboardPage />} />
-        <Route path="/manager/incidents" element={<ManagerIncidentPage />} />
-        <Route path="/manager/reports" element={<ManagerReportPage />} />
-        <Route path="/manager/account" element={<ManagerAccountPage />} />
-        <Route path="/manager/profile" element={<ProfilePage actor="manager" />} />
+        <Route path="/manager/home" element={<ProtectedRoute requiredRole="manager"><ManagerHomePage /></ProtectedRoute>} />
+        <Route path="/manager/devices" element={<ProtectedRoute requiredRole="manager"><ManagerDevicePage /></ProtectedRoute>} />
+        <Route path="/manager/escape" element={<ProtectedRoute requiredRole="manager"><ManagerEscapePage /></ProtectedRoute>} />
+        <Route path="/manager/floor-check" element={<ProtectedRoute requiredRole="manager"><ManagerFloorCheckPage /></ProtectedRoute>} />
+        <Route path="/manager/dashboard" element={<ProtectedRoute requiredRole="manager"><ManagerDashboardPage /></ProtectedRoute>} />
+        <Route path="/manager/incidents" element={<ProtectedRoute requiredRole="manager"><ManagerIncidentPage /></ProtectedRoute>} />
+        <Route path="/manager/reports" element={<ProtectedRoute requiredRole="manager"><ManagerReportPage /></ProtectedRoute>} />
+        <Route path="/manager/account" element={<ProtectedRoute requiredRole="manager"><ManagerAccountPage /></ProtectedRoute>} />
+        <Route path="/manager/profile" element={<ProtectedRoute requiredRole="manager"><ProfilePage actor="manager" /></ProtectedRoute>} />
 
         {/* Resident Pages */}
-        <Route path="/resident/home" element={<ResidentHomePage />} />
-        <Route path="/resident/escape" element={<ResidentEscapePage />} />
-        <Route path="/resident/devices" element={<ResidentDevicePage />} />
-        <Route path="/resident/guidance" element={<ResidentGuidancePage />} />
-        <Route path="/resident/profile" element={<ProfilePage actor="resident" />} />
+        <Route path="/resident/home" element={<ProtectedRoute requiredRole="resident"><ResidentHomePage /></ProtectedRoute>} />
+        <Route path="/resident/escape" element={<ProtectedRoute requiredRole="resident"><ResidentEscapePage /></ProtectedRoute>} />
+        <Route path="/resident/devices" element={<ProtectedRoute requiredRole="resident"><ResidentDevicePage /></ProtectedRoute>} />
+        <Route path="/resident/guidance" element={<ProtectedRoute requiredRole="resident"><ResidentGuidancePage /></ProtectedRoute>} />
+        <Route path="/resident/profile" element={<ProtectedRoute requiredRole="resident"><ProfilePage actor="resident" /></ProtectedRoute>} />
 
         {/* Default Routes */}
         <Route path="/" element={<Navigate to="/splash" replace />} />

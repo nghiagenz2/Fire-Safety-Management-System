@@ -1,5 +1,6 @@
 import { ArrowLeft, SignOut, User, EnvelopeSimple, Phone, ShieldCheck } from '@phosphor-icons/react';
 import { Link } from 'react-router-dom';
+import { getCurrentUser, logoutAccount } from '../services/authApi';
 import './ProfilePage.css';
 
 const PROFILE_CONFIG = {
@@ -27,7 +28,17 @@ const PROFILE_CONFIG = {
 };
 
 function ProfilePage({ actor = 'resident' }) {
-  const profile = PROFILE_CONFIG[actor] || PROFILE_CONFIG.resident;
+  const currentUser = getCurrentUser();
+  const fallbackProfile = PROFILE_CONFIG[actor] || PROFILE_CONFIG.resident;
+  const profile = currentUser
+    ? {
+        name: currentUser.fullName || fallbackProfile.name,
+        roleLabel: currentUser.roleLabel || fallbackProfile.roleLabel,
+        email: currentUser.email || fallbackProfile.email,
+        phone: currentUser.phone || fallbackProfile.phone,
+        homePath: fallbackProfile.homePath
+      }
+    : fallbackProfile;
 
   return (
     <main className="profile-screen">
@@ -81,7 +92,7 @@ function ProfilePage({ actor = 'resident' }) {
           </div>
 
           <footer className="profile-actions">
-            <Link to="/login" className="profile-logout-btn typo-body-lg" aria-label="Đăng xuất">
+            <Link to="/login" className="profile-logout-btn typo-body-lg" aria-label="Đăng xuất" onClick={logoutAccount}>
               <SignOut size={20} />
               <span>Đăng xuất</span>
             </Link>
