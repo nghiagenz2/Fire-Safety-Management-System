@@ -134,6 +134,15 @@
 	border-radius: 12px;
 }
 
+.manager-inline-error {
+	margin: 12px 12px 0;
+	padding: 10px 12px;
+	border: 1px solid rgba(239, 68, 68, 0.28);
+	border-radius: 12px;
+	background: rgba(254, 242, 242, 0.95);
+	color: #b91c1c;
+}
+
 .manager-device-table {
 	width: 100%;
 	border-collapse: collapse;
@@ -738,4 +747,3 @@ grid-template-columns: 1fr;
 	appearance: none !important;
 	padding-right: 40px !important;
 }
-

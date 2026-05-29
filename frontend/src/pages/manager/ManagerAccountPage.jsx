@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
-import { LockKey, MagnifyingGlass, NotePencil, Plus, UserSwitch } from '@phosphor-icons/react';
+import { LockKey, MagnifyingGlass, NotePencil, Plus, Trash, UserSwitch } from '@phosphor-icons/react';
 import Header from '../../components/Header';
 import ManagerBottomNav from '../../components/manager/ManagerBottomNav';
 import {
   assignManagerAccountRole,
   createManagerAccount,
+  deleteManagerAccount,
   getManagerAccounts,
   getManagerRoles,
   setManagerAccountLock,
   updateManagerAccount
-} from '../../services/mockManagerAccountsApi';
+} from '../../services/managerAccountsApi';
 import '../../styles/manager-shell.css';
 
 const statusFilters = [
@@ -36,6 +37,7 @@ function ManagerAccountPage() {
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingAccountId, setEditingAccountId] = useState(null);
@@ -53,6 +55,7 @@ function ManagerAccountPage() {
         setRoles(roleData);
       } catch (error) {
         console.error('Failed to load manager accounts:', error);
+        setErrorMessage(error.message || 'Không tải được danh sách tài khoản.');
         setAccounts([]);
         setRoles([]);
       } finally {
@@ -128,6 +131,7 @@ function ManagerAccountPage() {
     }
 
     try {
+      setErrorMessage('');
       if (editingAccountId) {
         await updateManagerAccount(editingAccountId, payload);
       } else {
@@ -139,11 +143,13 @@ function ManagerAccountPage() {
       closeForm();
     } catch (error) {
       console.error('Failed to save manager account:', error);
+      setErrorMessage(error.message || 'Không lưu được tài khoản.');
     }
   };
 
   const handleRoleChange = async (accountId, role) => {
     try {
+      setErrorMessage('');
       const updated = await assignManagerAccountRole(accountId, role);
       if (!updated) {
         return;
@@ -154,12 +160,22 @@ function ManagerAccountPage() {
       );
     } catch (error) {
       console.error('Failed to assign role:', error);
+      setErrorMessage(error.message || 'Không đổi được vai trò.');
     }
   };
 
   const handleToggleLock = async (account) => {
+    const shouldLock = account.status !== 'locked';
+    const message = shouldLock
+      ? `Khóa tài khoản ${account.fullName}?`
+      : `Mở khóa tài khoản ${account.fullName}?`;
+
+    if (!window.confirm(message)) {
+      return;
+    }
+
     try {
-      const shouldLock = account.status !== 'locked';
+      setErrorMessage('');
       const updated = await setManagerAccountLock(account.id, shouldLock);
 
       if (!updated) {
@@ -171,6 +187,22 @@ function ManagerAccountPage() {
       );
     } catch (error) {
       console.error('Failed to toggle account lock:', error);
+      setErrorMessage(error.message || 'Không cập nhật được trạng thái tài khoản.');
+    }
+  };
+
+  const handleDeleteAccount = async (account) => {
+    if (!window.confirm(`Xóa tài khoản ${account.fullName}?`)) {
+      return;
+    }
+
+    try {
+      setErrorMessage('');
+      await deleteManagerAccount(account.id);
+      setAccounts((prev) => prev.filter((item) => item.id !== account.id));
+    } catch (error) {
+      console.error('Failed to delete account:', error);
+      setErrorMessage(error.message || 'Không xóa được tài khoản.');
     }
   };
 
@@ -244,6 +276,11 @@ function ManagerAccountPage() {
         </section>
 
         <section className="manager-panel manager-device-table-panel" aria-label="Danh sách tài khoản">
+          {errorMessage && (
+            <div className="manager-inline-error typo-body-md" role="alert">
+              {errorMessage}
+            </div>
+          )}
           <table className="manager-device-table manager-account-table">
             <thead>
               <tr>
@@ -310,6 +347,14 @@ function ManagerAccountPage() {
                           onClick={() => handleToggleLock(account)}
                         >
                           <LockKey size={17} weight="regular" />
+                        </button>
+                        <button
+                          type="button"
+                          className="manager-action-btn delete"
+                          aria-label={`Xóa tài khoản ${account.fullName}`}
+                          onClick={() => handleDeleteAccount(account)}
+                        >
+                          <Trash size={17} weight="regular" />
                         </button>
                       </div>
                     </td>
