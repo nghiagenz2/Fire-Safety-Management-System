@@ -207,6 +207,9 @@ function ManagerFloorCheckPage() {
 				setFloorList(list);
 				setBuildingInfo(info);
 				setDeviceTypes(types);
+				if (list && list.length > 0 && window.innerWidth > 1024) {
+					setSelectedFloorId(list[0].id);
+				}
 			} catch (err) {
 				console.error('Failed to load floors:', err);
 			} finally {
@@ -311,12 +314,12 @@ function ManagerFloorCheckPage() {
 							Ban quản lý · UC04
 						</p>
 						<h1 className="typo-h1 manager-device-title">
-							{floorDetail ? floorDetail.name : 'Kiểm tra trạng thái an toàn theo tầng'}
+							Kiểm tra trạng thái an toàn theo tầng
 						</h1>
 						<p className="typo-body-lg text-secondary manager-device-subtitle floor-subtitle-ellipsis">
-							{floorDetail
-								? `${floorDetail.area} · ${buildingInfo?.name || ''}`
-								: `${buildingInfo?.name || 'Toà nhà'} — ${buildingInfo?.address || ''}`}
+							{buildingInfo?.name 
+								? `${buildingInfo.name} — ${buildingInfo.address}`
+								: 'Bcon City — Đường Thống Nhất, Dĩ An, Bình Dương'}
 						</p>
 					</div>
 
@@ -351,12 +354,12 @@ function ManagerFloorCheckPage() {
 				</header>
 
 				{/* ── Main layout: 2-col when no selection, full-width when selected ── */}
-				<div className={`floor-check-layout ${floorDetail || isLoadingDetail ? 'floor-check-layout--detail' : ''}`}>
+				<div className={`floor-check-layout ${(floorDetail || isLoadingDetail) && window.innerWidth <= 1024 ? 'floor-check-layout--detail' : ''}`}>
 					{/* ── LEFT: Floor list panel — hidden when floor selected ── */}
 					<aside
-						className={`floor-list-panel manager-panel ${floorDetail || isLoadingDetail ? 'floor-list-panel--hidden' : ''}`}
+						className={`floor-list-panel manager-panel ${(floorDetail || isLoadingDetail) && window.innerWidth <= 1024 ? 'floor-list-panel--hidden' : ''}`}
 						aria-label="Danh sách tầng"
-						aria-hidden={!!(floorDetail || isLoadingDetail)}
+						aria-hidden={!!(floorDetail || isLoadingDetail) && window.innerWidth <= 1024}
 					>
 						<div className="floor-list-panel-head">
 							<p className="typo-label text-secondary">DANH SÁCH TẦNG</p>

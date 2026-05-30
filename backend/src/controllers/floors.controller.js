@@ -100,10 +100,10 @@ async function getFloorsList(req, res, next) {
       };
     });
 
-    // 3. Fetch exits counts grouped by floor
+    // 3. Fetch exits counts grouped by floor from escapes table
     const exitsResult = await pool.query(`
       SELECT floor, COUNT(*) as total, SUM(CASE WHEN status = 'available' THEN 1 ELSE 0 END) as available
-      FROM exits
+      FROM escapes
       GROUP BY floor
     `);
 
@@ -115,38 +115,18 @@ async function getFloorsList(req, res, next) {
       };
     });
 
-    // Fetch doors grouped by floor to combine into exits count
-    const doorsResult = await pool.query(`
-      SELECT 
-        floor,
-        COUNT(*) as total_doors,
-        SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as available_doors
-      FROM devices
-      WHERE floor IS NOT NULL AND type = 'Cửa thoát hiểm'
-      GROUP BY floor
-    `);
-
-    const doorsMap = {};
-    doorsResult.rows.forEach((row) => {
-      doorsMap[row.floor] = {
-        total: parseInt(row.total_doors, 10) || 0,
-        available: parseInt(row.available_doors, 10) || 0
-      };
-    });
-
     // 4. Construct response list
     const floorsList = floorNames.map((name) => {
       const stats = statsMap[name] || { total: 0, active: 0, warning: 0, danger: 0, maintenance: 0, inspection: 0 };
-      const exits = exitsMap[name] || { total: 2, available: 2 }; // Default fallback to 2 available exits if none seeded
-      const doors = doorsMap[name] || { total: 0, available: 0 };
+      const exits = exitsMap[name] || { total: 0, available: 0 };
 
       const totalDevices = stats.total;
       const activeDevices = stats.active;
       const warningDevices = stats.warning + stats.inspection;
       const brokenDevices = stats.danger + stats.maintenance;
 
-      const totalExits = exits.total + doors.total;
-      const availableExits = exits.available + doors.available;
+      const totalExits = exits.total;
+      const availableExits = exits.available;
 
       // safetyScore computation: percentage of active devices
       let safetyScore = 100;
@@ -224,40 +204,6 @@ async function getFloorById(req, res, next) {
       floor: row.floor
     }));
 
-    // 2. Get doors on this floor from devices table to treat as exits (only emergency exits)
-    const doorsResult = await pool.query(
-      `
-      SELECT *
-      FROM devices
-      WHERE floor = $1 AND type = 'Cửa thoát hiểm'
-      ORDER BY id ASC
-      `,
-      [floorId]
-    );
-
-    const doorExits = doorsResult.rows.map((row) => {
-      let status = 'inspection';
-      let statusLabel = 'Cần kiểm tra';
-      if (row.status === 'active') {
-        status = 'available';
-        statusLabel = 'Khả dụng';
-      } else if (row.status === 'danger' || row.status === 'maintenance') {
-        status = 'blocked';
-        statusLabel = 'Bị chặn';
-      }
-
-      return {
-        id: row.id,
-        floor: row.floor,
-        type: row.type,
-        location: row.location || 'Hành lang',
-        status: status,
-        statusLabel: statusLabel,
-        lastInspection: row.last_inspection || '28/05/2026',
-        note: row.status === 'danger' || row.status === 'maintenance' ? 'Lối thoát bị khóa hoặc có vật cản.' : null
-      };
-    });
-
     // Calculate dynamic stats
     const totalDevices = devices.length;
     const activeDevices = devices.filter((d) => d.status === 'active').length;
@@ -279,62 +225,59 @@ async function getFloorById(req, res, next) {
       safetyLevelLabel = 'Cảnh báo';
     }
 
-    // 3. Get exits from exits table
-    const exitsResult = await pool.query(
+    // 2. Get exits on this floor from escapes table
+    const escapesResult = await pool.query(
       `
       SELECT *
-      FROM exits
+      FROM escapes
       WHERE floor = $1
       ORDER BY id ASC
       `,
       [floorId]
     );
 
-    let dbExits = exitsResult.rows.map((row) => {
-      let statusLabel = 'Khả dụng';
-      if (row.status === 'blocked' || row.status === 'unavailable') statusLabel = 'Bị chặn';
-      else if (row.status === 'inspection') statusLabel = 'Cần kiểm tra';
+    const exits = escapesResult.rows.map((row) => {
+      let status = row.status;
+      let statusLabel = row.status_label || 'Khả dụng';
+      if (status === 'blocked' || status === 'unavailable') {
+        status = 'blocked';
+        statusLabel = 'Bị chặn';
+      } else if (status === 'inspection') {
+        status = 'inspection';
+        statusLabel = 'Cần kiểm tra';
+      } else {
+        status = 'available';
+        statusLabel = 'Khả dụng';
+      }
+
+      let formattedInspection = '--';
+      if (row.last_inspection) {
+        try {
+          const dateObj = new Date(row.last_inspection);
+          if (!isNaN(dateObj.getTime())) {
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const year = dateObj.getFullYear();
+            formattedInspection = `${day}/${month}/${year}`;
+          } else {
+            formattedInspection = row.last_inspection;
+          }
+        } catch (e) {
+          formattedInspection = row.last_inspection;
+        }
+      }
 
       return {
         id: row.id,
         floor: row.floor,
-        type: 'Cửa thoát hiểm',
-        location: row.floor === 'Tầng trệt' ? 'Lối ra sảnh chính' : 'Lối thoát hành lang bộ',
-        status: row.status === 'unavailable' ? 'blocked' : row.status,
-        statusLabel,
-        lastInspection: '28/05/2026',
-        note: row.status === 'unavailable' || row.status === 'blocked' ? 'Lối thoát bị khóa hoặc có vật cản.' : null
+        type: row.type || 'Cửa thoát hiểm',
+        location: row.room || row.location || 'Hành lang thoát hiểm',
+        status: status,
+        statusLabel: statusLabel,
+        lastInspection: formattedInspection,
+        note: status === 'blocked' ? 'Lối thoát bị khóa hoặc có vật cản.' : null
       };
     });
-
-    // If no exits are in the DB for this floor, generate 2 default available exits
-    if (dbExits.length === 0) {
-      const code = floorId === 'Tầng trệt' ? 'TR' : `F${getFloorLevel(floorId)}`;
-      dbExits = [
-        {
-          id: `EXIT-${code}-01`,
-          floor: floorId,
-          type: 'Cửa thoát hiểm bộ A',
-          location: 'Hành lang phía Tây',
-          status: 'available',
-          statusLabel: 'Khả dụng',
-          lastInspection: '28/05/2026',
-          note: null
-        },
-        {
-          id: `EXIT-${code}-02`,
-          floor: floorId,
-          type: 'Cửa thoát hiểm bộ B',
-          location: 'Hành lang phía Đông',
-          status: 'available',
-          statusLabel: 'Khả dụng',
-          lastInspection: '28/05/2026',
-          note: null
-        }
-      ];
-    }
-
-    const exits = [...dbExits, ...doorExits];
 
     const hazardZones = getFloorHazardZones(floorId);
 
