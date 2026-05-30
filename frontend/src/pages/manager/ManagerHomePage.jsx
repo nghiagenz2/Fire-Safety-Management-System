@@ -49,7 +49,7 @@ function ManagerHomePage() {
 					</div>
 				</header>
 
-				<BuildingModelViewer />
+				<BuildingModelViewer highlightExits={true} />
 
 				<section className="resident-stats-grid" aria-label="Thống kê tổng quan">
 					<div className="resident-panel stat-card-item bg-light-safe">
