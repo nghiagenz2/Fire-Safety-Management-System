@@ -217,7 +217,7 @@
 
 .resident-featured-guide {
   margin-top: 14px;
-  padding: 14px;
+  padding: 20px;
   background:
     linear-gradient(140deg, rgba(0, 82, 204, 0.12), rgba(255, 255, 255, 0.9)),
     linear-gradient(220deg, rgba(40, 167, 69, 0.12), rgba(255, 255, 255, 0.9));
@@ -257,6 +257,91 @@
   text-decoration: underline;
 }
 
+.resident-video-wrapper {
+  margin-top: 10px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.resident-video-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  opacity: 0.9;
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.resident-video-wrapper:hover .resident-video-overlay {
+  background: rgba(0, 0, 0, 0.55);
+  opacity: 1;
+}
+
+.resident-video-play-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #0052cc;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  padding-left: 3px;
+  box-shadow: 0 4px 12px rgba(0, 82, 204, 0.4);
+  transition: transform 0.2s ease;
+}
+
+.resident-video-wrapper:hover .resident-video-play-icon {
+  transform: scale(1.1);
+}
+
+.resident-video-overlay-title {
+  color: #ffffff !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  font-weight: 600;
+  text-align: center;
+  padding: 0 16px;
+  margin: 0;
+}
+
+/* Play button for individual list cards */
+.resident-guide-thumb {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.resident-thumb-play {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(220, 53, 69, 0.95);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  padding-left: 2px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s ease;
+  z-index: 2;
+}
+
+.resident-guide-thumb:hover .resident-thumb-play {
+  transform: translate(-50%, -50%) scale(1.15);
+}
+
 .resident-text-guide,
 .resident-contact-card {
   margin-top: 12px;
@@ -275,14 +360,14 @@
 
 .resident-guide-card {
   display: grid;
-  grid-template-columns: 92px minmax(0, 1fr);
-  gap: 10px;
-  padding: 10px;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 16px;
+  padding: 14px;
 }
 
 .resident-guide-thumb {
   border-radius: 12px;
-  min-height: 88px;
+  min-height: 100px;
   background:
     linear-gradient(160deg, rgba(220, 53, 69, 0.18), rgba(255, 193, 7, 0.25));
   border: 1px solid rgba(220, 53, 69, 0.2);

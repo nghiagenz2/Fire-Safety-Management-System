@@ -10,6 +10,13 @@ const CATEGORIES = [
   { value: 'emergency', label: 'Khẩn cấp' }
 ];
 
+function getYouTubeId(url) {
+  if (!url) return '';
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : '';
+}
+
 function ResidentGuidancePage() {
   const [guideItems, setGuideItems] = useState([]);
   const [search, setSearch] = useState('');
@@ -80,15 +87,35 @@ function ResidentGuidancePage() {
         <p className="typo-label text-secondary">Video nổi bật</p>
         <h2 className="typo-h2">{featuredGuide ? featuredGuide.title : 'Đang cập nhật nội dung video'}</h2>
         <p className="typo-body-md text-secondary">{featuredGuide ? featuredGuide.summary : 'Nội dung sẽ hiển thị khi dữ liệu sẵn sàng.'}</p>
-        <div className="resident-video-placeholder" aria-label="Khung video hướng dẫn">
-          <p className="typo-label">{featuredGuide ? featuredGuide.videoTitle : 'Video huấn luyện cư dân'}</p>
-          {featuredGuide && (
-            <a className="resident-video-link typo-label" href={featuredGuide.videoUrl} target="_blank" rel="noreferrer">
-              Mở video mô phỏng
-            </a>
-          )}
-        </div>
-        <button type="button" className="resident-primary-btn typo-body-md">
+        
+        {featuredGuide ? (
+          <div 
+            className="resident-video-wrapper"
+            onClick={() => window.open(featuredGuide.videoUrl, '_blank')}
+            style={{ cursor: 'pointer' }}
+            aria-label="Xem video hướng dẫn trên YouTube"
+          >
+            <img 
+              src={featuredGuide.coverImage ? featuredGuide.coverImage : `https://img.youtube.com/vi/${getYouTubeId(featuredGuide.videoUrl)}/hqdefault.jpg`} 
+              alt={featuredGuide.videoTitle} 
+              style={{ width: '100%', height: '340px', objectFit: 'cover', display: 'block' }}
+            />
+            <div className="resident-video-overlay">
+              <span className="resident-video-play-icon">▶</span>
+              <p className="resident-video-overlay-title typo-body-md">{featuredGuide.videoTitle}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="resident-video-placeholder" aria-label="Khung video hướng dẫn">
+            <p className="typo-label">Video đang cập nhật</p>
+          </div>
+        )}
+
+        <button 
+          type="button" 
+          className="resident-primary-btn typo-body-md"
+          onClick={() => featuredGuide && window.open(featuredGuide.videoUrl, '_blank')}
+        >
           Phát video hướng dẫn
         </button>
       </section>
@@ -152,8 +179,17 @@ function ResidentGuidancePage() {
           <ul className="resident-guide-list">
             {filteredGuides.map((guide) => (
               <li key={guide.id} className="resident-panel resident-guide-card">
-                <div className="resident-guide-thumb" aria-hidden="true">
-                  <span className="typo-label">Video</span>
+                <div 
+                  className="resident-guide-thumb" 
+                  aria-label="Xem video hướng dẫn trên YouTube"
+                  onClick={() => window.open(guide.videoUrl, '_blank')}
+                >
+                  <img 
+                    src={guide.coverImage ? guide.coverImage : `https://img.youtube.com/vi/${getYouTubeId(guide.videoUrl)}/hqdefault.jpg`} 
+                    alt={guide.title} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: '12px' }}
+                  />
+                  <span className="resident-thumb-play">▶</span>
                 </div>
 
                 <div className="resident-guide-content">
