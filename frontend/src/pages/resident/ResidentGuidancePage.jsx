@@ -78,9 +78,12 @@ function ResidentGuidancePage() {
           <p className="typo-label text-secondary resident-overline">Cư dân - Thư viện an toàn</p>
           <h1 className="typo-h1 resident-title">Hướng dẫn thoát hiểm</h1>
         </div>
-        <button type="button" className="resident-call-btn typo-label">
-          Liên hệ khẩn cấp
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span className="resident-floor-chip typo-label">Tầng hiện tại: 3</span>
+          <button type="button" className="resident-call-btn typo-label">
+            Liên hệ khẩn cấp
+          </button>
+        </div>
       </header>
 
       <section className="resident-panel resident-featured-guide">

@@ -43,6 +43,7 @@ function ResidentHomePage() {
             <p className="typo-label text-secondary resident-overline">Cư dân - Trung tâm vận hành</p>
             <h1 className="typo-h1 resident-title">Trang chủ 3D</h1>
           </div>
+          <span className="resident-floor-chip typo-label">Tầng hiện tại: 3</span>
         </header>
 
         <BuildingModelViewer

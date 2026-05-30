@@ -69,16 +69,28 @@ function makeDeviceId(nodeName, floorName, indexInFloor) {
   return `${prefix}-${floorCode}-${getDeviceSequence(nodeName, indexInFloor)}`;
 }
 
+function generateMaintenanceDue(deviceId) {
+  let sum = 0;
+  for (let i = 0; i < deviceId.length; i++) {
+    sum += deviceId.charCodeAt(i);
+  }
+  const day = ((sum * 7) % 28 + 1).toString().padStart(2, "0");
+  const month = ((sum * 3) % 12 + 1).toString().padStart(2, "0");
+  const year = 2026 + (sum % 2);
+  return `${day}/${month}/${year}`;
+}
+
 function nodeToDevice(node, floorName, indexInFloor) {
   const floor = getFloorLabel(floorName);
+  const id = makeDeviceId(node.name, floorName, indexInFloor);
 
   return {
-    id: makeDeviceId(node.name, floorName, indexInFloor),
+    id,
     type: getDeviceType(node.name),
     location: floor,
     status: "active",
     status_label: STATUS_LABEL.active,
-    maintenance_due: "--",
+    maintenance_due: generateMaintenanceDue(id),
     owner_name: "--",
     model: node.name,
     last_inspection: "--",

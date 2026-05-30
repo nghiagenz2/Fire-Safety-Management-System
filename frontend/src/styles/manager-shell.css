@@ -79,8 +79,20 @@
 .manager-device-filter {
 	padding: 16px;
 	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
+	grid-template-columns: repeat(4, minmax(0, 1fr));
 	gap: 16px;
+}
+
+@media (max-width: 1024px) {
+	.manager-device-filter {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: 640px) {
+	.manager-device-filter {
+		grid-template-columns: 1fr;
+	}
 }
 
 .manager-filter-item {
@@ -132,6 +144,7 @@
 	overflow-y: hidden;
 	background: #ffffff;
 	border-radius: 12px;
+	min-width: 0;
 }
 
 .manager-inline-error {
@@ -271,7 +284,7 @@
 }
 
 .manager-account-table {
-	min-width: 1320px;
+	min-width: 1000px;
 }
 
 .manager-account-role-cell {
@@ -309,19 +322,22 @@
 .manager-modal-backdrop {
 	position: fixed;
 	inset: 0;
-	background-color: rgba(15, 23, 42, 0.42);
+	background-color: rgba(15, 23, 42, 0.45);
+	backdrop-filter: blur(6px);
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: 14px;
+	padding: 20px;
 	z-index: 70;
 }
 
 .manager-account-modal {
-	width: min(100%, 760px);
-	padding: 18px;
-	display: grid;
-	gap: 14px;
+	width: min(100%, 680px);
+	padding: 32px;
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+	border-radius: 20px;
 }
 
 .manager-account-modal-head h2,
@@ -330,36 +346,71 @@
 }
 
 .manager-account-modal-head p {
-	margin-top: 4px;
+	margin-top: 6px;
 }
 
 .manager-account-form {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 12px;
+	gap: 20px 24px;
 }
 
 .manager-account-form-item {
-	display: grid;
-	gap: 6px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.manager-account-form-item span {
+	font-weight: 600;
+	color: #475569;
+}
+
+.manager-account-form-item--full {
+	grid-column: 1 / -1;
+}
+
+.manager-form-input {
+	width: 100%;
+	min-height: 44px;
+	border: 1px solid #cbd5e1;
+	border-radius: 12px;
+	background: #ffffff;
+	padding: 0 14px;
+	font-family: inherit;
+	color: var(--text-primary);
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.manager-form-input:focus {
+	outline: none;
+	border-color: var(--color-brand);
+	box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.16);
 }
 
 .manager-account-form-actions {
 	grid-column: 1 / -1;
 	display: flex;
 	justify-content: flex-end;
-	gap: 8px;
-	margin-top: 2px;
+	gap: 12px;
+	margin-top: 8px;
 }
 
 .manager-account-cancel-btn {
 	min-height: 40px;
-	border: 1px solid #d1d5db;
+	border: 1px solid #cbd5e1;
 	border-radius: 12px;
 	background: #ffffff;
-	color: #334155;
-	padding: 0 14px;
+	color: #475569;
+	padding: 0 24px;
+	font-weight: 500;
 	cursor: pointer;
+	transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.manager-account-cancel-btn:hover {
+	background-color: #f8fafc;
+	color: #0f172a;
 }
 
 .page-header-section {

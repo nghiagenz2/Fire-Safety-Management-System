@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Clock, MapPin, NotePencil, User, WarningCircle } from '@phosphor-icons/react';
+import axios from 'axios';
 import Header from '../../components/Header';
 import FireStaffBottomNav from '../../components/firestaff/FireStaffBottomNav.jsx';
 import {
@@ -37,7 +38,7 @@ function FireStaffIncidentPage() {
 				setIncidentUiMeta(uiMetaData);
 				setFallbackProcessingSteps(fallbackSteps);
 				const initialResolved = incidentData
-					.filter((incident) => uiMetaData[incident.id]?.isResolved)
+					.filter((incident) => incident.status === 'resolved' || uiMetaData[incident.id]?.isResolved)
 					.map((incident) => incident.id);
 				setResolvedIds(initialResolved);
 			})
@@ -56,17 +57,44 @@ function FireStaffIncidentPage() {
 		return incidents.map((incident) => {
 			const uiMeta = incidentUiMeta[incident.id] || {};
 			const isResolved = resolvedIds.includes(incident.id);
+			
+			let occurredAtStr = uiMeta.occurredAt || '—';
+			if (incident.occurredAt) {
+				const date = new Date(incident.occurredAt);
+				if (!isNaN(date.getTime())) {
+					const yyyy = date.getFullYear();
+					const mm = String(date.getMonth() + 1).padStart(2, '0');
+					const dd = String(date.getDate()).padStart(2, '0');
+					const hh = String(date.getHours()).padStart(2, '0');
+					const min = String(date.getMinutes()).padStart(2, '0');
+					occurredAtStr = `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+				}
+			}
+
+			let severityLabel = uiMeta.severityLabel || incident.severity || 'Trung bình';
+			let severityClass = uiMeta.severityClass || 'medium';
+			if (incident.severity === 'high') {
+				severityLabel = 'Cao';
+				severityClass = 'danger';
+			} else if (incident.severity === 'medium') {
+				severityLabel = 'Trung bình';
+				severityClass = 'medium';
+			} else if (incident.severity === 'low') {
+				severityLabel = 'Thấp';
+				severityClass = 'low';
+			}
+
 			return {
 				id: incident.id,
 				displayId: uiMeta.displayId || incident.id,
-				summary: uiMeta.summary || incident.title,
-				severityLabel: uiMeta.severityLabel || incident.severity,
-				severityClass: uiMeta.severityClass || 'medium',
-				occurredAt: uiMeta.occurredAt || incident.updatedAt,
-				locationLabel: uiMeta.locationLabel || incident.fireAt,
-				assignee: uiMeta.assignee || 'Chưa phân công',
-				sourceLabel: uiMeta.sourceLabel || '',
-				detail: incident.detail || 'Chưa có mô tả chi tiết.',
+				summary: uiMeta.summary || incident.incident_type || incident.title || 'Sự cố PCCC',
+				severityLabel,
+				severityClass,
+				occurredAt: occurredAtStr,
+				locationLabel: uiMeta.locationLabel || incident.floor || '—',
+				assignee: uiMeta.assignee || 'Đội trực ca PCCC',
+				sourceLabel: uiMeta.sourceLabel || 'Hệ thống báo cháy',
+				detail: incident.detail || 'Phát hiện sự cố cảnh báo từ cảm biến hệ thống.',
 				route: incident.route || [],
 				dangerZones: incident.dangerZones || [],
 				isResolved
@@ -82,7 +110,12 @@ function FireStaffIncidentPage() {
 		return incidentCards.find((incident) => incident.id === detailIncidentId) || null;
 	}, [detailIncidentId, incidentCards]);
 
-	function markIncidentResolved(incidentId) {
+	async function markIncidentResolved(incidentId) {
+		try {
+			await axios.put(`http://localhost:5000/api/incidents/${incidentId}`, { status: 'resolved' });
+		} catch (error) {
+			console.error("Lỗi khi cập nhật trạng thái sự cố:", error);
+		}
 		setResolvedIds((previous) => {
 			if (previous.includes(incidentId)) {
 				return previous;

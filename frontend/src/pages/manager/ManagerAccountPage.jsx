@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { LockKey, MagnifyingGlass, NotePencil, Plus, Trash } from '@phosphor-icons/react';
+import { MagnifyingGlass, NotePencil, Plus, Trash } from '@phosphor-icons/react';
 import Header from '../../components/Header';
 import ManagerBottomNav from '../../components/manager/ManagerBottomNav';
 import {
@@ -7,7 +7,6 @@ import {
   deleteManagerAccount,
   getManagerAccounts,
   getManagerRoles,
-  setManagerAccountLock,
   updateManagerAccount
 } from '../../services/managerAccountsApi';
 import '../../styles/manager-shell.css';
@@ -15,8 +14,7 @@ import '../../styles/manager-shell.css';
 const statusFilters = [
   { value: 'all', label: 'Tất cả' },
   { value: 'active', label: 'Đang hoạt động' },
-  { value: 'inactive', label: 'Ngưng hoạt động' },
-  { value: 'locked', label: 'Đã khóa' }
+  { value: 'inactive', label: 'Ngưng hoạt động' }
 ];
 
 const initialFormState = {
@@ -146,33 +144,6 @@ function ManagerAccountPage() {
     }
   };
 
-  const handleToggleLock = async (account) => {
-    const shouldLock = account.status !== 'locked';
-    const message = shouldLock
-      ? `Khóa tài khoản ${account.fullName}?`
-      : `Mở khóa tài khoản ${account.fullName}?`;
-
-    if (!window.confirm(message)) {
-      return;
-    }
-
-    try {
-      setErrorMessage('');
-      const updated = await setManagerAccountLock(account.id, shouldLock);
-
-      if (!updated) {
-        return;
-      }
-
-      setAccounts((prev) =>
-        prev.map((item) => (item.id === account.id ? updated : item))
-      );
-    } catch (error) {
-      console.error('Failed to toggle account lock:', error);
-      setErrorMessage(error.message || 'Không cập nhật được trạng thái tài khoản.');
-    }
-  };
-
   const handleDeleteAccount = async (account) => {
     if (!window.confirm(`Xóa tài khoản ${account.fullName}?`)) {
       return;
@@ -271,7 +242,6 @@ function ManagerAccountPage() {
                 <th>VAI TRÒ</th>
                 <th>TRẠNG THÁI</th>
                 <th>SỐ ĐIỆN THOẠI / EMAIL</th>
-                <th>LẦN HOẠT ĐỘNG GẦN NHẤT</th>
                 <th>THAO TÁC</th>
               </tr>
             </thead>
@@ -292,7 +262,6 @@ function ManagerAccountPage() {
                       <p className="manager-account-contact">{account.phone}</p>
                       <p className="manager-account-contact text-secondary">{account.email}</p>
                     </td>
-                    <td>{account.lastActiveAt}</td>
                     <td>
                       <div className="manager-device-actions manager-account-actions">
                         <button
@@ -302,14 +271,6 @@ function ManagerAccountPage() {
                           onClick={() => openEditForm(account)}
                         >
                           <NotePencil size={17} weight="regular" />
-                        </button>
-                        <button
-                          type="button"
-                          className="manager-action-btn danger"
-                          aria-label={`${account.status === 'locked' ? 'Mở khóa' : 'Khóa'} tài khoản ${account.fullName}`}
-                          onClick={() => handleToggleLock(account)}
-                        >
-                          <LockKey size={17} weight="regular" />
                         </button>
                         <button
                           type="button"
@@ -326,7 +287,7 @@ function ManagerAccountPage() {
 
               {!isLoading && filteredAccounts.length === 0 && (
                 <tr>
-                  <td className="manager-device-empty typo-body-lg" colSpan={7}>
+                  <td className="manager-device-empty typo-body-lg" colSpan={6}>
                     Không tìm thấy tài khoản phù hợp bộ lọc hiện tại.
                   </td>
                 </tr>
@@ -334,7 +295,7 @@ function ManagerAccountPage() {
 
               {isLoading && (
                 <tr>
-                  <td className="manager-device-empty typo-body-lg" colSpan={7}>
+                  <td className="manager-device-empty typo-body-lg" colSpan={6}>
                     Đang tải danh sách tài khoản...
                   </td>
                 </tr>
@@ -359,11 +320,11 @@ function ManagerAccountPage() {
             </header>
 
             <form className="manager-account-form" onSubmit={handleSubmitForm}>
-              <label className="manager-account-form-item" htmlFor="manager-account-fullname">
+              <label className="manager-account-form-item manager-account-form-item--full" htmlFor="manager-account-fullname">
                 <span className="typo-body-md">Họ tên</span>
                 <input
                   id="manager-account-fullname"
-                  className="manager-search-input typo-body-lg"
+                  className="manager-form-input typo-body-lg"
                   value={formState.fullName}
                   onChange={(event) => handleFormChange('fullName', event.target.value)}
                   required
@@ -374,7 +335,7 @@ function ManagerAccountPage() {
                 <span className="typo-body-md">Username</span>
                 <input
                   id="manager-account-username"
-                  className="manager-search-input typo-body-lg"
+                  className="manager-form-input typo-body-lg"
                   value={formState.username}
                   onChange={(event) => handleFormChange('username', event.target.value)}
                   required
@@ -386,7 +347,7 @@ function ManagerAccountPage() {
                 <input
                   id="manager-account-password"
                   type="password"
-                  className="manager-search-input typo-body-lg"
+                  className="manager-form-input typo-body-lg"
                   value={formState.password}
                   onChange={(event) => handleFormChange('password', event.target.value)}
                   required={!editingAccountId}
@@ -398,7 +359,7 @@ function ManagerAccountPage() {
                 <input
                   id="manager-account-email"
                   type="email"
-                  className="manager-search-input typo-body-lg"
+                  className="manager-form-input typo-body-lg"
                   value={formState.email}
                   onChange={(event) => handleFormChange('email', event.target.value)}
                   required
@@ -409,7 +370,7 @@ function ManagerAccountPage() {
                 <span className="typo-body-md">Số điện thoại</span>
                 <input
                   id="manager-account-phone"
-                  className="manager-search-input typo-body-lg"
+                  className="manager-form-input typo-body-lg"
                   value={formState.phone}
                   onChange={(event) => handleFormChange('phone', event.target.value)}
                   required

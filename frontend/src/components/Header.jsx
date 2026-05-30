@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Buildings, MagnifyingGlass, Bell, User } from '@phosphor-icons/react';
+import { getCurrentUser } from '../services/authApi';
 import '../styles/Header.css';
 
 function Header({ roleLabel = 'Cư dân', homePath = '/resident/home' }) {
@@ -9,6 +10,9 @@ function Header({ roleLabel = 'Cư dân', homePath = '/resident/home' }) {
       ? 'firestaff'
       : 'resident';
   const profilePath = `/${actor}/profile`;
+
+  const currentUser = getCurrentUser();
+  const displayName = currentUser?.fullName || 'Người dùng';
 
   return (
     <>
@@ -44,7 +48,7 @@ function Header({ roleLabel = 'Cư dân', homePath = '/resident/home' }) {
                 <User weight="fill" size={20} />
               </div>
               <div className="user-info">
-                <span className="user-name">Người dùng</span>
+                <span className="user-name">{displayName}</span>
                 <span className="user-role">{roleLabel}</span>
               </div>
             </Link>

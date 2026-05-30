@@ -28,6 +28,7 @@ function ManagerDevicePage() {
 	const [floors, setFloors] = useState([]);
 	const [search, setSearch] = useState('');
 	const [statusFilter, setStatusFilter] = useState('all');
+	const [typeFilter, setTypeFilter] = useState('all');
 	const [floorFilter, setFloorFilter] = useState('all');
 	const [isLoading, setIsLoading] = useState(true);
 	const [loadError, setLoadError] = useState('');
@@ -56,6 +57,11 @@ function ManagerDevicePage() {
 		loadData();
 	}, []);
 
+	const deviceTypes = useMemo(() => {
+		const types = new Set(devices.map((device) => device.type).filter(Boolean));
+		return ['all', ...Array.from(types)];
+	}, [devices]);
+
 	const filteredDevices = useMemo(() => {
 		const keyword = search.trim().toLowerCase();
 
@@ -64,6 +70,8 @@ function ManagerDevicePage() {
 				statusFilter === 'all' || device.status === statusFilter;
 			const isMatchingFloor =
 				floorFilter === 'all' || device.floor === floorFilter;
+			const isMatchingType =
+				typeFilter === 'all' || device.type === typeFilter;
 			const isMatchingKeyword =
 				keyword.length === 0 ||
 				device.id.toLowerCase().includes(keyword) ||
@@ -71,9 +79,9 @@ function ManagerDevicePage() {
 				device.location.toLowerCase().includes(keyword) ||
 				device.glbNodeName?.toLowerCase().includes(keyword);
 
-			return isMatchingStatus && isMatchingFloor && isMatchingKeyword;
+			return isMatchingStatus && isMatchingFloor && isMatchingType && isMatchingKeyword;
 		});
-	}, [devices, search, statusFilter, floorFilter]);
+	}, [devices, search, statusFilter, floorFilter, typeFilter]);
 
 	return (
 		<main className="manager-screen">
@@ -121,6 +129,23 @@ function ManagerDevicePage() {
 							{statusFilters.map((filter) => (
 								<option key={filter.value} value={filter.value}>
 									{filter.label}
+								</option>
+							))}
+						</select>
+					</div>
+
+					<div className="manager-filter-item">
+						<label className="typo-body-lg" htmlFor="manager-device-type">Loại thiết bị</label>
+						<select
+							id="manager-device-type"
+							className="manager-filter-select typo-body-lg"
+							value={typeFilter}
+							onChange={(event) => setTypeFilter(event.target.value)}
+						>
+							<option value="all">Tất cả loại</option>
+							{deviceTypes.filter(type => type !== 'all').map((type) => (
+								<option key={type} value={type}>
+									{type}
 								</option>
 							))}
 						</select>

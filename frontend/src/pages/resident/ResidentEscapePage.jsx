@@ -29,6 +29,8 @@ function ResidentEscapePage() {
     fetchEscapes();
   }, []);
 
+  const filteredEscapes = escapes.filter(e => e.floor === 'Tầng 3');
+
   return (
     <main className="resident-screen">
       <Header />
@@ -39,6 +41,7 @@ function ResidentEscapePage() {
             <p className="typo-label text-secondary resident-overline">Cư dân - Ứng phó khẩn cấp</p>
             <h1 className="typo-h1 resident-title">Lối thoát hiểm</h1>
           </div>
+          <span className="resident-floor-chip typo-label">Tầng hiện tại: 3</span>
         </header>
         {/* Khối Sơ đồ lối thoát (Placeholder) */}
         <section className="resident-list-section">
@@ -70,7 +73,7 @@ function ResidentEscapePage() {
             <div className="p-8 text-center typo-body-lg text-secondary">Đang tải dữ liệu lối thoát hiểm...</div>
           ) : (
             <ul className="resident-device-list">
-              {escapes.map((escape) => (
+              {filteredEscapes.map((escape) => (
                 <li key={escape.id} className="resident-panel resident-device-card">
                   <div className="resident-device-row">
                     <p className="typo-label text-secondary">{escape.id}</p>
@@ -92,7 +95,7 @@ function ResidentEscapePage() {
                 </li>
               ))}
 
-              {escapes.length === 0 && (
+              {filteredEscapes.length === 0 && (
                 <div className="p-8 text-center typo-body-lg text-secondary">
                   Không tìm thấy lối thoát hiểm nào.
                 </div>
