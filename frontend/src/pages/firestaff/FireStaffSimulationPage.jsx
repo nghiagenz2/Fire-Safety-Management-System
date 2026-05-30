@@ -1,95 +1,119 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Fire, Play } from '@phosphor-icons/react';
+import { Play } from '@phosphor-icons/react';
 import Header from '../../components/Header';
 import FireStaffBottomNav from '../../components/firestaff/FireStaffBottomNav.jsx';
-import { fetchFireStaffSimulationConfig } from '../../services/mockFireStaffSimulationApi.js';
+import BuildingModelViewer from '../../components/three/BuildingModelViewer.jsx';
+import '../../styles/ResidentHome.css';
 
 function FireStaffSimulationPage() {
-	const [simulationAreas, setSimulationAreas] = useState([]);
-	const [areaToPoint, setAreaToPoint] = useState({});
-	const [safeExits, setSafeExits] = useState([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const [selectedFloor, setSelectedFloor] = useState('Tầng 1');
+	const [selectedFloor, setSelectedFloor] = useState('Tầng trệt');
 	const [fireOrigin, setFireOrigin] = useState('');
 	const [fireLevel, setFireLevel] = useState('medium');
 	const [hasSimulated, setHasSimulated] = useState(false);
+	const [doorsByFloor, setDoorsByFloor] = useState({});
 
+	const floorsList = useMemo(() => {
+		return [
+			'Tầng trệt',
+			...Array.from({ length: 27 }, (_, i) => `Tầng ${i + 1}`)
+		];
+	}, []);
+
+	const selectedFloorId = useMemo(() => {
+		if (selectedFloor === 'Tầng trệt') return 'floor_tret';
+		const num = selectedFloor.replace('Tầng ', '');
+		return `floor_${num}`;
+	}, [selectedFloor]);
+
+	const currentFloorDoors = useMemo(() => {
+		return doorsByFloor[selectedFloorId] || [];
+	}, [doorsByFloor, selectedFloorId]);
+
+	// Fetch initial simulation state on mount
 	useEffect(() => {
 		let isMounted = true;
+		const fetchActiveSimulation = async () => {
+			try {
+				const response = await fetch('http://localhost:5000/api/incidents/simulation');
+				const result = await response.json();
+				if (isMounted && result.success && result.data && result.data.active) {
+					const { origin, level, floorId } = result.data;
 
-		fetchFireStaffSimulationConfig()
-			.then((config) => {
-				if (!isMounted) {
-					return;
+					// Map floorId back to floor display name
+					let floorName = 'Tầng trệt';
+					if (floorId !== 'floor_tret') {
+						const num = floorId.replace('floor_', '');
+						floorName = `Tầng ${num}`;
+					}
+
+					setSelectedFloor(floorName);
+					setFireOrigin(origin);
+					setFireLevel(level);
+					setHasSimulated(true);
 				}
-
-				setSimulationAreas(config.simulationAreas || []);
-				setAreaToPoint(config.areaToPoint || {});
-				setSafeExits(config.safeExits || []);
-				setFireOrigin(config.defaultFireOrigin || '');
-			})
-			.finally(() => {
-				if (isMounted) {
-					setIsLoading(false);
-				}
-			});
-
+			} catch (error) {
+				console.error('Failed to fetch initial simulation state:', error);
+			}
+		};
+		fetchActiveSimulation();
 		return () => {
 			isMounted = false;
 		};
 	}, []);
 
-	const spreadByLevel = {
-		low: 1,
-		medium: 2,
-		high: 3
-	};
-
-	const spreadLevel = spreadByLevel[fireLevel];
-
-	const riskAreas = useMemo(() => {
-		if (!hasSimulated || !fireOrigin || !areaToPoint[fireOrigin]) {
-			return [];
-		}
-
-		const [fireRow, fireCol] = areaToPoint[fireOrigin];
-		return simulationAreas.filter((area) => {
-			if (!areaToPoint[area]) {
-				return false;
+	// Auto-select first door when changing floor if current selected door is not on this floor
+	useEffect(() => {
+		if (currentFloorDoors.length > 0) {
+			const hasValidOrigin = currentFloorDoors.includes(fireOrigin);
+			if (!hasValidOrigin) {
+				setFireOrigin(currentFloorDoors[0]);
 			}
-
-			const [row, col] = areaToPoint[area];
-			const distance = Math.abs(row - fireRow) + Math.abs(col - fireCol);
-			return distance <= spreadLevel;
-		});
-	}, [hasSimulated, simulationAreas, areaToPoint, fireOrigin, spreadLevel]);
-
-	const optimalRoute = useMemo(() => {
-		if (!fireOrigin || !areaToPoint[fireOrigin] || safeExits.length === 0) {
-			return [];
 		}
+	}, [selectedFloorId, currentFloorDoors, fireOrigin]);
 
-		const [fireRow, fireCol] = areaToPoint[fireOrigin];
-		const chosenExit = safeExits
-			.map((exit) => {
-				if (!areaToPoint[exit]) {
-					return { exit, distance: Number.POSITIVE_INFINITY };
-				}
-
-				const [exitRow, exitCol] = areaToPoint[exit];
-				return { exit, distance: Math.abs(exitRow - fireRow) + Math.abs(exitCol - fireCol) };
-			})
-			.sort((a, b) => a.distance - b.distance)[0].exit;
-
-		return [fireOrigin, 'B5', 'A5', chosenExit].filter((value, index, arr) => arr.indexOf(value) === index);
-	}, [areaToPoint, fireOrigin, safeExits]);
-
-	function handleStartSimulation() {
+	async function handleStartSimulation() {
 		if (!fireOrigin) {
 			return;
 		}
+		try {
+			await fetch('http://localhost:5000/api/incidents/simulation', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					active: true,
+					origin: fireOrigin,
+					level: fireLevel,
+					floorId: selectedFloorId
+				})
+			});
+			setHasSimulated(true);
+		} catch (error) {
+			console.error('Failed to start simulation on backend:', error);
+			setHasSimulated(true); // Fallback to local only
+		}
+	}
 
-		setHasSimulated(true);
+	async function handleStopSimulation() {
+		try {
+			await fetch('http://localhost:5000/api/incidents/simulation', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					active: false,
+					origin: '',
+					level: 'medium',
+					floorId: 'floor_tret'
+				})
+			});
+			setHasSimulated(false);
+		} catch (error) {
+			console.error('Failed to stop simulation on backend:', error);
+			setHasSimulated(false);
+		}
 	}
 
 	return (
@@ -116,21 +140,29 @@ function FireStaffSimulationPage() {
 						value={selectedFloor}
 						onChange={(event) => setSelectedFloor(event.target.value)}
 					>
-						<option value="Tầng 1">Tầng 1</option>
-						<option value="Tầng 2">Tầng 2</option>
-						<option value="Tầng 3">Tầng 3</option>
+						{floorsList.map((floor) => (
+							<option key={floor} value={floor}>
+								{floor}
+							</option>
+						))}
 					</select>
 
 					<label className="typo-body-md firestaff-sim-label" htmlFor="simulation-fire-position">
 						Vị trí cháy
 					</label>
-					<input
+					<select
 						id="simulation-fire-position"
-						className="firestaff-sim-input typo-body-md"
+						className="firestaff-sim-select typo-body-md"
 						value={fireOrigin}
-						placeholder="Click vào bản đồ để chọn"
-						readOnly
-					/>
+						onChange={(event) => setFireOrigin(event.target.value)}
+					>
+						<option value="">-- Chọn vị trí cháy --</option>
+						{currentFloorDoors.map((doorName) => (
+							<option key={doorName} value={doorName}>
+								{doorName}
+							</option>
+						))}
+					</select>
 
 					<label className="typo-body-md firestaff-sim-label" htmlFor="simulation-fire-level">
 						Mức độ cháy
@@ -149,59 +181,45 @@ function FireStaffSimulationPage() {
 					<button
 						type="button"
 						className="firestaff-sim-start-btn typo-body-lg"
-						onClick={handleStartSimulation}
-						disabled={isLoading || !fireOrigin}
+						style={hasSimulated ? { backgroundColor: '#ef4444', borderColor: '#ef4444' } : {}}
+						onClick={hasSimulated ? handleStopSimulation : handleStartSimulation}
+						disabled={!fireOrigin}
 					>
-						<Play size={18} weight="bold" />
-						<span>Bắt đầu mô phỏng</span>
+						{hasSimulated ? (
+							<span>Dừng mô phỏng</span>
+						) : (
+							<>
+								<Play size={18} weight="bold" />
+								<span>Bắt đầu mô phỏng</span>
+							</>
+						)}
 					</button>
 				</article>
 
 				<article className="firestaff-panel firestaff-sim-map-card">
 					<h2 className="typo-h2 firestaff-section-title">Khu vực mô phỏng</h2>
 					<div className="firestaff-sim-map-surface" aria-label="Khu vực mô phỏng cháy">
-						{!hasSimulated && (
-							<div className="firestaff-sim-placeholder">
-								<Fire size={64} weight="duotone" />
-								<p className="typo-body-lg">Chọn các thông số và bắt đầu mô phỏng</p>
-								<p className="typo-body-md text-secondary">Vùng cháy và tuyến thoát sẽ được hiển thị ở đây</p>
-							</div>
-						)}
-
-						{hasSimulated && (
-							<div className="firestaff-sim-grid">
-								{simulationAreas.map((area) => {
-									const isOrigin = area === fireOrigin;
-									const isRisk = riskAreas.includes(area);
-									const isRoute = optimalRoute.includes(area);
-									const className = `firestaff-sim-cell typo-label ${
-										isOrigin ? 'fire' : isRisk ? 'danger' : isRoute ? 'route' : ''
-									}`;
-
-									return (
-										<button
-											type="button"
-											key={area}
-											className={className}
-											onClick={() => {
-												setFireOrigin(area);
-												setHasSimulated(false);
-											}}
-										>
-											{area}
-										</button>
-									);
-								})}
-							</div>
-						)}
+						<div style={{ width: '100%', height: '100%', minHeight: '400px', position: 'relative' }}>
+							<BuildingModelViewer
+								className="resident-home-model"
+								showHeader={false}
+								showCaption={false}
+								ariaLabel="Khu vực mô hình 3D"
+								highlightExits={true}
+								selectedFloorId={selectedFloorId}
+								onDoorsLoaded={setDoorsByFloor}
+								simulationActive={hasSimulated}
+								simulationOrigin={fireOrigin}
+								simulationLevel={fireLevel}
+							/>
+						</div>
 					</div>
 
 					<p className="typo-body-md text-secondary firestaff-sim-result">
 						{hasSimulated
-							? `Tuyến đề xuất: ${optimalRoute.join(' → ') || '--'}`
-							: 'Chọn vị trí cháy trên bản đồ sau khi chạy mô phỏng để điều chỉnh kịch bản.'}
+							? 'Hệ thống đang chạy kịch bản mô phỏng tình huống cháy.'
+							: 'Chọn tầng và vị trí cửa phòng để bắt đầu chạy mô phỏng.'}
 					</p>
-					{isLoading && <p className="typo-label text-secondary">Đang tải cấu hình mô phỏng...</p>}
 				</article>
 			</section>
 

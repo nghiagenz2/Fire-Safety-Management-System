@@ -6,7 +6,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 const MODEL_URL = '/model/BconCity.glb';
 const FLOOR_27_IDS = new Set(['Tang 27', 'floor_27']);
-const FLOOR_27_HIDDEN_MESH_NAMES = new Set(['San_Vien_Ngoai.049']);
+const FLOOR_27_HIDDEN_MESH_NAMES = new Set(['San_Vien_Ngoai.025']);
 const NORMALIZED_FLOOR_27_HIDDEN_MESH_NAMES = new Set(
 	[...FLOOR_27_HIDDEN_MESH_NAMES].map((name) => normalizeObjectName(name)),
 );
@@ -43,6 +43,25 @@ function loadCachedModel() {
 
 function normalizeObjectName(name = '') {
 	return name.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function getFloorIdFromName(name = '') {
+	const nameLower = name.toLowerCase().trim();
+	if (nameLower.includes('tret') || nameLower.includes('trệt')) {
+		return 'floor_tret';
+	}
+	const match = nameLower.match(/\d+/);
+	if (match) {
+		return `floor_${match[0]}`;
+	}
+	return nameLower;
+}
+
+function getFloorNameById(floorId) {
+	if (!floorId) return 'Tầng trệt';
+	if (floorId === 'floor_tret') return 'Tầng trệt';
+	const num = floorId.replace('floor_', '');
+	return `Tầng ${num}`;
 }
 
 function hasObjectNameInAncestors(object, normalizedTargetNames) {
@@ -94,6 +113,63 @@ function countMeshes(object) {
 	return meshCount;
 }
 
+function assignFloorIdToUnassignedMeshes(gltf) {
+	const floorAverages = {};
+	gltf.scene.traverse((child) => {
+		if (child.isMesh) {
+			const fId = child.userData.floorId;
+			if (fId) {
+				if (!child.geometry.boundingBox) {
+					child.geometry.computeBoundingBox();
+				}
+				const localCenter = new THREE.Vector3();
+				child.geometry.boundingBox.getCenter(localCenter);
+				child.updateMatrixWorld(true);
+				const worldCenter = localCenter.clone().applyMatrix4(child.matrixWorld);
+
+				if (!floorAverages[fId]) {
+					floorAverages[fId] = { sum: 0, count: 0 };
+				}
+				floorAverages[fId].sum += worldCenter.y;
+				floorAverages[fId].count += 1;
+			}
+		}
+	});
+
+	const floorHeights = [];
+	for (const fId in floorAverages) {
+		floorHeights.push({
+			id: fId,
+			avgY: floorAverages[fId].sum / floorAverages[fId].count
+		});
+	}
+
+	if (floorHeights.length > 0) {
+		gltf.scene.traverse((child) => {
+			if (child.isMesh && !child.userData.floorId) {
+				if (!child.geometry.boundingBox) {
+					child.geometry.computeBoundingBox();
+				}
+				const localCenter = new THREE.Vector3();
+				child.geometry.boundingBox.getCenter(localCenter);
+				child.updateMatrixWorld(true);
+				const worldCenter = localCenter.clone().applyMatrix4(child.matrixWorld);
+
+				let closestFloor = floorHeights[0].id;
+				let minDiff = Math.abs(worldCenter.y - floorHeights[0].avgY);
+				for (let i = 1; i < floorHeights.length; i++) {
+					const diff = Math.abs(worldCenter.y - floorHeights[i].avgY);
+					if (diff < minDiff) {
+						minDiff = diff;
+						closestFloor = floorHeights[i].id;
+					}
+				}
+				child.userData.floorId = closestFloor;
+			}
+		});
+	}
+}
+
 function getFloorNodes(gltf) {
 	// --- Cách 1: Thử quét theo cấu trúc Hierarchy từ Blender (khi bật "Full Collection Hierarchy") ---
 	let hierarchyFloors = [];
@@ -136,11 +212,13 @@ function getFloorNodes(gltf) {
 
 		// Gán floorId cho từng mesh con trực thuộc
 		hierarchyFloors.forEach((floor) => {
+			const normalizedId = getFloorIdFromName(floor.id);
 			floor.object.traverse((child) => {
 				if (child.isMesh) {
-					child.userData.floorId = floor.id;
+					child.userData.floorId = normalizedId;
 				}
 			});
+			floor.id = normalizedId;
 		});
 
 		// Đóng dấu null cho tất cả các mesh không thuộc tầng nào
@@ -150,6 +228,7 @@ function getFloorNodes(gltf) {
 			}
 		});
 
+		assignFloorIdToUnassignedMeshes(gltf);
 		return hierarchyFloors.map(({ id, name, type, meshCount }) => ({ id, name, type, meshCount }));
 	}
 
@@ -253,6 +332,7 @@ function getFloorNodes(gltf) {
 			});
 		}
 
+		assignFloorIdToUnassignedMeshes(gltf);
 		console.log('BconCity.glb loaded. Floors mapped:', floors);
 		return floors;
 	}
@@ -327,6 +407,7 @@ function getFloorNodes(gltf) {
 		});
 	});
 
+	assignFloorIdToUnassignedMeshes(gltf);
 	return clusteredFloors.map(({ id, name, type, meshCount }) => ({ id, name, type, meshCount }));
 }
 
@@ -386,7 +467,7 @@ function initGlobalWebGL() {
 	scene.background = new THREE.Color('#111827');
 
 	const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 2000);
-	
+
 	const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0));
 	renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -425,17 +506,118 @@ function BuildingModelViewer({
 	title = 'Mô hình 3D tòa nhà',
 	ariaLabel = 'Mô hình 3D tòa nhà',
 	highlightExits = false,
+	selectedFloorId: propSelectedFloorId,
+	onDoorsLoaded,
+
+	// New simulation props (prefixed to distinguish from resolved values)
+	simulationActive: propSimulationActive,
+	simulationOrigin: propSimulationOrigin,
+	simulationLevel: propSimulationLevel,
+	simulationElapsedMs: propSimulationElapsedMs,
 }) {
 	const canvasHostRef = useRef(null);
 	const gltfRef = useRef(null);
 	const exitDoorsRef = useRef([]);
 	const markersRef = useRef([]);
 	const highlightExitsRef = useRef(highlightExits);
+	const activeFiresRef = useRef([]);
+
+	const onDoorsLoadedRef = useRef(onDoorsLoaded);
+	useEffect(() => {
+		onDoorsLoadedRef.current = onDoorsLoaded;
+	}, [onDoorsLoaded]);
+
+	// Sync states for auto-synchronized simulation from backend
+	const [syncSimulationActive, setSyncSimulationActive] = useState(false);
+	const [syncSimulationOrigin, setSyncSimulationOrigin] = useState('');
+	const [syncSimulationLevel, setSyncSimulationLevel] = useState('medium');
+	const [syncSelectedFloorId, setSyncSelectedFloorId] = useState('floor_tret');
+	const [syncSimulationElapsedMs, setSyncSimulationElapsedMs] = useState(0);
+
+	const isSimulationControlled = propSimulationActive !== undefined;
+
+	const simulationActive = isSimulationControlled ? propSimulationActive : syncSimulationActive;
+	const simulationOrigin = isSimulationControlled ? propSimulationOrigin : syncSimulationOrigin;
+	const simulationLevel = isSimulationControlled ? propSimulationLevel : syncSimulationLevel;
+	const simulationElapsedMs = propSimulationElapsedMs !== undefined ? propSimulationElapsedMs : syncSimulationElapsedMs;
+	const simulationFloorId = isSimulationControlled ? propSelectedFloorId : syncSelectedFloorId;
+
 	const [isLoading, setIsLoading] = useState(!modelCache.gltf);
+	const [modelLoaded, setModelLoaded] = useState(false);
 	const [loadingError, setLoadingError] = useState('');
 	const [floorNodes, setFloorNodes] = useState(modelCache.floors || []);
-	const [selectedFloorId, setSelectedFloorId] = useState('all');
+	const [internalFloorId, setInternalFloorId] = useState('all');
+
+	const [showFireNotification, setShowFireNotification] = useState(false);
+	const prevSimulationActiveRef = useRef(false);
+
+	// Auto-navigate to fire floor once on simulation start, and manage warning notification
+	useEffect(() => {
+		if (simulationActive) {
+			setShowFireNotification(true);
+			if (!prevSimulationActiveRef.current && syncSelectedFloorId && !isSimulationControlled) {
+				setInternalFloorId(syncSelectedFloorId);
+			}
+		} else {
+			setShowFireNotification(false);
+		}
+		prevSimulationActiveRef.current = simulationActive;
+	}, [simulationActive, syncSelectedFloorId, isSimulationControlled]);
+
+	const selectedFloorId = propSelectedFloorId !== undefined
+		? propSelectedFloorId
+		: internalFloorId;
+
+	const setSelectedFloorId = propSelectedFloorId !== undefined ? () => { } : setInternalFloorId;
 	const [modelSummary, setModelSummary] = useState(modelCache.summary || { name: MODEL_NAME, meshCount: 0 });
+
+	// Sync simulation status in real-time using EventSource
+	useEffect(() => {
+		if (isSimulationControlled) {
+			return undefined;
+		}
+
+		let eventSource = null;
+		let reconnectTimeout = null;
+		
+		const connectSSE = () => {
+			eventSource = new EventSource('http://localhost:5000/api/incidents/simulation/stream');
+			
+			eventSource.onmessage = (event) => {
+				try {
+					const data = JSON.parse(event.data);
+					const { active, origin, level, floorId, elapsedMs } = data;
+					setSyncSimulationActive(active);
+					setSyncSimulationOrigin(origin);
+					setSyncSimulationLevel(level);
+					setSyncSelectedFloorId(floorId);
+					setSyncSimulationElapsedMs(elapsedMs || 0);
+				} catch (error) {
+					console.error('Error parsing SSE event data:', error);
+				}
+			};
+
+			eventSource.onerror = (error) => {
+				console.error('SSE connection error, attempting to reconnect...', error);
+				if (eventSource) {
+					eventSource.close();
+				}
+				// Reconnect after 3 seconds
+				reconnectTimeout = setTimeout(connectSSE, 3000);
+			};
+		};
+
+		connectSSE();
+
+		return () => {
+			if (eventSource) {
+				eventSource.close();
+			}
+			if (reconnectTimeout) {
+				clearTimeout(reconnectTimeout);
+			}
+		};
+	}, [isSimulationControlled]);
 
 	useEffect(() => {
 		highlightExitsRef.current = highlightExits;
@@ -467,7 +649,7 @@ function BuildingModelViewer({
 					}
 
 					const isExit = child.name && (
-						child.name.toLowerCase().includes('cua_thoat_hiem') || 
+						child.name.toLowerCase().includes('cua_thoat_hiem') ||
 						child.name.toLowerCase().includes('exit_door')
 					);
 
@@ -550,7 +732,7 @@ function BuildingModelViewer({
 	useEffect(() => {
 		if (gltfRef.current) {
 			applyFloorVisibility(gltfRef.current, selectedFloorId);
-			
+
 			// Toggle visibility of existing exit markers based on the selected floor
 			markersRef.current.forEach((marker) => {
 				if (marker.userData && marker.userData.floorId) {
@@ -562,9 +744,191 @@ function BuildingModelViewer({
 				}
 			});
 
+			// Toggle visibility of active fire meshes based on the selected floor
+			activeFiresRef.current.forEach((fire) => {
+				if (fire.mesh && fire.mesh.userData && fire.mesh.userData.floorId) {
+					if (selectedFloorId === 'all') {
+						fire.mesh.visible = true;
+					} else {
+						fire.mesh.visible = (fire.mesh.userData.floorId === selectedFloorId);
+					}
+				}
+			});
+
 			globalContext.needsRender = true;
 		}
 	}, [selectedFloorId]);
+
+	useEffect(() => {
+		let isMounted = true;
+		let spreadTimer = null;
+		const spawnedFires = [];
+
+		const cleanup = () => {
+			// Clear all fires from scene
+			spawnedFires.forEach((fire) => {
+				if (globalContext.scene) {
+					globalContext.scene.remove(fire.mesh);
+				}
+			});
+			spawnedFires.length = 0;
+			activeFiresRef.current = [];
+			if (globalContext) {
+				globalContext.needsRender = true;
+			}
+		};
+
+		if (!simulationActive || !simulationOrigin || !gltfRef.current) {
+			cleanup();
+			return undefined;
+		}
+
+		// Find the starting door object in the scene
+		const originMesh = gltfRef.current.scene.getObjectByName(simulationOrigin);
+		if (!originMesh) {
+			console.warn(`Simulation origin door "${simulationOrigin}" not found in model.`);
+			return undefined;
+		}
+
+		const originPos = new THREE.Vector3();
+		originMesh.getWorldPosition(originPos);
+
+		// Adjust Y coordinate so the fire sits nicely on the floor (not halfway through)
+		const box = new THREE.Box3().setFromObject(originMesh);
+		const minY = box.min.y;
+		originPos.y = minY; // Sit at the base of the door
+
+		const runSimulation = async () => {
+			try {
+				const fireModel = await sharedGltfLoader.loadAsync('/model/fire.glb');
+				if (!isMounted || !simulationActive) return;
+
+				// Compute the local bounding box of the fire model once to auto-correct any pivot offsets in fire.glb
+				const fireBox = new THREE.Box3().setFromObject(fireModel.scene);
+				const fireCenter = new THREE.Vector3();
+				fireBox.getCenter(fireCenter);
+
+				const spawnFireAt = (pos, doorName) => {
+					const fireClone = fireModel.scene.clone(true);
+
+					// Scale is always 7.0 regardless of fire level
+					const finalScale = 7.0;
+					fireClone.scale.set(finalScale, finalScale, finalScale);
+
+					// Align X/Z to the door's center, and Y to the door's base (sitting on floor)
+					const adjustedPos = new THREE.Vector3(
+						pos.x - fireCenter.x * finalScale,
+						pos.y - fireBox.min.y * finalScale,
+						pos.z - fireCenter.z * finalScale
+					);
+					fireClone.position.copy(adjustedPos);
+
+					// Tag the fire mesh with the floor it belongs to
+					fireClone.userData = { floorId: simulationFloorId };
+
+					// Set initial visibility based on whether its floor is selected
+					fireClone.visible = (selectedFloorId === 'all' || simulationFloorId === selectedFloorId);
+
+					// Store original scale for pulse animation in rendering loop
+					const baseScale = new THREE.Vector3(finalScale, finalScale, finalScale);
+
+					globalContext.scene.add(fireClone);
+
+					const fireObj = {
+						mesh: fireClone,
+						position: pos.clone(), // Use original door position for proximity calculations
+						doorName,
+						baseScale,
+					};
+					spawnedFires.push(fireObj);
+					activeFiresRef.current = [...spawnedFires];
+					globalContext.needsRender = true;
+				};
+
+				// 1. Spawn initial fire at origin
+				spawnFireAt(originPos, simulationOrigin);
+
+				// 2. Find other doors on the same floor for spreading
+				const otherDoors = [];
+				gltfRef.current.scene.traverse((child) => {
+					if (child.isMesh && child.name && child.name.toLowerCase().includes('cua_phong') && child.name !== simulationOrigin) {
+						const doorFloorId = child.userData.floorId || 'floor_tret';
+						if (doorFloorId === simulationFloorId) {
+							const pos = new THREE.Vector3();
+							child.getWorldPosition(pos);
+
+							const doorBox = new THREE.Box3().setFromObject(child);
+							pos.y = doorBox.min.y; // Sit on floor
+
+							const dist = originPos.distanceTo(pos);
+							otherDoors.push({ mesh: child, position: pos, name: child.name, distance: dist });
+						}
+					}
+				});
+
+				// Sort other doors by distance (closest first)
+				otherDoors.sort((a, b) => a.distance - b.distance);
+
+				// Determine maximum number of fires based on simulation level
+				let maxFires = 10; // default medium
+				if (simulationLevel === 'low') maxFires = 8;
+				if (simulationLevel === 'high') maxFires = 12;
+
+				// 3. Calculate how many fires to spawn immediately based on elapsed time
+				const firesAlreadySpread = Math.floor(simulationElapsedMs / 2500);
+
+				let doorIdx = 0;
+				// Spawn already spread fires immediately
+				while (doorIdx < firesAlreadySpread && doorIdx < otherDoors.length && spawnedFires.length < maxFires) {
+					const targetDoor = otherDoors[doorIdx];
+					spawnFireAt(targetDoor.position, targetDoor.name);
+					doorIdx++;
+				}
+
+				// If we still have more fires to spread, schedule them
+				if (doorIdx < otherDoors.length && spawnedFires.length < maxFires) {
+					const remainingTime = 2500 - (simulationElapsedMs % 2500);
+
+					const spawnNext = () => {
+						if (!isMounted || !simulationActive) return;
+						if (doorIdx >= otherDoors.length || spawnedFires.length >= maxFires) {
+							return;
+						}
+						const targetDoor = otherDoors[doorIdx];
+						spawnFireAt(targetDoor.position, targetDoor.name);
+						doorIdx++;
+
+						// Set up regular interval for subsequent fires
+						spreadTimer = window.setInterval(() => {
+							if (doorIdx >= otherDoors.length || spawnedFires.length >= maxFires) {
+								window.clearInterval(spreadTimer);
+								return;
+							}
+							const nextDoor = otherDoors[doorIdx];
+							spawnFireAt(nextDoor.position, nextDoor.name);
+							doorIdx++;
+						}, 2500);
+					};
+
+					spreadTimer = window.setTimeout(spawnNext, remainingTime);
+				}
+
+			} catch (err) {
+				console.error('Failed to load fire.glb model:', err);
+			}
+		};
+
+		runSimulation();
+
+		return () => {
+			isMounted = false;
+			if (spreadTimer) {
+				window.clearTimeout(spreadTimer);
+				window.clearInterval(spreadTimer);
+			}
+			cleanup();
+		};
+	}, [simulationActive, simulationOrigin, simulationLevel, simulationFloorId, modelLoaded, simulationElapsedMs]);
 
 	useEffect(() => {
 		const hostElement = canvasHostRef.current;
@@ -585,6 +949,23 @@ function BuildingModelViewer({
 		let disposed = false;
 		let resizeObserver = null;
 
+		const triggerDoorsLoaded = (gltfModel) => {
+			if (!onDoorsLoadedRef.current) return;
+			const doorsByFloor = {};
+			gltfModel.scene.traverse((child) => {
+				if (child.isMesh && child.name && child.name.toLowerCase().includes('cua_phong')) {
+					const floorId = child.userData.floorId || 'floor_tret';
+					if (!doorsByFloor[floorId]) {
+						doorsByFloor[floorId] = [];
+					}
+					if (!doorsByFloor[floorId].includes(child.name)) {
+						doorsByFloor[floorId].push(child.name);
+					}
+				}
+			});
+			onDoorsLoadedRef.current(doorsByFloor);
+		};
+
 		const handleResize = () => {
 			const { clientWidth, clientHeight } = hostElement;
 			if (!clientWidth || !clientHeight) {
@@ -597,30 +978,107 @@ function BuildingModelViewer({
 			ctx.needsRender = true;
 		};
 
+		let lastProximityCheckTime = 0;
+
 		const animate = () => {
 			const controlsUpdated = controls.update();
 			let needsPulseRender = false;
+			const now = Date.now();
+			const doProximityCheck = (now - lastProximityCheckTime > 250);
+			if (doProximityCheck) {
+				lastProximityCheckTime = now;
+			}
 
 			if (highlightExitsRef.current && exitDoorsRef.current.length > 0) {
-				const time = Date.now() * 0.004;
+				const time = now * 0.004;
 				const intensity = 0.3 + Math.abs(Math.sin(time)) * 0.8;
 				exitDoorsRef.current.forEach((door) => {
-					if (door.material && door.material.emissive) {
-						door.material.emissiveIntensity = intensity;
+					if (doProximityCheck) {
+						let isNearFire = false;
+						if (activeFiresRef.current && activeFiresRef.current.length > 0) {
+							if (!door.userData.worldPosition) {
+								door.userData.worldPosition = new THREE.Vector3();
+								door.getWorldPosition(door.userData.worldPosition);
+							}
+							const doorPos = door.userData.worldPosition;
+							const doorFloorId = door.userData.floorId || 'floor_tret';
+
+							for (const fire of activeFiresRef.current) {
+								const fireFloorId = (fire.mesh && fire.mesh.userData && fire.mesh.userData.floorId) || 'floor_tret';
+								if (doorFloorId !== fireFloorId) {
+									continue;
+								}
+
+								const dx = doorPos.x - fire.position.x;
+								const dz = doorPos.z - fire.position.z;
+								const dist2D = Math.sqrt(dx * dx + dz * dz);
+								if (dist2D < 6.0) {
+									isNearFire = true;
+									break;
+								}
+							}
+						}
+						door.userData.isNearFire = isNearFire;
+					}
+
+					if (door.material && door.material.isMaterial) {
+						if (door.userData.isNearFire) {
+							// Red warning color and higher pulsing intensity
+							door.material.color.setHex(0xef4444);
+							door.material.emissive.setHex(0xef4444);
+							door.material.emissiveIntensity = intensity * 1.5;
+						} else {
+							// Reset to normal green color
+							door.material.color.setHex(0x10b981);
+							door.material.emissive.setHex(0x059669);
+							door.material.emissiveIntensity = intensity;
+						}
 					}
 				});
 				needsPulseRender = true;
 			}
 
 			if (highlightExitsRef.current && markersRef.current.length > 0) {
-				const time = Date.now();
 				markersRef.current.forEach((marker) => {
+					if (!marker.visible) return;
 					if (marker.userData && marker.userData.originalY !== undefined) {
-						const bob = Math.sin(time * marker.userData.bobSpeed) * marker.userData.bobHeight;
+						const bob = Math.sin(now * marker.userData.bobSpeed) * marker.userData.bobHeight;
 						marker.position.y = marker.userData.originalY + bob;
 
-						const scale = 1.0 + Math.sin(time * 0.008) * 0.25;
-						marker.scale.set(scale, scale, scale);
+						if (doProximityCheck) {
+							let isNearFire = false;
+							if (activeFiresRef.current && activeFiresRef.current.length > 0) {
+								const markerFloorId = marker.userData.floorId || 'floor_tret';
+
+								for (const fire of activeFiresRef.current) {
+									const fireFloorId = (fire.mesh && fire.mesh.userData && fire.mesh.userData.floorId) || 'floor_tret';
+									if (markerFloorId !== fireFloorId) {
+										continue;
+									}
+
+									const dx = marker.position.x - fire.position.x;
+									const dz = marker.position.z - fire.position.z;
+									const dist2D = Math.sqrt(dx * dx + dz * dz);
+									if (dist2D < 6.0) {
+										isNearFire = true;
+										break;
+									}
+								}
+							}
+							marker.userData.isNearFire = isNearFire;
+						}
+
+						if (marker.userData.isNearFire) {
+							// Flash red and pulse faster
+							marker.material.color.setHex(0xef4444);
+							const scale = 1.0 + Math.sin(now * 0.016) * 0.35;
+							marker.scale.set(scale, scale, scale);
+						} else {
+							// Normal neon green
+							marker.material.color.setHex(0x00ff88);
+							const scale = 1.0 + Math.sin(now * 0.008) * 0.25;
+							marker.scale.set(scale, scale, scale);
+						}
 					}
 				});
 				needsPulseRender = true;
@@ -687,6 +1145,7 @@ function BuildingModelViewer({
 
 				setFloorNodes(modelCache.floors);
 				setModelSummary(modelCache.summary);
+				triggerDoorsLoaded(gltf);
 
 				handleResize();
 				ctx.needsRender = true;
@@ -695,6 +1154,7 @@ function BuildingModelViewer({
 				setLoadingError(`Không tải được model 3D. Kiểm tra lại file ${MODEL_NAME}.`);
 			} finally {
 				setIsLoading(false);
+				setModelLoaded(true);
 			}
 		};
 
@@ -703,9 +1163,11 @@ function BuildingModelViewer({
 			applyFloorVisibility(modelCache.gltf, selectedFloorId);
 			setFloorNodes(modelCache.floors);
 			setModelSummary(modelCache.summary);
+			triggerDoorsLoaded(modelCache.gltf);
 			handleResize();
 			ctx.needsRender = true;
 			setIsLoading(false);
+			setModelLoaded(true);
 		} else {
 			if (modelCache.gltf) {
 				loadModel();
@@ -789,7 +1251,34 @@ function BuildingModelViewer({
 				</div>
 			</div>
 
-			<div className="manager-model-stage">
+			<div className="manager-model-stage" style={{ position: 'relative' }}>
+				{showFireNotification && (
+					<div className="fire-notification-banner">
+						<div className="fire-notification-icon">⚠️</div>
+						<div className="fire-notification-content">
+							<span className="fire-notification-title">CẢNH BÁO PHÁT HIỆN SỰ CỐ CHÁY!</span>
+							<span className="fire-notification-desc">
+								Đang có giả lập cháy tại {getFloorNameById(syncSelectedFloorId)} (Khu vực: {syncSimulationOrigin})
+							</span>
+						</div>
+						<div className="fire-notification-actions">
+							{internalFloorId !== syncSelectedFloorId && (
+								<button 
+									className="fire-notification-btn view-btn"
+									onClick={() => setInternalFloorId(syncSelectedFloorId)}
+								>
+									Xem vị trí cháy
+								</button>
+							)}
+							<button 
+								className="fire-notification-btn close-btn"
+								onClick={() => setShowFireNotification(false)}
+							>
+								Đóng
+							</button>
+						</div>
+					</div>
+				)}
 				<div className="manager-model-canvas" ref={canvasHostRef}>
 					{isLoading ? <div className="manager-model-floating-status">Đang tải model 3D...</div> : null}
 					{loadingError ? <div className="manager-model-floating-status manager-model-floating-error">{loadingError}</div> : null}
