@@ -50,6 +50,8 @@ app.listen(env.PORT, async () => {
     console.log(
       `Database connected: ${env.DB_NAME} (PostGIS ${db.postgis_version})`,
     );
+    await ensureManagerTables();
+    console.log("Database tables verified/created.");
   } catch (error) {
     console.error("Database connection failed:", error.message);
   }
