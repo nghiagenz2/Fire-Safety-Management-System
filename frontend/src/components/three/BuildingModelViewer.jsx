@@ -424,9 +424,13 @@ function BuildingModelViewer({
 	showCaption = true,
 	title = 'Mô hình 3D tòa nhà',
 	ariaLabel = 'Mô hình 3D tòa nhà',
+	highlightExits = false,
 }) {
 	const canvasHostRef = useRef(null);
 	const gltfRef = useRef(null);
+	const exitDoorsRef = useRef([]);
+	const markersRef = useRef([]);
+	const highlightExitsRef = useRef(highlightExits);
 	const [isLoading, setIsLoading] = useState(!modelCache.gltf);
 	const [loadingError, setLoadingError] = useState('');
 	const [floorNodes, setFloorNodes] = useState(modelCache.floors || []);
@@ -434,8 +438,130 @@ function BuildingModelViewer({
 	const [modelSummary, setModelSummary] = useState(modelCache.summary || { name: MODEL_NAME, meshCount: 0 });
 
 	useEffect(() => {
+		highlightExitsRef.current = highlightExits;
+	}, [highlightExits]);
+
+	useEffect(() => {
+		if (gltfRef.current && globalContext.isModelInitialized) {
+			const maxAnisotropy = globalContext.renderer.capabilities.getMaxAnisotropy();
+			exitDoorsRef.current = [];
+
+			// Clean up previous markers
+			markersRef.current.forEach((marker) => {
+				globalContext.scene.remove(marker);
+				if (marker.geometry) marker.geometry.dispose();
+				if (marker.material) {
+					if (Array.isArray(marker.material)) {
+						marker.material.forEach((m) => m.dispose());
+					} else {
+						marker.material.dispose();
+					}
+				}
+			});
+			markersRef.current = [];
+
+			globalContext.modelRoot.traverse((child) => {
+				if (child.isMesh) {
+					if (!child.userData.originalMaterial) {
+						child.userData.originalMaterial = child.material;
+					}
+
+					const isExit = child.name && (
+						child.name.toLowerCase().includes('cua_thoat_hiem') || 
+						child.name.toLowerCase().includes('exit_door')
+					);
+
+					if (highlightExits && isExit) {
+						child.material = new THREE.MeshStandardMaterial({
+							color: 0x10b981, // Vibrant emerald green
+							emissive: 0x059669, // Emerald glow
+							emissiveIntensity: 1.0,
+							roughness: 0.2,
+							metalness: 0.8,
+						});
+						exitDoorsRef.current.push(child);
+
+						// Bounding box mapping for marker positioning
+						const box = new THREE.Box3().setFromObject(child);
+						const center = new THREE.Vector3();
+						box.getCenter(center);
+						const maxY = box.max.y;
+						const markerPosition = new THREE.Vector3(center.x, maxY + 1.2, center.z);
+
+						// Glowing sphere
+						const sphereGeom = new THREE.SphereGeometry(0.7, 16, 16);
+						const sphereMat = new THREE.MeshBasicMaterial({
+							color: 0x00ff88, // Neon green
+							transparent: true,
+							opacity: 0.85
+						});
+						const sphereMesh = new THREE.Mesh(sphereGeom, sphereMat);
+						sphereMesh.position.copy(markerPosition);
+						sphereMesh.userData = {
+							originalY: markerPosition.y,
+							bobSpeed: 0.003 + Math.random() * 0.002,
+							bobHeight: 0.35,
+							floorId: child.userData.floorId
+						};
+
+						// Glowing outer horizontal ring (Torus)
+						const ringGeom = new THREE.TorusGeometry(0.9, 0.08, 8, 24);
+						const ringMat = new THREE.MeshBasicMaterial({
+							color: 0x00ff88,
+							transparent: true,
+							opacity: 0.6
+						});
+						const ringMesh = new THREE.Mesh(ringGeom, ringMat);
+						ringMesh.rotation.x = Math.PI / 2;
+						ringMesh.position.copy(markerPosition);
+						ringMesh.userData = {
+							originalY: markerPosition.y,
+							bobSpeed: sphereMesh.userData.bobSpeed,
+							bobHeight: sphereMesh.userData.bobHeight,
+							floorId: child.userData.floorId
+						};
+
+						// Set initial visibility based on selectedFloorId
+						const markerVisible = (selectedFloorId === 'all' || child.userData.floorId === selectedFloorId);
+						sphereMesh.visible = markerVisible;
+						ringMesh.visible = markerVisible;
+
+						globalContext.scene.add(sphereMesh);
+						globalContext.scene.add(ringMesh);
+						markersRef.current.push(sphereMesh, ringMesh);
+					} else {
+						child.material = child.userData.originalMaterial;
+						if (child.material) {
+							const materials = Array.isArray(child.material) ? child.material : [child.material];
+							materials.forEach((mat) => {
+								if (mat.map) {
+									mat.map.anisotropy = maxAnisotropy;
+									mat.map.needsUpdate = true;
+								}
+							});
+						}
+					}
+				}
+			});
+			globalContext.needsRender = true;
+		}
+	}, [highlightExits, isLoading, selectedFloorId]);
+
+	useEffect(() => {
 		if (gltfRef.current) {
 			applyFloorVisibility(gltfRef.current, selectedFloorId);
+			
+			// Toggle visibility of existing exit markers based on the selected floor
+			markersRef.current.forEach((marker) => {
+				if (marker.userData && marker.userData.floorId) {
+					if (selectedFloorId === 'all') {
+						marker.visible = true;
+					} else {
+						marker.visible = (marker.userData.floorId === selectedFloorId);
+					}
+				}
+			});
+
 			globalContext.needsRender = true;
 		}
 	}, [selectedFloorId]);
@@ -473,7 +599,34 @@ function BuildingModelViewer({
 
 		const animate = () => {
 			const controlsUpdated = controls.update();
-			if (controlsUpdated || ctx.needsRender) {
+			let needsPulseRender = false;
+
+			if (highlightExitsRef.current && exitDoorsRef.current.length > 0) {
+				const time = Date.now() * 0.004;
+				const intensity = 0.3 + Math.abs(Math.sin(time)) * 0.8;
+				exitDoorsRef.current.forEach((door) => {
+					if (door.material && door.material.emissive) {
+						door.material.emissiveIntensity = intensity;
+					}
+				});
+				needsPulseRender = true;
+			}
+
+			if (highlightExitsRef.current && markersRef.current.length > 0) {
+				const time = Date.now();
+				markersRef.current.forEach((marker) => {
+					if (marker.userData && marker.userData.originalY !== undefined) {
+						const bob = Math.sin(time * marker.userData.bobSpeed) * marker.userData.bobHeight;
+						marker.position.y = marker.userData.originalY + bob;
+
+						const scale = 1.0 + Math.sin(time * 0.008) * 0.25;
+						marker.scale.set(scale, scale, scale);
+					}
+				});
+				needsPulseRender = true;
+			}
+
+			if (controlsUpdated || ctx.needsRender || needsPulseRender) {
 				renderer.render(scene, camera);
 				ctx.needsRender = false;
 			}
@@ -582,6 +735,20 @@ function BuildingModelViewer({
 			} else {
 				window.removeEventListener('resize', handleResize);
 			}
+
+			// Clean up exit markers
+			markersRef.current.forEach((marker) => {
+				scene.remove(marker);
+				if (marker.geometry) marker.geometry.dispose();
+				if (marker.material) {
+					if (Array.isArray(marker.material)) {
+						marker.material.forEach((m) => m.dispose());
+					} else {
+						marker.material.dispose();
+					}
+				}
+			});
+			markersRef.current = [];
 
 			if (renderer.domElement.parentNode === hostElement) {
 				hostElement.removeChild(renderer.domElement);

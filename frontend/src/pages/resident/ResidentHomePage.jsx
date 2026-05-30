@@ -51,6 +51,7 @@ function ResidentHomePage() {
           showHeader={false}
           showCaption={false}
           ariaLabel="Khu vực mô hình 3D"
+          highlightExits={true}
         />
 
         <section className="resident-stats-grid">
