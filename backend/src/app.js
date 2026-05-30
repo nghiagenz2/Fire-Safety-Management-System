@@ -2,6 +2,7 @@ const express = require('express');
 const env = require('./config/env');
 const routes = require('./routes');
 const { testConnection } = require('./config/db');
+const { ensureManagerTables } = require('./config/schema');
 const notFound = require('./middlewares/notFound.middleware');
 const errorHandler = require('./middlewares/errorHandler.middleware');
 
@@ -25,6 +26,8 @@ app.listen(env.PORT, async () => {
   try {
     const db = await testConnection();
     console.log(`Database connected: ${env.DB_NAME} (PostGIS ${db.postgis_version})`);
+    await ensureManagerTables();
+    console.log("Database tables verified/created.");
   } catch (error) {
     console.error("Database connection failed:", error.message);
   }
