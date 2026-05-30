@@ -17,6 +17,10 @@ import {
 } from 'recharts';
 import Header from "../../components/Header";
 import ManagerBottomNav from "../../components/manager/ManagerBottomNav";
+import {
+  getManagerDashboardData,
+  getManagerDashboardFilterOptions,
+} from "../../services/managerDashboardApi";
 import "../../styles/manager-shell.css";
 import "../../styles/manager-dashboard.css";
 
@@ -36,7 +40,7 @@ function getDeviceStatusClass(status) {
   if (status === 'warning') return 'status-warning';
   if (status === 'danger') return 'status-danger';
   if (status === 'resolved') return 'status-active'; // For incidents
-    return 'status-warning';
+  return 'status-warning';
 
   return 'status-inactive';
 }
@@ -204,16 +208,16 @@ function ManagerDashboardPage() {
                       margin={{ top: 20, right: 20, left: 0, bottom: 20 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                      <XAxis 
-                        dataKey="label" 
+                      <XAxis
+                        dataKey="label"
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fontSize: 12, fill: '#6b7280' }} 
+                        tick={{ fontSize: 12, fill: '#6b7280' }}
                         tickFormatter={(val) => {
                           if (typeof val !== 'string') return val;
                           const lower = val.toLowerCase();
                           if (lower.includes('trệt') || lower.includes('tret')) return 'Trệt';
-                          
+
                           const numMatch = val.match(/\d+/);
                           if (numMatch) {
                             const num = parseInt(numMatch[0], 10);
@@ -226,15 +230,15 @@ function ManagerDashboardPage() {
                       >
                         <Label value={charts.dynamicBarChart?.xAxisLabel} position="bottom" offset={0} style={{ fill: '#374151', fontSize: 14, fontWeight: 'bold' }} />
                       </XAxis>
-                      <YAxis 
+                      <YAxis
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fontSize: 12, fill: '#6b7280' }} 
+                        tick={{ fontSize: 12, fill: '#6b7280' }}
                         allowDecimals={false}
                       >
                         <Label value="Số lượng thiết bị" angle={-90} position="insideLeft" style={{ fill: '#374151', fontSize: 14, fontWeight: 'bold' }} />
                       </YAxis>
-                      <BarTooltip 
+                      <BarTooltip
                         cursor={{ fill: '#f3f4f6' }}
                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                       />
