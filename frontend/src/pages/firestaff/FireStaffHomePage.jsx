@@ -8,6 +8,7 @@ import { getDeviceStatistics } from '../../services/mockManagerDevicesApi.js';
 
 function FireStaffHomePage() {
 	const [deviceTotal, setDeviceTotal] = useState('--');
+	const [exitTotal, setExitTotal] = useState('--');
 
 	useEffect(() => {
 		let isMounted = true;
@@ -16,12 +17,14 @@ function FireStaffHomePage() {
 			.then((stats) => {
 				if (isMounted) {
 					setDeviceTotal(stats.total);
+					setExitTotal(stats.availableExits);
 				}
 			})
 			.catch((error) => {
 				console.error('Failed to load device statistics:', error);
 				if (isMounted) {
 					setDeviceTotal('--');
+					setExitTotal('--');
 				}
 			});
 
@@ -65,7 +68,7 @@ function FireStaffHomePage() {
 							<DoorOpen size={24} weight="fill" />
 						</div>
 						<div>
-							<p className="typo-h1 status-brand stat-card-value">12</p>
+							<p className="typo-h1 status-brand stat-card-value">{exitTotal}</p>
 							<p className="typo-body-md text-secondary stat-card-label">Lối thoát khả dụng</p>
 						</div>
 					</div>

@@ -5,9 +5,11 @@ const { testConnection } = require('./config/db');
 const { ensureManagerTables } = require('./config/schema');
 const notFound = require('./middlewares/notFound.middleware');
 const errorHandler = require('./middlewares/errorHandler.middleware');
+const cors = require('cors');
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 
 app.use('/api', routes);

@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { LockKey, MagnifyingGlass, NotePencil, Plus, Trash, UserSwitch } from '@phosphor-icons/react';
+import { LockKey, MagnifyingGlass, NotePencil, Plus, Trash } from '@phosphor-icons/react';
 import Header from '../../components/Header';
 import ManagerBottomNav from '../../components/manager/ManagerBottomNav';
 import {
-  assignManagerAccountRole,
   createManagerAccount,
   deleteManagerAccount,
   getManagerAccounts,
@@ -147,23 +146,6 @@ function ManagerAccountPage() {
     }
   };
 
-  const handleRoleChange = async (accountId, role) => {
-    try {
-      setErrorMessage('');
-      const updated = await assignManagerAccountRole(accountId, role);
-      if (!updated) {
-        return;
-      }
-
-      setAccounts((prev) =>
-        prev.map((account) => (account.id === accountId ? updated : account))
-      );
-    } catch (error) {
-      console.error('Failed to assign role:', error);
-      setErrorMessage(error.message || 'Không đổi được vai trò.');
-    }
-  };
-
   const handleToggleLock = async (account) => {
     const shouldLock = account.status !== 'locked';
     const message = shouldLock
@@ -300,26 +282,7 @@ function ManagerAccountPage() {
                   <tr key={account.id}>
                     <td className="manager-device-id">{account.fullName}</td>
                     <td>{account.username}</td>
-                    <td>
-                      <div className="manager-account-role-cell">
-                        <span>{account.roleLabel}</span>
-                        <button
-                          type="button"
-                          className="manager-account-role-btn"
-                          onClick={() => {
-                            const nextRoleIndex = roles.findIndex((item) => item.value === account.role) + 1;
-                            const nextRole = roles[nextRoleIndex % Math.max(roles.length, 1)]?.value;
-                            if (nextRole) {
-                              handleRoleChange(account.id, nextRole);
-                            }
-                          }}
-                          aria-label={`Gán vai trò cho ${account.fullName}`}
-                        >
-                          <UserSwitch size={16} weight="duotone" />
-                          <span>Đổi role</span>
-                        </button>
-                      </div>
-                    </td>
+                    <td>{account.roleLabel}</td>
                     <td>
                       <span className={`manager-device-status status-${account.status}`}>
                         {account.statusLabel}

@@ -73,7 +73,7 @@ async function getFloorsList(req, res, next) {
 
     const floorNames = floorsResult.rows.map((row) => row.floor);
 
-    // 2. Fetch device statistics grouped by floor
+    // 2. Fetch device statistics grouped by floor (excluding doors)
     const statsResult = await pool.query(`
       SELECT 
         floor,
@@ -84,7 +84,7 @@ async function getFloorsList(req, res, next) {
         SUM(CASE WHEN status = 'maintenance' THEN 1 ELSE 0 END) as maintenance_devices,
         SUM(CASE WHEN status = 'inspection' THEN 1 ELSE 0 END) as inspection_devices
       FROM devices
-      WHERE floor IS NOT NULL
+      WHERE floor IS NOT NULL AND type NOT IN ('Cửa phòng', 'Cửa thoát hiểm')
       GROUP BY floor
     `);
 
@@ -115,15 +115,38 @@ async function getFloorsList(req, res, next) {
       };
     });
 
+    // Fetch doors grouped by floor to combine into exits count
+    const doorsResult = await pool.query(`
+      SELECT 
+        floor,
+        COUNT(*) as total_doors,
+        SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as available_doors
+      FROM devices
+      WHERE floor IS NOT NULL AND type = 'Cửa thoát hiểm'
+      GROUP BY floor
+    `);
+
+    const doorsMap = {};
+    doorsResult.rows.forEach((row) => {
+      doorsMap[row.floor] = {
+        total: parseInt(row.total_doors, 10) || 0,
+        available: parseInt(row.available_doors, 10) || 0
+      };
+    });
+
     // 4. Construct response list
     const floorsList = floorNames.map((name) => {
       const stats = statsMap[name] || { total: 0, active: 0, warning: 0, danger: 0, maintenance: 0, inspection: 0 };
       const exits = exitsMap[name] || { total: 2, available: 2 }; // Default fallback to 2 available exits if none seeded
+      const doors = doorsMap[name] || { total: 0, available: 0 };
 
       const totalDevices = stats.total;
       const activeDevices = stats.active;
       const warningDevices = stats.warning + stats.inspection;
       const brokenDevices = stats.danger + stats.maintenance;
+
+      const totalExits = exits.total + doors.total;
+      const availableExits = exits.available + doors.available;
 
       // safetyScore computation: percentage of active devices
       let safetyScore = 100;
@@ -156,8 +179,8 @@ async function getFloorsList(req, res, next) {
           activeDevices,
           warningDevices,
           brokenDevices,
-          totalExits: exits.total,
-          availableExits: exits.available,
+          totalExits,
+          availableExits,
           hasHazardZone: hazardZones.length > 0,
           hazardZoneCount: hazardZones.length
         }
@@ -174,12 +197,12 @@ async function getFloorById(req, res, next) {
   try {
     const { floorId } = req.params;
 
-    // 1. Get devices on this floor
+    // 1. Get devices on this floor (excluding doors)
     const devicesResult = await pool.query(
       `
       SELECT *
       FROM devices
-      WHERE floor = $1
+      WHERE floor = $1 AND type NOT IN ('Cửa phòng', 'Cửa thoát hiểm')
       ORDER BY id ASC
       `,
       [floorId]
@@ -200,6 +223,40 @@ async function getFloorById(req, res, next) {
       condition: row.condition_note || '--',
       floor: row.floor
     }));
+
+    // 2. Get doors on this floor from devices table to treat as exits (only emergency exits)
+    const doorsResult = await pool.query(
+      `
+      SELECT *
+      FROM devices
+      WHERE floor = $1 AND type = 'Cửa thoát hiểm'
+      ORDER BY id ASC
+      `,
+      [floorId]
+    );
+
+    const doorExits = doorsResult.rows.map((row) => {
+      let status = 'inspection';
+      let statusLabel = 'Cần kiểm tra';
+      if (row.status === 'active') {
+        status = 'available';
+        statusLabel = 'Khả dụng';
+      } else if (row.status === 'danger' || row.status === 'maintenance') {
+        status = 'blocked';
+        statusLabel = 'Bị chặn';
+      }
+
+      return {
+        id: row.id,
+        floor: row.floor,
+        type: row.type,
+        location: row.location || 'Hành lang',
+        status: status,
+        statusLabel: statusLabel,
+        lastInspection: row.last_inspection || '28/05/2026',
+        note: row.status === 'danger' || row.status === 'maintenance' ? 'Lối thoát bị khóa hoặc có vật cản.' : null
+      };
+    });
 
     // Calculate dynamic stats
     const totalDevices = devices.length;
@@ -222,7 +279,7 @@ async function getFloorById(req, res, next) {
       safetyLevelLabel = 'Cảnh báo';
     }
 
-    // 2. Get exits
+    // 3. Get exits from exits table
     const exitsResult = await pool.query(
       `
       SELECT *
@@ -233,7 +290,7 @@ async function getFloorById(req, res, next) {
       [floorId]
     );
 
-    let exits = exitsResult.rows.map((row) => {
+    let dbExits = exitsResult.rows.map((row) => {
       let statusLabel = 'Khả dụng';
       if (row.status === 'blocked' || row.status === 'unavailable') statusLabel = 'Bị chặn';
       else if (row.status === 'inspection') statusLabel = 'Cần kiểm tra';
@@ -251,9 +308,9 @@ async function getFloorById(req, res, next) {
     });
 
     // If no exits are in the DB for this floor, generate 2 default available exits
-    if (exits.length === 0) {
+    if (dbExits.length === 0) {
       const code = floorId === 'Tầng trệt' ? 'TR' : `F${getFloorLevel(floorId)}`;
-      exits = [
+      dbExits = [
         {
           id: `EXIT-${code}-01`,
           floor: floorId,
@@ -276,6 +333,8 @@ async function getFloorById(req, res, next) {
         }
       ];
     }
+
+    const exits = [...dbExits, ...doorExits];
 
     const hazardZones = getFloorHazardZones(floorId);
 

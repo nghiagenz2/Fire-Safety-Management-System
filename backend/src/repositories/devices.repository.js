@@ -25,7 +25,7 @@ function toDevice(row) {
   };
 }
 
-async function findAll({ status, floor, search } = {}) {
+async function findAll({ status, floor, search, allTypes } = {}) {
   const values = [];
   const conditions = [];
 
@@ -47,6 +47,10 @@ async function findAll({ status, floor, search } = {}) {
       OR location ILIKE $${values.length}
       OR glb_node_name ILIKE $${values.length}
     )`);
+  }
+
+  if (allTypes !== 'true' && allTypes !== true) {
+    conditions.push("type IN ('Bình chữa cháy', 'Tủ chữa cháy')");
   }
 
   const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
