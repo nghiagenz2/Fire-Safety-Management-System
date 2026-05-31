@@ -1,25 +1,44 @@
-import { Link } from 'react-router-dom';
-import { Buildings, MagnifyingGlass, Bell, User } from '@phosphor-icons/react';
+import { Link, useNavigate } from 'react-router-dom';
+import { MagnifyingGlass, Bell, User, ShieldCheck, FireExtinguisher, HouseLine } from '@phosphor-icons/react';
 import { getCurrentUser } from '../services/authApi';
 import '../styles/Header.css';
 
 function Header({ roleLabel = 'Cư dân', homePath = '/resident/home' }) {
+  const navigate = useNavigate();
   const actor = homePath.startsWith('/manager')
     ? 'manager'
     : homePath.startsWith('/firestaff')
       ? 'firestaff'
       : 'resident';
   const profilePath = `/${actor}/profile`;
+  const RoleIcon = actor === 'manager' ? ShieldCheck : actor === 'firestaff' ? FireExtinguisher : HouseLine;
 
   const currentUser = getCurrentUser();
   const displayName = currentUser?.fullName || 'Người dùng';
+
+  function handleSearchSubmit(event) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const keyword = String(formData.get('headerSearch') || '').trim();
+    if (!keyword) return;
+
+    const normalized = keyword.toLowerCase();
+    const wantsEscape = normalized.includes('thoát') || normalized.includes('loi thoat') || normalized.includes('exit');
+    const targetPath = wantsEscape && actor === 'resident'
+      ? '/resident/escape'
+      : wantsEscape && actor === 'manager'
+        ? '/manager/escape'
+        : `/${actor}/devices`;
+
+    navigate(`${targetPath}?search=${encodeURIComponent(keyword)}`);
+  }
 
   return (
     <>
       <header className="app-header">
         <div className="header-left">
           <Link to={homePath} className="header-logo">
-            <Buildings weight="fill" size={32} className="logo-icon" />
+            <RoleIcon weight="fill" size={32} className="logo-icon" />
             <div className="logo-text-group">
               <h1 className="logo-title">PCCC 3D</h1>
               <p className="logo-subtitle">{roleLabel}</p>
@@ -28,17 +47,18 @@ function Header({ roleLabel = 'Cư dân', homePath = '/resident/home' }) {
         </div>
 
         <div className="header-right">
-          <div className="header-search">
+          <form className="header-search" onSubmit={handleSearchSubmit}>
             <MagnifyingGlass size={20} color="#9ca3af" />
             <input
+              name="headerSearch"
               type="text"
               placeholder="Tìm kiếm thiết bị, tầng..."
               className="search-input"
             />
-          </div>
+          </form>
 
           <div className="header-actions">
-            <button type="button" className="action-btn" aria-label="Thông báo">
+            <button type="button" className="action-btn" aria-label="Thông báo mô phỏng và cảnh báo">
               <Bell size={24} />
               <span className="notification-badge"></span>
             </button>

@@ -1,14 +1,18 @@
 import { useMemo, useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
 	MagnifyingGlass,
 	MapPin,
 	NotePencil,
 	Plus,
-	Trash
+	Trash,
+	X,
+	WarningCircle
 } from '@phosphor-icons/react';
 import Header from '../../components/Header';
 import ManagerBottomNav from '../../components/manager/ManagerBottomNav';
-import { getManagerDevices, getFloors } from '../../services/mockManagerDevicesApi';
+import ModelLocationModal from '../../components/three/ModelLocationModal.jsx';
+import { createDevice, deleteDevice, getDevices, getDeviceFloors, updateDevice } from '../../services/devicesApi.js';
 import '../../styles/manager-shell.css';
 
 const statusFilters = [
@@ -19,11 +23,30 @@ const statusFilters = [
 	{ value: 'maintenance', label: 'Bảo trì' }
 ];
 
+function createInitialForm(floor = 'Tầng 1') {
+	return {
+		type: 'Bình chữa cháy',
+		floor,
+		location: floor,
+		status: 'active',
+		maintenanceDue: '',
+		owner: '',
+		model: '',
+		lastInspection: '',
+		installDate: '',
+		quantity: 1,
+		condition: '',
+		glbNodeName: '',
+		glbNodeIndex: ''
+	};
+}
+
 function getDisplayLocation(device) {
 	return device.floor || device.location?.split(',')[0]?.trim() || '--';
 }
 
 function ManagerDevicePage() {
+	const [searchParams] = useSearchParams();
 	const [devices, setDevices] = useState([]);
 	const [floors, setFloors] = useState([]);
 	const [search, setSearch] = useState('');
@@ -32,15 +55,26 @@ function ManagerDevicePage() {
 	const [floorFilter, setFloorFilter] = useState('all');
 	const [isLoading, setIsLoading] = useState(true);
 	const [loadError, setLoadError] = useState('');
+	const [modelTarget, setModelTarget] = useState(null);
+	const [isFormOpen, setIsFormOpen] = useState(false);
+	const [editingDevice, setEditingDevice] = useState(null);
+	const [deletingDevice, setDeletingDevice] = useState(null);
+	const [formState, setFormState] = useState(createInitialForm());
+	const [formError, setFormError] = useState('');
+	const [isSaving, setIsSaving] = useState(false);
+	const [isDeleting, setIsDeleting] = useState(false);
 
 	useEffect(() => {
-		const loadData = async () => {
+		setSearch(searchParams.get('search') || '');
+	}, [searchParams]);
+
+	const loadData = async () => {
 			try {
 				setIsLoading(true);
 				setLoadError('');
 				const [devicesData, floorsData] = await Promise.all([
-					getManagerDevices(),
-					getFloors()
+					getDevices(),
+					getDeviceFloors()
 				]);
 				setDevices(devicesData);
 				setFloors(floorsData);
@@ -54,8 +88,86 @@ function ManagerDevicePage() {
 			}
 		};
 
+	useEffect(() => {
+
 		loadData();
 	}, []);
+
+	const updateField = (field, value) => {
+		setFormState((current) => ({
+			...current,
+			[field]: value,
+			...(field === 'floor' ? { location: value } : null)
+		}));
+	};
+
+	const openCreateForm = () => {
+		setEditingDevice(null);
+		setFormError('');
+		setFormState(createInitialForm(floors[0] || 'Tầng 1'));
+		setIsFormOpen(true);
+	};
+
+	const openEditForm = (device) => {
+		setEditingDevice(device);
+		setFormError('');
+		setFormState({
+			type: device.type || '',
+			floor: device.floor || floors[0] || 'Tầng 1',
+			location: device.location || device.floor || '',
+			status: device.status || 'active',
+			maintenanceDue: device.maintenanceDue || '',
+			owner: device.owner || '',
+			model: device.model || '',
+			lastInspection: device.lastInspection || '',
+			installDate: device.installDate || '',
+			quantity: device.quantity || 1,
+			condition: device.condition || '',
+			glbNodeName: device.glbNodeName || '',
+			glbNodeIndex: device.glbNodeIndex ?? ''
+		});
+		setIsFormOpen(true);
+	};
+
+	const handleSaveDevice = async (event) => {
+		event.preventDefault();
+		setFormError('');
+		try {
+			setIsSaving(true);
+			const payload = {
+				...formState,
+				quantity: Number(formState.quantity) || 1,
+				glbNodeIndex: formState.glbNodeIndex === '' ? null : Number(formState.glbNodeIndex)
+			};
+			if (editingDevice) {
+				await updateDevice(editingDevice.id, payload);
+			} else {
+				await createDevice(payload);
+			}
+			await loadData();
+			setIsFormOpen(false);
+			setEditingDevice(null);
+		} catch (error) {
+			console.error('Failed to save device:', error);
+			setFormError('Không thể lưu thiết bị. Vui lòng kiểm tra dữ liệu nhập.');
+		} finally {
+			setIsSaving(false);
+		}
+	};
+
+	const handleDeleteDevice = async () => {
+		if (!deletingDevice) return;
+		try {
+			setIsDeleting(true);
+			await deleteDevice(deletingDevice.id);
+			await loadData();
+			setDeletingDevice(null);
+		} catch (error) {
+			console.error('Failed to delete device:', error);
+		} finally {
+			setIsDeleting(false);
+		}
+	};
 
 	const deviceTypes = useMemo(() => {
 		const types = new Set(devices.map((device) => device.type).filter(Boolean));
@@ -97,7 +209,7 @@ function ManagerDevicePage() {
 						</p>
 					</div>
 
-					<button type="button" className="manager-device-add-btn typo-body-lg">
+					<button type="button" className="manager-device-add-btn typo-body-lg" onClick={openCreateForm}>
 						<Plus size={18} weight="bold" />
 						<span>Thêm mới</span>
 					</button>
@@ -214,13 +326,22 @@ function ManagerDevicePage() {
 									<td>{device.owner}</td>
 									<td>
 										<div className="manager-device-actions">
-											<button type="button" className="manager-action-btn edit" aria-label="Chỉnh sửa thiết bị">
+											<button type="button" className="manager-action-btn edit" aria-label="Chỉnh sửa thiết bị" onClick={() => openEditForm(device)}>
 												<NotePencil size={17} weight="regular" />
 											</button>
-											<button type="button" className="manager-action-btn location" aria-label="Xem vị trí thiết bị">
+											<button
+												type="button"
+												className="manager-action-btn location"
+												aria-label="Xem vị trí thiết bị"
+												onClick={() => {
+													if (device.glbNodeName) {
+														setModelTarget(device);
+													}
+												}}
+											>
 												<MapPin size={17} weight="regular" />
 											</button>
-											<button type="button" className="manager-action-btn delete" aria-label="Xóa thiết bị">
+											<button type="button" className="manager-action-btn delete" aria-label="Xóa thiết bị" onClick={() => setDeletingDevice(device)}>
 												<Trash size={17} weight="regular" />
 											</button>
 										</div>
@@ -240,6 +361,116 @@ function ManagerDevicePage() {
 				</section>
 			</section>
 			<ManagerBottomNav />
+
+			{isFormOpen && (
+				<div className="manager-modal-backdrop" onClick={() => setIsFormOpen(false)}>
+					<div className="manager-panel manager-escape-modal" onClick={(e) => e.stopPropagation()}>
+						<div className="manager-escape-modal-head">
+							<div>
+								<p className="typo-label text-secondary manager-escape-modal-overline">
+									{editingDevice ? `Chỉnh sửa - ${editingDevice.id}` : 'Tạo mới thiết bị'}
+								</p>
+								<h2 className="typo-h2 text-primary">Thông tin thiết bị PCCC</h2>
+							</div>
+							<button type="button" className="manager-escape-close-btn" onClick={() => setIsFormOpen(false)} aria-label="Đóng">
+								<X size={20} />
+							</button>
+						</div>
+
+						{formError ? <p className="manager-escape-error typo-body-md">{formError}</p> : null}
+
+						<form onSubmit={handleSaveDevice}>
+							<div className="manager-escape-form-grid">
+								<label className="manager-escape-field">
+									<span className="manager-escape-label typo-label">Loại</span>
+									<input className="manager-escape-input typo-body-lg" value={formState.type} onChange={(e) => updateField('type', e.target.value)} />
+								</label>
+								<label className="manager-escape-field">
+									<span className="manager-escape-label typo-label">Tầng</span>
+									<select className="manager-escape-input typo-body-lg" value={formState.floor} onChange={(e) => updateField('floor', e.target.value)}>
+										{(floors.length > 0 ? floors : ['Tầng 1']).map((floor) => <option key={floor} value={floor}>{floor}</option>)}
+									</select>
+								</label>
+								<label className="manager-escape-field">
+									<span className="manager-escape-label typo-label">Vị trí</span>
+									<input className="manager-escape-input typo-body-lg" value={formState.location} onChange={(e) => updateField('location', e.target.value)} />
+								</label>
+								<label className="manager-escape-field">
+									<span className="manager-escape-label typo-label">Trạng thái</span>
+									<select className="manager-escape-input typo-body-lg" value={formState.status} onChange={(e) => updateField('status', e.target.value)}>
+										<option value="active">Hoạt động tốt</option>
+										<option value="warning">Cảnh báo</option>
+										<option value="danger">Hỏng</option>
+										<option value="maintenance">Bảo trì</option>
+									</select>
+								</label>
+								<label className="manager-escape-field">
+									<span className="manager-escape-label typo-label">Hạn bảo trì</span>
+									<input className="manager-escape-input typo-body-lg" value={formState.maintenanceDue} onChange={(e) => updateField('maintenanceDue', e.target.value)} />
+								</label>
+								<label className="manager-escape-field">
+									<span className="manager-escape-label typo-label">Người phụ trách</span>
+									<input className="manager-escape-input typo-body-lg" value={formState.owner} onChange={(e) => updateField('owner', e.target.value)} />
+								</label>
+								<label className="manager-escape-field">
+									<span className="manager-escape-label typo-label">Model</span>
+									<input className="manager-escape-input typo-body-lg" value={formState.model} onChange={(e) => updateField('model', e.target.value)} />
+								</label>
+								<label className="manager-escape-field">
+									<span className="manager-escape-label typo-label">Kiểm tra gần nhất</span>
+									<input type="date" className="manager-escape-input typo-body-lg" value={formState.lastInspection} onChange={(e) => updateField('lastInspection', e.target.value)} />
+								</label>
+								<label className="manager-escape-field">
+									<span className="manager-escape-label typo-label">Node 3D</span>
+									<input className="manager-escape-input typo-body-lg" value={formState.glbNodeName} onChange={(e) => updateField('glbNodeName', e.target.value)} />
+								</label>
+								<label className="manager-escape-field">
+									<span className="manager-escape-label typo-label">Chỉ số node</span>
+									<input type="number" className="manager-escape-input typo-body-lg" value={formState.glbNodeIndex} onChange={(e) => updateField('glbNodeIndex', e.target.value)} />
+								</label>
+							</div>
+
+							<div className="manager-escape-form-actions">
+								<button type="button" className="manager-account-cancel-btn typo-body-lg" onClick={() => setIsFormOpen(false)} disabled={isSaving}>Hủy</button>
+								<button type="submit" className="manager-device-add-btn typo-body-lg" disabled={isSaving}>
+									{isSaving ? 'Đang lưu...' : editingDevice ? 'Cập nhật' : 'Lưu thiết bị'}
+								</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			)}
+
+			{deletingDevice && (
+				<div className="manager-modal-backdrop" onClick={() => setDeletingDevice(null)}>
+					<div className="manager-panel manager-escape-delete-modal" onClick={(e) => e.stopPropagation()}>
+						<div className="manager-escape-delete-icon">
+							<WarningCircle size={24} weight="fill" />
+						</div>
+						<h3 className="typo-h2 manager-escape-delete-title">Xác nhận xóa thiết bị</h3>
+						<p className="typo-body-md text-secondary manager-escape-delete-copy">
+							Bạn có chắc muốn xóa <strong>{deletingDevice.id}</strong>? Thao tác này không thể hoàn tác.
+						</p>
+						<div className="manager-escape-delete-actions">
+							<button type="button" className="manager-account-cancel-btn typo-body-lg" onClick={() => setDeletingDevice(null)} disabled={isDeleting}>Hủy</button>
+							<button type="button" className="manager-device-add-btn manager-escape-delete-confirm typo-body-lg" onClick={handleDeleteDevice} disabled={isDeleting}>
+								{isDeleting ? 'Đang xóa...' : 'Xóa thiết bị'}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+
+			<ModelLocationModal
+				isOpen={Boolean(modelTarget)}
+				title={modelTarget ? `Vị trí ${modelTarget.id}` : 'Vị trí thiết bị'}
+				subtitle={modelTarget ? `${modelTarget.type} - ${modelTarget.floor || modelTarget.location || ''}` : ''}
+				selectedFloorId={modelTarget ? (modelTarget.glbFloorId || modelTarget.floor || 'all') : 'all'}
+				focusedNodeName={modelTarget?.glbNodeName || ''}
+				highlightExits={true}
+				focusedNodeHighlightColor="#f97316"
+				onClose={() => setModelTarget(null)}
+			/>
 		</main>
 	);
 }

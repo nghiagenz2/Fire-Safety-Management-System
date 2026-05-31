@@ -9,17 +9,19 @@ import {
 	Door,
 	Fire,
 	MagnifyingGlass,
-	MapTrifold,
+	MapPin,
 	Shield,
 	ShieldWarning,
 	Sliders,
+	UserPlus,
 	Warning,
 	WarningDiamond,
-	Wrench,
+	FireExtinguisher,
 	X,
 } from '@phosphor-icons/react';
 import Header from '../../components/Header';
 import ManagerBottomNav from '../../components/manager/ManagerBottomNav';
+import ModelLocationModal from '../../components/three/ModelLocationModal.jsx';
 import {
 	getFloorList,
 	getFloorById,
@@ -91,7 +93,7 @@ function StatCard({ icon, value, label, colorClass }) {
 	);
 }
 
-function DeviceDetailModal({ device, onClose }) {
+function DeviceDetailModal({ device, onClose, onView3d }) {
 	if (!device) return null;
 	return (
 		<div
@@ -162,8 +164,8 @@ function DeviceDetailModal({ device, onClose }) {
 					<button type="button" className="floor-modal-action-btn floor-modal-action-btn--secondary typo-body-md" onClick={onClose}>
 						Đóng
 					</button>
-					<button type="button" className="floor-modal-action-btn floor-modal-action-btn--primary typo-body-md">
-						<MapTrifold size={16} />
+					<button type="button" className="floor-modal-action-btn floor-modal-action-btn--primary typo-body-md" onClick={onView3d}>
+						<MapPin size={16} />
 						Xem trên 3D
 					</button>
 				</div>
@@ -187,6 +189,7 @@ function ManagerFloorCheckPage() {
 	const [typeFilter, setTypeFilter] = useState('all');
 
 	const [selectedDevice, setSelectedDevice] = useState(null);
+	const [modelTarget, setModelTarget] = useState(null);
 	const [activeTab, setActiveTab] = useState('devices'); // 'devices' | 'exits' | 'hazards'
 
 	const [isLoadingList, setIsLoadingList] = useState(true);
@@ -290,6 +293,10 @@ function ManagerFloorCheckPage() {
 	};
 
 	const summary = floorDetail?.summary;
+	const handleViewDevice3d = (device) => {
+		setModelTarget(device);
+		setSelectedDevice(null);
+	};
 
 	return (
 		<main className="manager-screen">
@@ -311,13 +318,13 @@ function ManagerFloorCheckPage() {
 							</button>
 						)}
 						<p className="typo-label text-secondary manager-overline">
-							Ban quản lý · UC04
+							Ban quản lý - Kiểm tra tầng
 						</p>
 						<h1 className="typo-h1 manager-device-title">
 							Kiểm tra trạng thái an toàn theo tầng
 						</h1>
 						<p className="typo-body-lg text-secondary manager-device-subtitle floor-subtitle-ellipsis">
-							{buildingInfo?.name 
+							{buildingInfo?.name
 								? `${buildingInfo.name} — ${buildingInfo.address}`
 								: 'Bcon City — Đường Thống Nhất, Dĩ An, Bình Dương'}
 						</p>
@@ -339,6 +346,20 @@ function ManagerFloorCheckPage() {
 							) : (
 								<><ClipboardText size={17} /><span>Xuất báo cáo</span></>
 							)}
+						</button>
+
+						<button
+							id="btn-assign-floor-task"
+							type="button"
+							className="floor-export-btn floor-assign-btn typo-body-md"
+							disabled={!floorDetail}
+							onClick={() => {
+								if (!floorDetail) return;
+								window.alert(`Đã tạo đề xuất giao nhiệm vụ kiểm tra ${floorDetail.name}.`);
+							}}
+						>
+							<UserPlus size={17} />
+							<span>Giao nhiệm vụ</span>
 						</button>
 
 						<button
@@ -453,7 +474,7 @@ function ManagerFloorCheckPage() {
 
 									<div className="floor-stat-row">
 										<StatCard
-											icon={<Wrench size={18} weight="duotone" />}
+											icon={<FireExtinguisher size={18} weight="duotone" />}
 											value={summary?.activeDevices ?? '—'}
 											label="Thiết bị hoạt động"
 											colorClass="floor-stat-card--safe"
@@ -504,7 +525,7 @@ function ManagerFloorCheckPage() {
 										className={`floor-tab-btn typo-body-md ${activeTab === 'devices' ? 'is-active' : ''}`}
 										onClick={() => setActiveTab('devices')}
 									>
-										<Wrench size={16} />
+										<FireExtinguisher size={16} />
 										Thiết bị
 										<span className="floor-tab-count">{floorDetail.devices?.length ?? 0}</span>
 									</button>
@@ -644,8 +665,9 @@ function ManagerFloorCheckPage() {
 																		id={`btn-device-3d-${device.id}`}
 																		className="manager-action-btn location"
 																		aria-label={`Xem ${device.id} trên 3D`}
+																		onClick={() => handleViewDevice3d(device)}
 																	>
-																		<MapTrifold size={17} />
+																		<MapPin size={17} />
 																	</button>
 																</div>
 															</td>
@@ -753,8 +775,20 @@ function ManagerFloorCheckPage() {
 				<DeviceDetailModal
 					device={selectedDevice}
 					onClose={() => setSelectedDevice(null)}
+					onView3d={() => handleViewDevice3d(selectedDevice)}
 				/>
 			)}
+
+			<ModelLocationModal
+				isOpen={Boolean(modelTarget)}
+				title={modelTarget ? `Vị trí ${modelTarget.id}` : 'Vị trí thiết bị'}
+				subtitle={modelTarget ? `${modelTarget.type} - ${floorDetail?.name || modelTarget.floor || ''}` : ''}
+				selectedFloorId={floorDetail?.name || modelTarget?.floor || 'all'}
+				focusedNodeName={modelTarget?.glbNodeName || modelTarget?.model || ''}
+				highlightExits={true}
+				focusedNodeHighlightColor="#f97316"
+				onClose={() => setModelTarget(null)}
+			/>
 
 			<ManagerBottomNav />
 		</main>

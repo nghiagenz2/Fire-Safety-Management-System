@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { MagnifyingGlass, FunnelSimple } from '@phosphor-icons/react';
 import Header from '../../components/Header';
 import ManagerBottomNav from '../../components/manager/ManagerBottomNav';
 import ManagerIncidentCard from '../../components/manager/ManagerIncidentCard';
-import { getManagerIncidentsData } from '../../services/managerIncidentsApi';
+import { getManagerIncidentsData, getSimulationIncident } from '../../services/managerIncidentsApi';
 import './ManagerIncidentPage.css';
 
 function mapDBToUI(dbIncident) {
@@ -19,7 +18,10 @@ function mapDBToUI(dbIncident) {
     location: dbIncident.floor || "Không rõ vị trí",
     status: mappedStatus,
     severity: dbIncident.severity || "medium",
-    time: new Date(dbIncident.occurred_at).toLocaleString("vi-VN"),
+    startTime: dbIncident.startTime || new Date(dbIncident.occurredAt || dbIncident.occurred_at).toLocaleString("vi-VN"),
+    resourcesDeployed: dbIncident.resourcesDeployed || [],
+    affectedArea: dbIncident.affectedArea || [dbIncident.floor || "Không rõ vị trí"],
+    description: dbIncident.description || "Không có mô tả chi tiết.",
   };
 }
 
@@ -29,40 +31,6 @@ function ManagerIncidentPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedIncident, setSelectedIncident] = useState(null);
-
-  // Gọi API lấy dữ liệu sự cố thật từ Database
-  useEffect(() => {
-    const fetchIncidents = async () => {
-      try {
-        const response = await axios.get('http://localhost:5000/api/incidents');
-        const data = (response.data?.data || []).map(inc => {
-          let startTime = '—';
-          if (inc.occurredAt) {
-            const date = new Date(inc.occurredAt);
-            if (!isNaN(date.getTime())) {
-              startTime = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-            }
-          }
-          return {
-            ...inc,
-            // Chuyển đổi trạng thái từ Tiếng Anh (DB) sang Tiếng Việt (UI)
-            status: inc.status === 'resolved' ? 'Dập tắt' : (inc.status === 'open' || inc.status === 'in_progress' ? 'Đang xử lý' : 'Xác nhận sai'),
-            severity: inc.severity || 'Trung bình',
-            startTime: startTime,
-            resourcesDeployed: inc.resourcesDeployed || [],
-            affectedArea: inc.affectedArea || [inc.location || inc.floor || '—'],
-            description: inc.description || 'Không có mô tả chi tiết.'
-          };
-        });
-        setIncidents(data);
-      } catch (error) {
-        console.error("Lỗi API sự cố:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchIncidents();
-  }, []);
 
   const filteredIncidents = incidents.filter((incident) => {
     const searchLower = (searchTerm || '').toLowerCase();
@@ -91,10 +59,14 @@ function ManagerIncidentPage() {
     const fetchIncidents = async () => {
       try {
         setIsLoading(true);
-        // Gọi API lấy dữ liệu thật từ Backend PostGIS
-        const dbData = await getManagerIncidentsData();
-        // Map dữ liệu DB sang UI
-        setIncidents(dbData.map(mapDBToUI));
+        const [dbData, simulationIncident] = await Promise.all([
+          getManagerIncidentsData(),
+          getSimulationIncident()
+        ]);
+        setIncidents([
+          ...(simulationIncident ? [mapDBToUI(simulationIncident)] : []),
+          ...dbData.map(mapDBToUI)
+        ]);
       } catch (error) {
         console.error("Lỗi khi tải dữ liệu sự cố:", error);
       } finally {

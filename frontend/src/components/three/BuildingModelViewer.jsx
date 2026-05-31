@@ -6,7 +6,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 const MODEL_URL = '/model/BconCity.glb';
 const FLOOR_27_IDS = new Set(['Tang 27', 'floor_27']);
-const FLOOR_27_HIDDEN_MESH_NAMES = new Set(['San_Vien_Ngoai.025']);
+const FLOOR_27_HIDDEN_MESH_NAMES = new Set(['San_Vien_Ngoai.049']);
 const NORMALIZED_FLOOR_27_HIDDEN_MESH_NAMES = new Set(
 	[...FLOOR_27_HIDDEN_MESH_NAMES].map((name) => normalizeObjectName(name)),
 );
@@ -99,6 +99,25 @@ function isHiddenWhenViewingFloor27(object) {
 		object.userData.hideWhenViewingFloor27 === true ||
 		hasObjectNameInAncestors(object, NORMALIZED_FLOOR_27_HIDDEN_MESH_NAMES)
 	);
+}
+
+function matchFloorId(idA, idB) {
+	if (!idA || !idB) return false;
+	if (idA === idB) return true;
+
+	const normA = idA.toLowerCase().replace(/[^a-z0-9]/g, '');
+	const normB = idB.toLowerCase().replace(/[^a-z0-9]/g, '');
+	if (normA === normB) return true;
+
+	const getFloorNum = (value) => {
+		if (value.includes('tret') || value.includes('trt')) return 0;
+		const match = value.match(/\d+/);
+		return match ? parseInt(match[0], 10) : null;
+	};
+
+	const numA = getFloorNum(normA);
+	const numB = getFloorNum(normB);
+	return numA !== null && numB !== null && numA === numB;
 }
 
 function countMeshes(object) {
@@ -418,7 +437,7 @@ function applyFloorVisibility(gltf, selectedId) {
 				child.visible = true;
 				return;
 			}
-			const isSelectedFloorMesh = child.userData.floorId === selectedId;
+			const isSelectedFloorMesh = matchFloorId(child.userData.floorId, selectedId);
 			const isHiddenFloor27Ceiling =
 				isFloor27Selected(selectedId) &&
 				isHiddenWhenViewingFloor27(child);
@@ -428,16 +447,19 @@ function applyFloorVisibility(gltf, selectedId) {
 	});
 }
 
-function fitCameraToObject(camera, controls, object) {
+function fitCameraToObject(camera, controls, object, options = {}) {
 	const box = new THREE.Box3().setFromObject(object);
 	const size = box.getSize(new THREE.Vector3());
 	const center = box.getCenter(new THREE.Vector3());
 	const maxDim = Math.max(size.x, size.y, size.z);
 	const fov = (camera.fov * Math.PI) / 180;
 	let cameraDistance = Math.abs(maxDim / (2 * Math.tan(fov / 2)));
-	cameraDistance *= 1.35;
+	const distanceMultiplier = options.distanceMultiplier ?? 1.35;
+	const minDistance = options.minDistance ?? 0;
+	const elevationRatio = options.elevationRatio ?? 0.5;
+	cameraDistance = Math.max(cameraDistance * distanceMultiplier, minDistance);
 
-	camera.position.set(center.x + cameraDistance, center.y + cameraDistance * 0.5, center.z + cameraDistance);
+	camera.position.set(center.x + cameraDistance, center.y + cameraDistance * elevationRatio, center.z + cameraDistance);
 	camera.near = Math.max(maxDim / 100, 0.01);
 	camera.far = Math.max(maxDim * 100, 1000);
 	camera.updateProjectionMatrix();
@@ -464,7 +486,7 @@ function initGlobalWebGL() {
 	}
 
 	const scene = new THREE.Scene();
-	scene.background = new THREE.Color('#111827');
+	scene.background = new THREE.Color('#ffffff');
 
 	const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 2000);
 
@@ -474,12 +496,24 @@ function initGlobalWebGL() {
 	renderer.shadowMap.enabled = false;
 
 	const ambientLight = new THREE.AmbientLight(0xffffff, 1.25);
+	const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xc7d2fe, 1.15);
 	const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
 	directionalLight.position.set(12, 18, 10);
 	directionalLight.castShadow = false;
 	const rimLight = new THREE.DirectionalLight(0x93c5fd, 1.0);
 	rimLight.position.set(-10, 8, -12);
-	scene.add(ambientLight, directionalLight, rimLight);
+	const gridHelper = new THREE.GridHelper(240, 24, 0x94a3b8, 0xdbeafe);
+	if (Array.isArray(gridHelper.material)) {
+		gridHelper.material.forEach((mat) => {
+			mat.transparent = true;
+			mat.opacity = 0.35;
+		});
+	} else {
+		gridHelper.material.transparent = true;
+		gridHelper.material.opacity = 0.35;
+	}
+	gridHelper.position.y = -1;
+	scene.add(ambientLight, hemisphereLight, directionalLight, rimLight, gridHelper);
 
 	const controls = new OrbitControls(camera, renderer.domElement);
 	controls.enableDamping = true;
@@ -612,14 +646,19 @@ function BuildingModelViewer({
 	className = '',
 	showHeader = true,
 	showCaption = true,
+	showFloorSelector = true,
 	title = 'Mô hình 3D tòa nhà',
 	ariaLabel = 'Mô hình 3D tòa nhà',
 	highlightExits = false,
 	selectedFloorId: propSelectedFloorId,
 	defaultFloorId = 'all',
 	focusedNodeName = '',
+	focusedNodeHighlightColor = '#f97316',
+	highlightedEscape = null,
 	onDoorsLoaded,
 	onFloorChange,
+	onSelectedFloorChange,
+	onFloorsLoaded,
 
 	// New simulation props (prefixed to distinguish from resolved values)
 	simulationActive: propSimulationActive,
@@ -634,6 +673,8 @@ function BuildingModelViewer({
 	const highlightExitsRef = useRef(highlightExits);
 	const activeFiresRef = useRef([]);
 	const lastHandledFocusRef = useRef(null);
+	const selectedExitNodeNameRef = useRef('');
+	const focusedMaterialRestoreRef = useRef(new Map());
 
 	// Quản lý Mesh và hoạt ảnh đường thoát hiểm neon
 	const pathMeshesRef = useRef([]);
@@ -696,8 +737,31 @@ function BuildingModelViewer({
 		if (onFloorChange) {
 			onFloorChange(floorId);
 		}
+		if (onSelectedFloorChange) {
+			onSelectedFloorChange(floorId);
+		}
 	};
 	const [modelSummary, setModelSummary] = useState(modelCache.summary || { name: MODEL_NAME, meshCount: 0 });
+
+	const getFocusedNodeName = (focusedNode) => {
+		if (!focusedNode) return '';
+		return typeof focusedNode === 'object' ? (focusedNode.name || '') : focusedNode;
+	};
+	const clearFocusedMaterial = () => {
+		focusedMaterialRestoreRef.current.forEach((material, childMesh) => {
+			childMesh.material = material;
+		});
+		focusedMaterialRestoreRef.current.clear();
+		globalContext.needsRender = true;
+	};
+	const highlightedNodeName = highlightedEscape?.glbNodeName || '';
+	const resolvedFocusedNodeName = focusedNodeName || highlightedNodeName;
+
+	useEffect(() => {
+		if (typeof onFloorsLoaded === 'function' && floorNodes.length > 0) {
+			onFloorsLoaded(floorNodes);
+		}
+	}, [floorNodes, onFloorsLoaded]);
 
 	// Đồng bộ hóa các state sang Ref để giải quyết lỗi closure tĩnh (stale closure) trong vòng lặp WebGL (60 FPS)
 	const escapeStartDoorRef = useRef(escapeStartDoor);
@@ -989,7 +1053,7 @@ function BuildingModelViewer({
 		let reconnectTimeout = null;
 
 		const connectSSE = () => {
-			eventSource = new EventSource('http://localhost:5000/api/incidents/simulation/stream');
+			eventSource = new EventSource('/api/incidents/simulation/stream');
 
 			eventSource.onmessage = (event) => {
 				try {
@@ -1032,9 +1096,13 @@ function BuildingModelViewer({
 	}, [highlightExits]);
 
 	useEffect(() => {
-		if (!focusedNodeName) return;
-		const targetName = typeof focusedNodeName === 'object' ? focusedNodeName.name : focusedNodeName;
-		const targetTimestamp = typeof focusedNodeName === 'object' ? focusedNodeName.timestamp : null;
+		selectedExitNodeNameRef.current = getFocusedNodeName(resolvedFocusedNodeName);
+	}, [resolvedFocusedNodeName]);
+
+	useEffect(() => {
+		if (!resolvedFocusedNodeName) return;
+		const targetName = typeof resolvedFocusedNodeName === 'object' ? resolvedFocusedNodeName.name : resolvedFocusedNodeName;
+		const targetTimestamp = typeof resolvedFocusedNodeName === 'object' ? resolvedFocusedNodeName.timestamp : null;
 
 		if (targetTimestamp && lastHandledFocusRef.current === targetTimestamp) {
 			return;
@@ -1071,7 +1139,7 @@ function BuildingModelViewer({
 				}
 				console.log('[Debug3D] Target floorId resolved:', meshFloorId, 'current selectedFloorId:', selectedFloorId);
 
-				if (meshFloorId && meshFloorId !== selectedFloorId) {
+				if (meshFloorId && !matchFloorId(meshFloorId, selectedFloorId)) {
 					console.log('[Debug3D] Changing selected floor to:', meshFloorId);
 					setSelectedFloorId(meshFloorId);
 				} else {
@@ -1082,33 +1150,29 @@ function BuildingModelViewer({
 					setTimeout(() => {
 						if (globalContext.camera && globalContext.controls) {
 							console.log('[Debug3D] Fitting camera to object:', targetObject.name);
-							fitCameraToObject(globalContext.camera, globalContext.controls, targetObject);
+							fitCameraToObject(globalContext.camera, globalContext.controls, targetObject, {
+								distanceMultiplier: 4.2,
+								minDistance: 24,
+								elevationRatio: 0.35,
+							});
 							
-							// Premium gold flash effect to highlight the focused exit door
-							const flashMaterial = new THREE.MeshStandardMaterial({
-								color: 0xffb700, // Rich gold
-								emissive: 0xffaa00, // Gold glow
+							clearFocusedMaterial();
+							const focusColor = new THREE.Color(focusedNodeHighlightColor);
+							const focusMaterial = new THREE.MeshStandardMaterial({
+								color: focusColor,
+								emissive: focusColor,
 								emissiveIntensity: 2.0,
 								roughness: 0.1,
 								metalness: 0.9,
 							});
 
-							const originalMaterialsMap = new Map();
 							targetObject.traverse((child) => {
 								if (child.isMesh) {
-									originalMaterialsMap.set(child, child.material);
-									child.material = flashMaterial;
+									focusedMaterialRestoreRef.current.set(child, child.material);
+									child.material = focusMaterial;
 								}
 							});
 							globalContext.needsRender = true;
-
-							// Restore original materials after 2.5 seconds
-							setTimeout(() => {
-								originalMaterialsMap.forEach((material, childMesh) => {
-									childMesh.material = material;
-								});
-								globalContext.needsRender = true;
-							}, 2500);
 						} else {
 							console.warn('[Debug3D] globalContext camera or controls is missing!');
 						}
@@ -1116,7 +1180,7 @@ function BuildingModelViewer({
 				}
 			}
 		}
-	}, [focusedNodeName, modelLoaded, selectedFloorId]);
+	}, [resolvedFocusedNodeName, modelLoaded, selectedFloorId, focusedNodeHighlightColor]);
 
 	useEffect(() => {
 		if (gltfRef.current && globalContext.isModelInitialized) {
@@ -1178,7 +1242,8 @@ function BuildingModelViewer({
 							originalY: markerPosition.y,
 							bobSpeed: 0.003 + Math.random() * 0.002,
 							bobHeight: 0.35,
-							floorId: child.userData.floorId
+							floorId: child.userData.floorId,
+							doorName: child.name,
 						};
 
 						// Glowing outer horizontal ring (Torus)
@@ -1195,11 +1260,12 @@ function BuildingModelViewer({
 							originalY: markerPosition.y,
 							bobSpeed: sphereMesh.userData.bobSpeed,
 							bobHeight: sphereMesh.userData.bobHeight,
-							floorId: child.userData.floorId
+							floorId: child.userData.floorId,
+							doorName: child.name,
 						};
 
 						// Set initial visibility based on selectedFloorId
-						const markerVisible = (selectedFloorId === 'all' || child.userData.floorId === selectedFloorId);
+						const markerVisible = (selectedFloorId === 'all' || matchFloorId(child.userData.floorId, selectedFloorId));
 						sphereMesh.visible = markerVisible;
 						ringMesh.visible = markerVisible;
 
@@ -1234,7 +1300,7 @@ function BuildingModelViewer({
 					if (selectedFloorId === 'all') {
 						marker.visible = true;
 					} else {
-						marker.visible = (marker.userData.floorId === selectedFloorId);
+						marker.visible = matchFloorId(marker.userData.floorId, selectedFloorId);
 					}
 				}
 			});
@@ -1245,7 +1311,7 @@ function BuildingModelViewer({
 					if (selectedFloorId === 'all') {
 						fire.mesh.visible = true;
 					} else {
-						fire.mesh.visible = (fire.mesh.userData.floorId === selectedFloorId);
+						fire.mesh.visible = matchFloorId(fire.mesh.userData.floorId, selectedFloorId);
 					}
 				}
 			});
@@ -1520,7 +1586,9 @@ function BuildingModelViewer({
 			if (highlightExitsRef.current && exitDoorsRef.current.length > 0) {
 				const time = now * 0.004;
 				const intensity = 0.3 + Math.abs(Math.sin(time)) * 0.8;
+				const selectedExitName = normalizeObjectName(selectedExitNodeNameRef.current);
 				exitDoorsRef.current.forEach((door) => {
+					const isSelectedExit = selectedExitName && normalizeObjectName(door.name) === selectedExitName;
 					if (doProximityCheck) {
 						let isNearFire = false;
 						if (activeFiresRef.current && activeFiresRef.current.length > 0) {
@@ -1550,7 +1618,11 @@ function BuildingModelViewer({
 					}
 
 					if (door.material && door.material.isMaterial) {
-						if (door.userData.isNearFire) {
+						if (isSelectedExit) {
+							door.material.color.setHex(0x3b82f6);
+							door.material.emissive.setHex(0x1d4ed8);
+							door.material.emissiveIntensity = intensity * 1.2;
+						} else if (door.userData.isNearFire) {
 							// Red warning color and higher pulsing intensity
 							door.material.color.setHex(0xef4444);
 							door.material.emissive.setHex(0xef4444);
@@ -1567,8 +1639,11 @@ function BuildingModelViewer({
 			}
 
 			if (highlightExitsRef.current && markersRef.current.length > 0) {
+				const selectedExitName = normalizeObjectName(selectedExitNodeNameRef.current);
 				markersRef.current.forEach((marker) => {
 					if (!marker.visible) return;
+					const markerDoorName = marker.userData?.doorName || '';
+					const isSelectedExit = selectedExitName && normalizeObjectName(markerDoorName) === selectedExitName;
 					if (marker.userData && marker.userData.originalY !== undefined) {
 						const bob = Math.sin(now * marker.userData.bobSpeed) * marker.userData.bobHeight;
 						marker.position.y = marker.userData.originalY + bob;
@@ -1596,7 +1671,11 @@ function BuildingModelViewer({
 							marker.userData.isNearFire = isNearFire;
 						}
 
-						if (marker.userData.isNearFire) {
+						if (isSelectedExit) {
+							marker.material.color.setHex(0x3b82f6);
+							const scale = 1.1 + Math.sin(now * 0.012) * 0.22;
+							marker.scale.set(scale, scale, scale);
+						} else if (marker.userData.isNearFire) {
 							// Flash red and pulse faster
 							marker.material.color.setHex(0xef4444);
 							const scale = 1.0 + Math.sin(now * 0.016) * 0.35;
@@ -1773,6 +1852,8 @@ function BuildingModelViewer({
 			});
 			markersRef.current = [];
 
+			clearFocusedMaterial();
+
 			// Clean up escape path meshes
 			pathMeshesRef.current.forEach((mesh) => {
 				scene.remove(mesh);
@@ -1809,25 +1890,26 @@ function BuildingModelViewer({
 				</div>
 			) : null}
 
-			<div className="manager-model-controls" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
-				<div className="manager-floor-dropdown-wrap">
-					<label htmlFor="floor-select" className="typo-label text-secondary">Chọn tầng hiển thị</label>
-					<select
-						id="floor-select"
-						className="manager-filter-select manager-floor-select"
-						value={selectedFloorId}
-						onChange={(e) => setSelectedFloorId(e.target.value)}
-					>
-						<option value="all">Tất cả tầng (Hiển thị toàn bộ)</option>
-						{floorNodes.map((floorNode) => (
-							<option key={floorNode.id} value={floorNode.id}>
-								{floorNode.name}
-							</option>
-						))}
-					</select>
+			{showFloorSelector ? (
+				<div className="manager-model-controls" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+					<div className="manager-floor-dropdown-wrap">
+						<label htmlFor="floor-select" className="typo-label text-secondary">Chọn tầng hiển thị</label>
+						<select
+							id="floor-select"
+							className="manager-filter-select manager-floor-select"
+							value={selectedFloorId === 'all' ? 'all' : (floorNodes.find((floorNode) => matchFloorId(floorNode.id, selectedFloorId))?.id || selectedFloorId)}
+							onChange={(e) => setSelectedFloorId(e.target.value)}
+						>
+							<option value="all">Tất cả tầng (Hiển thị toàn bộ)</option>
+							{floorNodes.map((floorNode) => (
+								<option key={floorNode.id} value={floorNode.id}>
+									{floorNode.name}
+								</option>
+							))}
+						</select>
+					</div>
 				</div>
-
-			</div>
+			) : null}
 
 			<div className="manager-model-stage" style={{ position: 'relative' }}>
 				{showFireNotification && (

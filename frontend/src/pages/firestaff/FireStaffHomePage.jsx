@@ -4,7 +4,7 @@ import FireStaffBottomNav from '../../components/firestaff/FireStaffBottomNav';
 import BuildingModelViewer from '../../components/three/BuildingModelViewer.jsx';
 import { Cube, DoorOpen, CheckCircle } from '@phosphor-icons/react';
 import '../../styles/ResidentHome.css';
-import { getDeviceStatistics } from '../../services/mockManagerDevicesApi.js';
+import { getDeviceStatistics } from '../../services/devicesApi.js';
 
 function FireStaffHomePage() {
 	const [deviceTotal, setDeviceTotal] = useState('--');

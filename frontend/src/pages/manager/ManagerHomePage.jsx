@@ -4,7 +4,7 @@ import ManagerBottomNav from '../../components/manager/ManagerBottomNav';
 import { Cube, DoorOpen, CheckCircle } from '@phosphor-icons/react';
 import '../../styles/ResidentHome.css';
 import BuildingModelViewer from '../../components/three/BuildingModelViewer.jsx';
-import { getDeviceStatistics } from '../../services/mockManagerDevicesApi.js';
+import { getDeviceStatistics } from '../../services/devicesApi.js';
 
 function ManagerHomePage() {
 	const [deviceTotal, setDeviceTotal] = useState('--');

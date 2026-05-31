@@ -1,15 +1,24 @@
 import { useMemo, useState, useEffect } from 'react';
-import axios from 'axios';
+import { useSearchParams } from 'react-router-dom';
 import {
 	MagnifyingGlass,
 	MapPin,
 	NotePencil,
 	Plus,
-	Trash
+	Trash,
+	X,
+	WarningCircle
 } from '@phosphor-icons/react';
 import Header from '../../components/Header';
 import ManagerBottomNav from '../../components/manager/ManagerBottomNav';
-import BuildingModelViewer from '../../components/three/BuildingModelViewer.jsx';
+import ModelLocationModal from '../../components/three/ModelLocationModal.jsx';
+import {
+	createEscapeRoute,
+	deleteEscapeRoute,
+	getEscapeFloors,
+	getEscapeRoutes,
+	updateEscapeRoute
+} from '../../services/escapeRoutesApi.js';
 import '../../styles/manager-shell.css';
 import '../../styles/ResidentEscape.css';
 
@@ -40,61 +49,148 @@ function labelToModelFloorId(label) {
   return label;
 }
 
+function toStatusLabel(status) {
+	if (status === 'available') return 'Khả dụng';
+	if (status === 'inspection') return 'Cần kiểm tra';
+	if (status === 'unavailable') return 'Không khả dụng';
+	return 'Chưa xác định';
+}
+
+function createInitialForm(floor = 'Tầng 1') {
+	return {
+		type: 'Cửa thoát hiểm',
+		floor,
+		room: `Hành lang thoát hiểm ${floor}`,
+		connectedTo: '',
+		status: 'available',
+		width: '1.2 m',
+		clearHeight: '2.1 m',
+		owner: '',
+		lastInspection: '',
+		glbNodeName: '',
+		glbNodeIndex: ''
+	};
+}
+
 function ManagerEscapePage() {
+	const [searchParams] = useSearchParams();
 	const [escapes, setEscapes] = useState([]);
 	const [floors, setFloors] = useState([]);
 	const [search, setSearch] = useState('');
 	const [statusFilter, setStatusFilter] = useState('all');
 	const [floorFilter, setFloorFilter] = useState('all');
 	const [isLoading, setIsLoading] = useState(true);
-	const [focusedNode, setFocusedNode] = useState(null);
+	const [modelTarget, setModelTarget] = useState(null);
+	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [editingEscape, setEditingEscape] = useState(null);
-	const [newStatus, setNewStatus] = useState('');
+	const [formState, setFormState] = useState(createInitialForm());
 	const [isSaving, setIsSaving] = useState(false);
+	const [deletingEscape, setDeletingEscape] = useState(null);
+	const [isDeleting, setIsDeleting] = useState(false);
+	const [formError, setFormError] = useState('');
 
-	const handleSaveStatus = async (e) => {
+	const loadData = async () => {
+		try {
+			setIsLoading(true);
+			const [escapesData, floorsData] = await Promise.all([
+				getEscapeRoutes(),
+				getEscapeFloors()
+			]);
+			setEscapes(escapesData);
+			setFloors(floorsData);
+		} catch (error) {
+			console.error('Failed to load manager escapes:', error);
+			setEscapes([]);
+			setFloors([]);
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	const handleSaveEscape = async (e) => {
 		e.preventDefault();
-		if (!editingEscape) return;
+		setFormError('');
 
 		try {
 			setIsSaving(true);
-			const response = await axios.put(`http://localhost:5000/api/escapes/${editingEscape.id}`, {
-				status: newStatus
-			});
-			if (response.data && response.data.success) {
-				const updatedEscape = response.data.data;
-				setEscapes(prev => prev.map(esc => esc.id === editingEscape.id ? { ...esc, ...updatedEscape } : esc));
-				setEditingEscape(null);
+			const payload = {
+				...formState,
+				location: formState.floor,
+				statusLabel: toStatusLabel(formState.status),
+				glbNodeIndex: formState.glbNodeIndex === '' ? null : Number(formState.glbNodeIndex)
+			};
+
+			if (editingEscape) {
+				await updateEscapeRoute(editingEscape.id, payload);
 			} else {
-				alert('Không thể lưu thay đổi trạng thái.');
+				await createEscapeRoute(payload);
 			}
+
+			await loadData();
+			setIsFormOpen(false);
+			setEditingEscape(null);
+			setFormState(createInitialForm(floors[0] || 'Tầng 1'));
 		} catch (error) {
-			console.error('Failed to update escape status:', error);
-			alert('Đã xảy ra lỗi khi cập nhật trạng thái.');
+			console.error('Failed to save escape:', error);
+			setFormError('Không thể lưu lối thoát. Vui lòng kiểm tra lại dữ liệu.');
 		} finally {
 			setIsSaving(false);
 		}
 	};
 
-	useEffect(() => {
-		const loadData = async () => {
-			try {
-				setIsLoading(true);
-				const [escapesRes, floorsRes] = await Promise.all([
-					axios.get('http://localhost:5000/api/escapes'),
-					axios.get('http://localhost:5000/api/escapes/floors')
-				]);
-				setEscapes(escapesRes.data?.data || []);
-				setFloors(floorsRes.data?.data || []);
-			} catch (error) {
-				console.error('Failed to load manager escapes:', error);
-				setEscapes([]);
-				setFloors([]);
-			} finally {
-				setIsLoading(false);
-			}
-		};
+	const handleDeleteEscape = async () => {
+		if (!deletingEscape) return;
 
+		try {
+			setIsDeleting(true);
+			await deleteEscapeRoute(deletingEscape.id);
+			await loadData();
+			setDeletingEscape(null);
+		} catch (error) {
+			console.error('Failed to delete escape:', error);
+		} finally {
+			setIsDeleting(false);
+		}
+	};
+
+	const openCreateModal = () => {
+		setFormError('');
+		setEditingEscape(null);
+		setFormState(createInitialForm(floors[0] || 'Tầng 1'));
+		setIsFormOpen(true);
+	};
+
+	const openEditModal = (escape) => {
+		setFormError('');
+		setEditingEscape(escape);
+		setFormState({
+			type: escape.type || '',
+			floor: escape.floor || escape.location || floors[0] || 'Tầng 1',
+			room: escape.room || '',
+			connectedTo: escape.connectedTo || '',
+			status: escape.status || 'available',
+			width: escape.width || '',
+			clearHeight: escape.clearHeight || '',
+			owner: escape.owner || '',
+			lastInspection: escape.lastInspection || '',
+			glbNodeName: escape.glbNodeName || '',
+			glbNodeIndex: escape.glbNodeIndex ?? ''
+		});
+		setIsFormOpen(true);
+	};
+
+	const updateField = (field, value) => {
+		setFormState((current) => ({
+			...current,
+			[field]: value
+		}));
+	};
+
+	useEffect(() => {
+		setSearch(searchParams.get('search') || '');
+	}, [searchParams]);
+
+	useEffect(() => {
 		loadData();
 	}, []);
 
@@ -130,22 +226,11 @@ function ManagerEscapePage() {
 						</p>
 					</div>
 
-					<button type="button" className="manager-device-add-btn typo-body-lg">
+					<button type="button" className="manager-device-add-btn typo-body-lg" onClick={openCreateModal}>
 						<Plus size={18} weight="bold" />
 						<span>Thêm tuyến thoát</span>
 					</button>
 				</header>
-
-				<BuildingModelViewer
-					className="manager-escape-model"
-					showHeader={false}
-					showCaption={false}
-					ariaLabel="Mô hình 3D lối thoát hiểm"
-					highlightExits={true}
-					selectedFloorId={labelToModelFloorId(floorFilter)}
-					onFloorChange={(floorId) => setFloorFilter(modelFloorIdToLabel(floorId))}
-					focusedNodeName={focusedNode}
-				/>
 
 				<section className="manager-panel manager-device-filter" aria-label="Bộ lọc lối thoát">
 					<div className="manager-filter-item">
@@ -228,8 +313,7 @@ function ManagerEscapePage() {
 												className="manager-action-btn edit"
 												aria-label="Chỉnh sửa lối thoát"
 												onClick={() => {
-													setEditingEscape(escape);
-													setNewStatus(escape.status);
+												openEditModal(escape);
 												}}
 											>
 												<NotePencil size={17} weight="regular" />
@@ -240,17 +324,18 @@ function ManagerEscapePage() {
 												aria-label="Xem vị trí lối thoát"
 												onClick={() => {
 													if (escape.glbNodeName) {
-														setFocusedNode({ name: escape.glbNodeName, timestamp: Date.now() });
-														const modelElement = document.querySelector('.manager-escape-model');
-														if (modelElement) {
-															modelElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-														}
+														setModelTarget(escape);
 													}
 												}}
 											>
 												<MapPin size={17} weight="regular" />
 											</button>
-											<button type="button" className="manager-action-btn delete" aria-label="Xóa lối thoát">
+											<button
+												type="button"
+												className="manager-action-btn delete"
+												aria-label="Xóa lối thoát"
+												onClick={() => setDeletingEscape(escape)}
+											>
 												<Trash size={17} weight="regular" />
 											</button>
 										</div>
@@ -271,45 +356,154 @@ function ManagerEscapePage() {
 			</section>
 			<ManagerBottomNav />
 
-			{editingEscape && (
-				<div className="manager-modal-backdrop" onClick={() => setEditingEscape(null)}>
-					<div className="manager-panel manager-account-modal" onClick={(e) => e.stopPropagation()}>
-						<div className="manager-account-modal-head">
-							<h2 className="typo-h2 text-primary" style={{ margin: 0 }}>Cập nhật trạng thái</h2>
-							<p className="typo-body-lg text-secondary" style={{ margin: '6px 0 0 0' }}>
-								Thay đổi trạng thái hoạt động của lối thoát hiểm <strong>{editingEscape.id}</strong>
-							</p>
+			{isFormOpen && (
+				<div className="manager-modal-backdrop" onClick={() => setIsFormOpen(false)}>
+					<div className="manager-panel manager-escape-modal" onClick={(e) => e.stopPropagation()}>
+						<div className="manager-escape-modal-head">
+							<div>
+								<p className="typo-label text-secondary manager-escape-modal-overline">
+									{editingEscape ? `Chỉnh sửa - ${editingEscape.id}` : 'Tạo mới lối thoát'}
+								</p>
+								<h2 className="typo-h2 text-primary">Thông tin lối thoát</h2>
+							</div>
+							<button
+								type="button"
+								className="manager-escape-close-btn"
+								onClick={() => setIsFormOpen(false)}
+								aria-label="Đóng"
+							>
+								<X size={20} />
+							</button>
 						</div>
 
-						<form className="manager-account-form" onSubmit={handleSaveStatus}>
-							<div className="manager-account-form-item">
-								<span className="typo-body-lg">Mã lối thoát hiểm</span>
+						{formError ? (
+							<p className="manager-escape-error typo-body-md">{formError}</p>
+						) : null}
+
+						<form onSubmit={handleSaveEscape}>
+							<div className="manager-escape-form-grid">
+							<label className="manager-escape-field">
+								<span className="manager-escape-label typo-label">Loại</span>
 								<input
 									type="text"
-									className="manager-form-input typo-body-lg"
-									value={editingEscape.id}
-									disabled
+									className="manager-escape-input typo-body-lg"
+									value={formState.type}
+									onChange={(e) => updateField('type', e.target.value)}
 								/>
-							</div>
+							</label>
 
-							<div className="manager-account-form-item">
-								<span className="typo-body-lg">Trạng thái</span>
+							<label className="manager-escape-field">
+								<span className="manager-escape-label typo-label">Tầng</span>
 								<select
-									className="manager-form-input typo-body-lg"
-									value={newStatus}
-									onChange={(e) => setNewStatus(e.target.value)}
+									className="manager-escape-input typo-body-lg"
+									value={formState.floor}
+									onChange={(e) => updateField('floor', e.target.value)}
+								>
+									{(floors.length > 0 ? floors : ['Tầng 1']).map((floor) => (
+										<option key={floor} value={floor}>{floor}</option>
+									))}
+								</select>
+							</label>
+
+							<label className="manager-escape-field">
+								<span className="manager-escape-label typo-label">Phòng / Khu vực</span>
+								<input
+									type="text"
+									className="manager-escape-input typo-body-lg"
+									value={formState.room}
+									onChange={(e) => updateField('room', e.target.value)}
+								/>
+							</label>
+
+							<label className="manager-escape-field">
+								<span className="manager-escape-label typo-label">Kết nối đến</span>
+								<input
+									type="text"
+									className="manager-escape-input typo-body-lg"
+									value={formState.connectedTo}
+									onChange={(e) => updateField('connectedTo', e.target.value)}
+								/>
+							</label>
+
+							<label className="manager-escape-field">
+								<span className="manager-escape-label typo-label">Trạng thái</span>
+								<select
+									className="manager-escape-input typo-body-lg"
+									value={formState.status}
+									onChange={(e) => updateField('status', e.target.value)}
 								>
 									<option value="available">Khả dụng</option>
 									<option value="inspection">Cần kiểm tra</option>
 									<option value="unavailable">Không khả dụng</option>
 								</select>
+							</label>
+
+							<label className="manager-escape-field">
+								<span className="manager-escape-label typo-label">Chiều rộng</span>
+								<input
+									type="text"
+									className="manager-escape-input typo-body-lg"
+									value={formState.width}
+									onChange={(e) => updateField('width', e.target.value)}
+								/>
+							</label>
+
+							<label className="manager-escape-field">
+								<span className="manager-escape-label typo-label">Cao thông thủy</span>
+								<input
+									type="text"
+									className="manager-escape-input typo-body-lg"
+									value={formState.clearHeight}
+									onChange={(e) => updateField('clearHeight', e.target.value)}
+								/>
+							</label>
+
+							<label className="manager-escape-field">
+								<span className="manager-escape-label typo-label">Người phụ trách</span>
+								<input
+									type="text"
+									className="manager-escape-input typo-body-lg"
+									value={formState.owner}
+									onChange={(e) => updateField('owner', e.target.value)}
+								/>
+							</label>
+
+							<label className="manager-escape-field">
+								<span className="manager-escape-label typo-label">Kiểm tra gần nhất</span>
+								<input
+									type="date"
+									className="manager-escape-input typo-body-lg"
+									value={formState.lastInspection}
+									onChange={(e) => updateField('lastInspection', e.target.value)}
+								/>
+							</label>
+
+							<label className="manager-escape-field">
+								<span className="manager-escape-label typo-label">Node 3D</span>
+								<input
+									type="text"
+									className="manager-escape-input typo-body-lg"
+									value={formState.glbNodeName}
+									onChange={(e) => updateField('glbNodeName', e.target.value)}
+								/>
+							</label>
+
+							<label className="manager-escape-field">
+								<span className="manager-escape-label typo-label">Chỉ số node</span>
+								<input
+									type="number"
+									className="manager-escape-input typo-body-lg"
+									value={formState.glbNodeIndex}
+									onChange={(e) => updateField('glbNodeIndex', e.target.value)}
+								/>
+							</label>
 							</div>
 
-							<div className="manager-account-form-actions">
+							<div className="manager-escape-form-actions">
 								<button
 									type="button"
 									className="manager-account-cancel-btn typo-body-lg"
-									onClick={() => setEditingEscape(null)}
+									onClick={() => setIsFormOpen(false)}
 									disabled={isSaving}
 								>
 									Hủy
@@ -319,13 +513,56 @@ function ManagerEscapePage() {
 									className="manager-device-add-btn typo-body-lg"
 									disabled={isSaving}
 								>
-									{isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
+									{isSaving ? 'Đang lưu...' : editingEscape ? 'Cập nhật' : 'Lưu lối thoát'}
 								</button>
 							</div>
 						</form>
 					</div>
 				</div>
 			)}
+
+			{deletingEscape && (
+				<div className="manager-modal-backdrop" onClick={() => setDeletingEscape(null)}>
+					<div className="manager-panel manager-escape-delete-modal" onClick={(e) => e.stopPropagation()}>
+						<div className="manager-escape-delete-icon">
+							<WarningCircle size={24} weight="fill" />
+						</div>
+						<h3 className="typo-h2 manager-escape-delete-title">Xác nhận xóa lối thoát</h3>
+						<p className="typo-body-md text-secondary manager-escape-delete-copy">
+							Bạn có chắc muốn xóa <strong>{deletingEscape.id}</strong>? Thao tác này không thể hoàn tác.
+							</p>
+						<div className="manager-escape-delete-actions">
+							<button
+								type="button"
+								className="manager-account-cancel-btn typo-body-lg"
+								onClick={() => setDeletingEscape(null)}
+								disabled={isDeleting}
+							>
+								Hủy
+							</button>
+							<button
+								type="button"
+								className="manager-device-add-btn manager-escape-delete-confirm typo-body-lg"
+								onClick={handleDeleteEscape}
+								disabled={isDeleting}
+							>
+								{isDeleting ? 'Đang xóa...' : 'Xóa lối thoát'}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+
+			<ModelLocationModal
+				isOpen={Boolean(modelTarget)}
+				title={modelTarget ? `Vị trí ${modelTarget.id}` : 'Vị trí lối thoát'}
+				subtitle={modelTarget ? `${modelTarget.type} - ${modelTarget.floor || modelTarget.location || ''}` : ''}
+				selectedFloorId={modelTarget ? labelToModelFloorId(modelTarget.floor || modelTarget.location) : 'all'}
+				focusedNodeName={modelTarget?.glbNodeName || ''}
+				highlightExits={true}
+				highlightedEscape={modelTarget}
+				onClose={() => setModelTarget(null)}
+			/>
 		</main>
 	);
 }

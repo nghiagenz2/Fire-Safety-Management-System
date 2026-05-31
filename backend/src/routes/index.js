@@ -23,5 +23,6 @@ router.use("/incidents", require("./incidents.route"));
 router.use('/escapes', escapesRoutes);
 router.use('/accounts', accountsRoutes);
 router.use('/reports', reportsRoutes);
+router.use('/floors', require('./floors.route'));
 
 module.exports = router;

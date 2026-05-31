@@ -201,7 +201,10 @@ async function getFloorById(req, res, next) {
       installDate: row.install_date || '--',
       quantity: row.quantity || 1,
       condition: row.condition_note || '--',
-      floor: row.floor
+      floor: row.floor,
+      glbNodeName: row.glb_node_name,
+      glbNodeIndex: row.glb_node_index,
+      glbTranslation: row.glb_translation
     }));
 
     // Calculate dynamic stats

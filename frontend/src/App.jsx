@@ -8,6 +8,7 @@ import Onboarding from './components/Onboarding.jsx';
 import LoginForm from './components/LoginForm.jsx';
 import ProfilePage from './components/ProfilePage.jsx';
 import ScrollToTop from "./components/ScrollToTop.jsx";
+import FireSimulationAlert from "./components/FireSimulationAlert.jsx";
 import ResidentGuidancePage from "./pages/resident/ResidentGuidancePage.jsx";
 import ResidentDevicePage from "./pages/resident/ResidentDevicePage.jsx";
 import FireStaffIncidentPage from "./pages/firestaff/FireStaffIncidentPage.jsx";
@@ -56,6 +57,7 @@ function App() {
   return (
     <>
       <ScrollToTop />
+      <FireSimulationAlert />
       <Routes>
         {/* Auth Flow */}
         <Route path="/splash" element={<Splash />} />

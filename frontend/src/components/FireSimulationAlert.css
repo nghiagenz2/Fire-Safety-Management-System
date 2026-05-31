@@ -1,0 +1,99 @@
+.fire-sim-alert {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  top: 88px;
+  z-index: 80;
+  padding: 20px 18px 18px;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 18px;
+  background:
+    linear-gradient(120deg, rgba(254, 226, 226, 0.96), rgba(255, 255, 255, 0.96) 48%, rgba(239, 246, 255, 0.96)),
+    #ffffff;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.18);
+}
+
+.fire-sim-alert-title,
+.fire-sim-alert-copy {
+  margin: 0;
+}
+
+.fire-sim-alert-title {
+  color: #0f172a;
+  letter-spacing: 0;
+}
+
+.fire-sim-alert-copy {
+  margin-top: 8px;
+  color: #111827;
+}
+
+.fire-sim-alert-actions {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.fire-sim-alert-btn {
+  min-height: 48px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.fire-sim-alert-primary {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.fire-sim-alert-danger {
+  background: rgba(239, 68, 68, 0.14);
+  color: #b91c1c;
+}
+
+.fire-sim-alert-secondary {
+  background: rgba(59, 130, 246, 0.14);
+  color: #1d4ed8;
+}
+
+.fire-sim-alert-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #64748b;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+@media (min-width: 1024px) {
+  .fire-sim-alert {
+    left: 50%;
+    right: auto;
+    width: min(1180px, calc(100vw - 32px));
+    transform: translateX(-50%);
+  }
+}
+
+@media (max-width: 640px) {
+  .fire-sim-alert {
+    top: 76px;
+    left: 8px;
+    right: 8px;
+    padding: 16px 12px 12px;
+  }
+
+  .fire-sim-alert-actions {
+    grid-template-columns: 1fr;
+  }
+}

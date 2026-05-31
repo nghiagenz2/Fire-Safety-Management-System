@@ -1,19 +1,19 @@
-import axios from "axios";
-
-const API_BASE = "http://localhost:5000/api/manager/floors";
+const API_BASE = "/api/floors";
 
 export async function getFloorList() {
-  const response = await axios.get(`${API_BASE}`);
-  if (response.data && response.data.success) {
-    return response.data.data;
+  const response = await fetch(API_BASE);
+  const payload = await response.json().catch(() => ({}));
+  if (response.ok && payload.success) {
+    return payload.data;
   }
   throw new Error("Lỗi tải danh sách tầng");
 }
 
 export async function getFloorById(floorId) {
-  const response = await axios.get(`${API_BASE}/${encodeURIComponent(floorId)}`);
-  if (response.data && response.data.success) {
-    return response.data.data;
+  const response = await fetch(`${API_BASE}/${encodeURIComponent(floorId)}`);
+  const payload = await response.json().catch(() => ({}));
+  if (response.ok && payload.success) {
+    return payload.data;
   }
   throw new Error("Lỗi tải chi tiết tầng");
 }

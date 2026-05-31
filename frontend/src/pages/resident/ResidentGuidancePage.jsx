@@ -69,6 +69,14 @@ function ResidentGuidancePage() {
     return guideItems.find((guide) => guide.category === 'escape') || guideItems[0] || null;
   }, [guideItems]);
 
+  const emergencyContacts = useMemo(() => (
+    guideItems.find((guide) => guide.category === 'emergency')?.contacts || [
+      '114 - Cảnh sát PCCC',
+      '115 - Cấp cứu',
+      'Bảo vệ tòa nhà: 0900 000 111'
+    ]
+  ), [guideItems]);
+
   return (
     <main className="resident-screen">
       <Header />
@@ -79,8 +87,13 @@ function ResidentGuidancePage() {
           <h1 className="typo-h1 resident-title">Hướng dẫn thoát hiểm</h1>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span className="resident-floor-chip typo-label">Tầng hiện tại: 3</span>
-          <button type="button" className="resident-call-btn typo-label">
+          <button
+            type="button"
+            className="resident-call-btn typo-label"
+            onClick={() => {
+              window.location.href = 'tel:114';
+            }}
+          >
             Liên hệ khẩn cấp
           </button>
         </div>
@@ -135,8 +148,7 @@ function ResidentGuidancePage() {
       <section className="resident-panel resident-contact-card">
         <h2 className="typo-h2">Liên hệ khẩn cấp</h2>
         <p className="typo-body-md text-secondary">
-          {guideItems.find((guide) => guide.category === 'emergency')?.contacts?.join(' | ') ||
-            '114 - Cảnh sát PCCC | 115 - Cấp cứu | Bảo vệ tòa nhà: 0900 000 111'}
+          {emergencyContacts.join(' | ')}
         </p>
       </section>
 

@@ -4,7 +4,7 @@ import ResidentBottomNav from '../../components/resident/ResidentBottomNav';
 import BuildingModelViewer from '../../components/three/BuildingModelViewer.jsx';
 import { Cube, DoorOpen, CheckCircle } from '@phosphor-icons/react';
 import '../../styles/ResidentHome.css';
-import { getDeviceStatistics } from '../../services/mockManagerDevicesApi.js';
+import { getDeviceStatistics } from '../../services/devicesApi.js';
 
 function ResidentHomePage() {
   const [deviceTotal, setDeviceTotal] = useState('--');

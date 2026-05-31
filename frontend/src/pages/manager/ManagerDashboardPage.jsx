@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import axios from "axios";
 import {
   PieChart,
   Pie,
@@ -59,11 +58,8 @@ function ManagerDashboardPage() {
   useEffect(() => {
     const loadFilterOptions = async () => {
       try {
-        const response = await axios.get(
-          'http://localhost:5000/api/dashboard/filters'
-        );
-        const filters = response.data.data.options;
-        setFiltersConfig(filters);
+        const data = await getManagerDashboardFilterOptions();
+        setFiltersConfig(data.options || data);
       } catch (error) {
         console.error('Failed to load dashboard filter options:', error);
       }
@@ -77,11 +73,8 @@ function ManagerDashboardPage() {
       try {
         setIsLoading(true);
         setErrorMessage('');
-        const response = await axios.post(
-          'http://localhost:5000/api/dashboard/data',
-          filters
-        );
-        setDashboard(response.data.data);
+        const data = await getManagerDashboardData(filters);
+        setDashboard(data);
       } catch (error) {
         console.error('Failed to load manager dashboard:', error);
         setDashboard(null);
