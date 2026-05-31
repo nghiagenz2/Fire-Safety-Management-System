@@ -499,6 +499,115 @@ function initGlobalWebGL() {
 	return globalContext;
 }
 
+// Danh sách tọa độ các nút giao lộ thoát hiểm ở Tầng trệt từ Blender (chuyển đổi sang hệ trục Three.js)
+const WAYPOINTS = [
+	{ id: 1, x: 6.1118, y: 1.4734, z: -77.143 },
+	{ id: 2, x: 28.352, y: 1.4734, z: -77.143 },
+	{ id: 3, x: 35.846, y: 1.4734, z: -73.991 },
+	{ id: 4, x: 35.846, y: 1.4734, z: -60.864 },
+	{ id: 5, x: 35.846, y: 1.4734, z: -39.876 },
+	{ id: 6, x: 35.846, y: 1.4734, z: -18.699 },
+	{ id: 7, x: 35.846, y: 1.4734, z: -11.003 },
+	{ id: 8, x: 12.733, y: 1.4734, z: -11.003 }
+];
+
+// Liên kết giữa các nút giao lộ thoát hiểm (Corridor Edges)
+const EDGES = [
+	[0, 1], // Nút 1 nối Nút 2
+	[1, 2], // Nút 2 nối Nút 3
+	[2, 3], // Nút 3 nối Nút 4
+	[3, 4], // Nút 4 nối Nút 5
+	[4, 5], // Nút 5 nối Nút 6
+	[5, 6], // Nút 6 nối Nút 7
+	[6, 7]  // Nút 7 nối Nút 8
+];
+
+// Thuật toán Dijkstra tìm đường đi ngắn nhất đồng thời tránh các điểm cháy trong thời gian thực
+function runDijkstra(startIndex, targetIndices, activeFires) {
+	const n = WAYPOINTS.length;
+	const dist = Array(n).fill(Infinity);
+	const parent = Array(n).fill(-1);
+	const visited = Array(n).fill(false);
+
+	dist[startIndex] = 0;
+
+	for (let i = 0; i < n; i++) {
+		let u = -1;
+		let minDist = Infinity;
+		for (let j = 0; j < n; j++) {
+			if (!visited[j] && dist[j] < minDist) {
+				minDist = dist[j];
+				u = j;
+			}
+		}
+
+		if (u === -1 || dist[u] === Infinity) break;
+		visited[u] = true;
+
+		// Tìm các đỉnh kề v của u
+		const neighbors = [];
+		EDGES.forEach(([a, b]) => {
+			if (a === u) neighbors.push(b);
+			if (b === u) neighbors.push(a);
+		});
+
+		for (const v of neighbors) {
+			if (visited[v]) continue;
+
+			const wpU = new THREE.Vector3(WAYPOINTS[u].x, WAYPOINTS[u].y, WAYPOINTS[u].z);
+			const wpV = new THREE.Vector3(WAYPOINTS[v].x, WAYPOINTS[v].y, WAYPOINTS[v].z);
+			let edgeCost = wpU.distanceTo(wpV);
+
+			// Kiểm tra khoảng cách của cạnh/nút đối với đám cháy
+			if (activeFires && activeFires.length > 0) {
+				for (const fire of activeFires) {
+					const distU = wpU.distanceTo(fire.position);
+					const distV = wpV.distanceTo(fire.position);
+					const minFireDist = Math.min(distU, distV);
+
+					if (minFireDist < 4.0) {
+						// Đường đi bị lửa bao vây hoàn toàn (Block)
+						edgeCost = Infinity;
+						break;
+					} else if (minFireDist < 7.5) {
+						// Cộng thêm chi phí phạt lớn nếu đi gần vùng cháy (tránh lửa)
+						edgeCost += (7.5 - minFireDist) * 350;
+					}
+				}
+			}
+
+			if (edgeCost === Infinity) continue;
+
+			if (dist[u] + edgeCost < dist[v]) {
+				dist[v] = dist[u] + edgeCost;
+				parent[v] = u;
+			}
+		}
+	}
+
+	let bestTargetIndex = -1;
+	let minCost = Infinity;
+
+	targetIndices.forEach((targetIdx) => {
+		if (dist[targetIdx] < minCost) {
+			minCost = dist[targetIdx];
+			bestTargetIndex = targetIdx;
+		}
+	});
+
+	if (bestTargetIndex === -1) {
+		return null;
+	}
+
+	const path = [];
+	let curr = bestTargetIndex;
+	while (curr !== -1) {
+		path.push(curr);
+		curr = parent[curr];
+	}
+	return path.reverse();
+}
+
 function BuildingModelViewer({
 	className = '',
 	showHeader = true,
@@ -521,6 +630,16 @@ function BuildingModelViewer({
 	const markersRef = useRef([]);
 	const highlightExitsRef = useRef(highlightExits);
 	const activeFiresRef = useRef([]);
+
+	// Quản lý Mesh và hoạt ảnh đường thoát hiểm neon
+	const pathMeshesRef = useRef([]);
+	const pathCurveRef = useRef(null);
+	const pathPulsesRef = useRef(null);
+	const startMarkerRef = useRef(null);
+
+	const [escapeStartDoor, setEscapeStartDoor] = useState('');
+	const [roomDoors, setRoomDoors] = useState([]);
+	const [pathBlocked, setPathBlocked] = useState(false);
 
 	const onDoorsLoadedRef = useRef(onDoorsLoaded);
 	useEffect(() => {
@@ -571,6 +690,286 @@ function BuildingModelViewer({
 	const setSelectedFloorId = propSelectedFloorId !== undefined ? () => { } : setInternalFloorId;
 	const [modelSummary, setModelSummary] = useState(modelCache.summary || { name: MODEL_NAME, meshCount: 0 });
 
+	// Đồng bộ hóa các state sang Ref để giải quyết lỗi closure tĩnh (stale closure) trong vòng lặp WebGL (60 FPS)
+	const escapeStartDoorRef = useRef(escapeStartDoor);
+	const simulationActiveRef = useRef(simulationActive);
+	const selectedFloorIdRef = useRef(selectedFloorId);
+
+	const clearPathTubeOnly = () => {
+		pathMeshesRef.current.forEach((mesh) => {
+			if (globalContext.scene) {
+				globalContext.scene.remove(mesh);
+			}
+			if (mesh.geometry) mesh.geometry.dispose();
+			if (mesh.material) {
+				if (Array.isArray(mesh.material)) {
+					mesh.material.forEach((m) => m.dispose());
+				} else {
+					mesh.material.dispose();
+				}
+			}
+		});
+		pathMeshesRef.current = [];
+		pathCurveRef.current = null;
+		pathPulsesRef.current = null;
+	};
+
+	// Hàm dọn dẹp các đường thoát hiểm cũ
+	const clearEscapePath = () => {
+		clearPathTubeOnly();
+
+		if (startMarkerRef.current) {
+			if (globalContext.scene) {
+				globalContext.scene.remove(startMarkerRef.current.sphere);
+				globalContext.scene.remove(startMarkerRef.current.ring);
+			}
+			startMarkerRef.current.sphere.geometry.dispose();
+			startMarkerRef.current.sphere.material.dispose();
+			startMarkerRef.current.ring.geometry.dispose();
+			startMarkerRef.current.ring.material.dispose();
+			startMarkerRef.current = null;
+		}
+	};
+
+	// Hàm vẽ ống Neon 3D phát sáng và thiết lập các hạt chạy dọc ống
+	const drawPathTube = (pathPoints) => {
+		clearPathTubeOnly();
+		if (pathPoints.length < 2) return;
+
+		try {
+			const curvePath = new THREE.CurvePath();
+			for (let i = 0; i < pathPoints.length - 1; i++) {
+				const lineCurve = new THREE.LineCurve3(pathPoints[i], pathPoints[i + 1]);
+				curvePath.add(lineCurve);
+			}
+			const tubeGeom = new THREE.TubeGeometry(curvePath, 64, 0.15, 8, false);
+
+			const tubeMat = new THREE.MeshStandardMaterial({
+				color: 0x00f3ff,
+				emissive: 0x0099ff,
+				emissiveIntensity: 2.5,
+				transparent: true,
+				opacity: 0.85,
+				roughness: 0.1,
+				metalness: 0.9,
+			});
+
+			const tubeMesh = new THREE.Mesh(tubeGeom, tubeMat);
+			globalContext.scene.add(tubeMesh);
+			pathMeshesRef.current.push(tubeMesh);
+
+			const pulses = [];
+			const numPulses = 4;
+			for (let i = 0; i < numPulses; i++) {
+				const pulseGeom = new THREE.SphereGeometry(0.3, 10, 10);
+				const pulseMat = new THREE.MeshBasicMaterial({
+					color: 0x33ffff,
+					transparent: true,
+					opacity: 0.95,
+				});
+				const pulseMesh = new THREE.Mesh(pulseGeom, pulseMat);
+				globalContext.scene.add(pulseMesh);
+				pathMeshesRef.current.push(pulseMesh);
+
+				pulses.push({
+					mesh: pulseMesh,
+					progress: i / numPulses,
+				});
+			}
+
+			pathCurveRef.current = curvePath;
+			pathPulsesRef.current = pulses;
+			globalContext.needsRender = true;
+		} catch (err) {
+			console.error('Failed to render escape route tube:', err);
+		}
+	};
+
+	// Hàm chạy tìm đường đi tối ưu dựa trên giải thuật Dijkstra
+	const updateEscapePath = () => {
+		const floorId = selectedFloorIdRef.current;
+		const isSimActive = simulationActiveRef.current;
+
+		if (!gltfRef.current || !isSimActive) {
+			clearEscapePath();
+			return;
+		}
+
+		// Nếu tầng đang xem không phải tầng bị cháy (và không chọn Tất cả tầng) thì ẩn đường thoát đi
+		if (floorId !== 'all' && floorId !== simulationFloorId) {
+			clearEscapePath();
+			return;
+		}
+
+		// Xác định tầng mục tiêu cần xử lý (nếu đang giả lập cháy tầng trệt mà người dùng xem 'Tất cả tầng', ta vẫn vẽ đường hành lang tầng trệt)
+		const targetFloor = (floorId === 'floor_tret' || (floorId === 'all' && simulationFloorId === 'floor_tret')) ? 'floor_tret' : floorId;
+
+		if (targetFloor === 'floor_tret') {
+			setPathBlocked(false);
+
+			const pathPoints = [];
+			WAYPOINTS.forEach((wp) => {
+				pathPoints.push(new THREE.Vector3(wp.x, wp.y, wp.z));
+			});
+
+			pathPoints.forEach((p) => {
+				p.y = 1.65;
+			});
+
+			// Tạo hiệu ứng radar marker tại vị trí bắt đầu (Nút 1) nếu chưa tồn tại
+			if (!startMarkerRef.current && globalContext.scene) {
+				const sphereGeom = new THREE.SphereGeometry(0.32, 16, 16);
+				const sphereMat = new THREE.MeshBasicMaterial({
+					color: 0x00d2ff, // Neon cyan
+					transparent: true,
+					opacity: 0.95
+				});
+				const sphereMesh = new THREE.Mesh(sphereGeom, sphereMat);
+				sphereMesh.position.set(6.1118, 1.65, -77.143);
+
+				const ringGeom = new THREE.RingGeometry(0.1, 1.0, 32);
+				const ringMat = new THREE.MeshBasicMaterial({
+					color: 0x00d2ff,
+					side: THREE.DoubleSide,
+					transparent: true,
+					opacity: 0.8
+				});
+				const ringMesh = new THREE.Mesh(ringGeom, ringMat);
+				ringMesh.rotation.x = Math.PI / 2;
+				ringMesh.position.set(6.1118, 1.66, -77.143);
+
+				globalContext.scene.add(sphereMesh);
+				globalContext.scene.add(ringMesh);
+
+				startMarkerRef.current = {
+					sphere: sphereMesh,
+					ring: ringMesh
+				};
+			}
+
+			drawPathTube(pathPoints);
+		} else {
+			// Cơ chế dự phòng cho các tầng khác: kết nối trực tiếp đến cửa thoát hiểm an toàn nhất
+			let startDoor = escapeStartDoorRef.current;
+			if (!startDoor) return;
+
+			const startMesh = gltfRef.current.scene.getObjectByName(startDoor);
+			if (!startMesh) {
+				clearEscapePath();
+				return;
+			}
+			const startPos = new THREE.Vector3();
+			startMesh.getWorldPosition(startPos);
+
+			const exitMeshes = [];
+			gltfRef.current.scene.traverse((child) => {
+				if (
+					child.isMesh &&
+					child.name &&
+					(child.name.toLowerCase().includes('cua_thoat_hiem') ||
+						child.name.toLowerCase().includes('exit_door'))
+				) {
+					const childFloorId = child.userData.floorId || 'floor_tret';
+					if (childFloorId === targetFloor) {
+						exitMeshes.push(child);
+					}
+				}
+			});
+
+			let bestExitPos = null;
+			let maxFireDist = -1;
+			let minExitDist = Infinity;
+
+			exitMeshes.forEach((exitMesh) => {
+				const exitPos = new THREE.Vector3();
+				exitMesh.getWorldPosition(exitPos);
+
+				const fireDists = activeFiresRef.current.map((fire) => exitPos.distanceTo(fire.position));
+				const minFireDist = fireDists.length > 0 ? Math.min(...fireDists) : Infinity;
+
+				const distToStart = startPos.distanceTo(exitPos);
+
+				let safetyScore = minFireDist;
+				if (minFireDist < 4.0) {
+					safetyScore = -1;
+				}
+
+				if (safetyScore > maxFireDist) {
+					maxFireDist = safetyScore;
+					bestExitPos = exitPos;
+					minExitDist = distToStart;
+				} else if (safetyScore === maxFireDist && distToStart < minExitDist) {
+					bestExitPos = exitPos;
+					minExitDist = distToStart;
+				}
+			});
+
+			if (!bestExitPos || maxFireDist === -1) {
+				setPathBlocked(true);
+				clearEscapePath();
+				return;
+			}
+
+			setPathBlocked(false);
+
+			const pathPoints = [startPos.clone(), bestExitPos.clone()];
+			pathPoints.forEach((p) => {
+				p.y = startPos.y + 0.15;
+			});
+
+			drawPathTube(pathPoints);
+		}
+	};
+	// Đồng bộ hóa các state và cập nhật đường đi khi bất kỳ thay đổi nào xảy ra (mô hình tải xong, bật mô phỏng, thay đổi tầng, v.v.)
+	useEffect(() => {
+		escapeStartDoorRef.current = escapeStartDoor;
+		simulationActiveRef.current = simulationActive;
+		selectedFloorIdRef.current = selectedFloorId;
+		updateEscapePath();
+	}, [escapeStartDoor, simulationActive, selectedFloorId, modelLoaded, simulationOrigin]);
+
+	// Lấy danh sách các cửa phòng (Cua_Phong) thuộc tầng đang chọn để cập nhật Dropdown
+	useEffect(() => {
+		if (gltfRef.current && modelLoaded) {
+			const doors = [];
+			gltfRef.current.scene.traverse((child) => {
+				if (child.isMesh && child.name && child.name.toLowerCase().includes('cua_phong')) {
+					const doorFloorId = child.userData.floorId || 'floor_tret';
+					if (doorFloorId === selectedFloorId) {
+						doors.push(child.name);
+					}
+				}
+			});
+
+			doors.sort();
+
+			// Thêm tùy chọn vị trí mặc định nếu ở tầng trệt
+			if (selectedFloorId === 'floor_tret') {
+				doors.unshift('Vị trí mặc định (Node 1)');
+			}
+
+			setRoomDoors(doors);
+
+			if (doors.length > 0) {
+				if (selectedFloorId === 'floor_tret') {
+					setEscapeStartDoor('Vị trí mặc định (Node 1)');
+				} else {
+					const nonFireDoors = doors.filter((d) => d !== simulationOrigin);
+					if (nonFireDoors.length > 0) {
+						setEscapeStartDoor(nonFireDoors[0]);
+					} else {
+						setEscapeStartDoor(doors[0]);
+					}
+				}
+			} else {
+				setEscapeStartDoor('');
+			}
+		} else {
+			setRoomDoors([]);
+			setEscapeStartDoor('');
+		}
+	}, [selectedFloorId, simulationOrigin, simulationActive, modelLoaded]);
+
 	// Sync simulation status in real-time using EventSource
 	useEffect(() => {
 		if (isSimulationControlled) {
@@ -579,10 +978,10 @@ function BuildingModelViewer({
 
 		let eventSource = null;
 		let reconnectTimeout = null;
-		
+
 		const connectSSE = () => {
 			eventSource = new EventSource('http://localhost:5000/api/incidents/simulation/stream');
-			
+
 			eventSource.onmessage = (event) => {
 				try {
 					const data = JSON.parse(event.data);
@@ -944,6 +1343,39 @@ function BuildingModelViewer({
 		ctx.currentHost = hostElement;
 		ctx.needsRender = true;
 
+		// Xử lý sự kiện click chuột để chọn điểm xuất phát thoát hiểm trực tiếp trên mô hình 3D
+		const handleCanvasClick = (event) => {
+			if (!gltfRef.current || !simulationActiveRef.current) return;
+
+			const rect = renderer.domElement.getBoundingClientRect();
+			const mouse = new THREE.Vector2(
+				((event.clientX - rect.left) / rect.width) * 2 - 1,
+				-((event.clientY - rect.top) / rect.height) * 2 + 1
+			);
+
+			const raycaster = new THREE.Raycaster();
+			raycaster.setFromCamera(mouse, camera);
+
+			const doorsToIntersect = [];
+			gltfRef.current.scene.traverse((child) => {
+				if (child.isMesh && child.name && child.name.toLowerCase().includes('cua_phong')) {
+					const doorFloorId = child.userData.floorId || 'floor_tret';
+					if (doorFloorId === selectedFloorIdRef.current) {
+						doorsToIntersect.push(child);
+					}
+				}
+			});
+
+			const intersects = raycaster.intersectObjects(doorsToIntersect, true);
+			if (intersects.length > 0) {
+				const clickedDoor = intersects[0].object;
+				console.log("Người dùng chọn điểm xuất phát bằng click 3D:", clickedDoor.name);
+				setEscapeStartDoor(clickedDoor.name);
+			}
+		};
+
+		renderer.domElement.addEventListener('click', handleCanvasClick);
+
 		let animationFrameId = 0;
 		let loadTimerId = 0;
 		let disposed = false;
@@ -1084,6 +1516,39 @@ function BuildingModelViewer({
 				needsPulseRender = true;
 			}
 
+			// Cập nhật vị trí các hạt neon phát sáng di chuyển dọc theo đường đi (chạy ở tốc độ 60 FPS)
+			if (pathPulsesRef.current && pathCurveRef.current) {
+				const speed = 0.003;
+				pathPulsesRef.current.forEach((pulse) => {
+					pulse.progress += speed;
+					if (pulse.progress > 1.0) {
+						pulse.progress = 0.0;
+					}
+					const pos = pathCurveRef.current.getPointAt(pulse.progress);
+					pulse.mesh.position.copy(pos);
+				});
+				needsPulseRender = true;
+			}
+
+			// Cập nhật hoạt ảnh marker radar của vị trí xuất phát
+			if (startMarkerRef.current) {
+				const time = now * 0.003;
+				// Quả cầu nhấp nhô lơ lửng nhẹ nhàng
+				startMarkerRef.current.sphere.position.y = 1.65 + Math.sin(time) * 0.12;
+
+				// Vòng tròn radar lan tỏa rộng dần rồi mờ hẳn
+				const scaleProgress = (now % 1500) / 1500;
+				const scale = 0.5 + scaleProgress * 2.5;
+				startMarkerRef.current.ring.scale.set(scale, scale, 1);
+				startMarkerRef.current.ring.material.opacity = 0.8 * (1.0 - scaleProgress);
+				needsPulseRender = true;
+			}
+
+			// Cập nhật đường đi tránh lửa theo chu kỳ quét khoảng cách
+			if (doProximityCheck && simulationActiveRef.current) {
+				updateEscapePath();
+			}
+
 			if (controlsUpdated || ctx.needsRender || needsPulseRender) {
 				renderer.render(scene, camera);
 				ctx.needsRender = false;
@@ -1212,6 +1677,22 @@ function BuildingModelViewer({
 			});
 			markersRef.current = [];
 
+			// Clean up escape path meshes
+			pathMeshesRef.current.forEach((mesh) => {
+				scene.remove(mesh);
+				if (mesh.geometry) mesh.geometry.dispose();
+				if (mesh.material) {
+					if (Array.isArray(mesh.material)) {
+						mesh.material.forEach((m) => m.dispose());
+					} else {
+						mesh.material.dispose();
+					}
+				}
+			});
+			pathMeshesRef.current = [];
+
+			renderer.domElement.removeEventListener('click', handleCanvasClick);
+
 			if (renderer.domElement.parentNode === hostElement) {
 				hostElement.removeChild(renderer.domElement);
 			}
@@ -1232,7 +1713,7 @@ function BuildingModelViewer({
 				</div>
 			) : null}
 
-			<div className="manager-model-controls">
+			<div className="manager-model-controls" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
 				<div className="manager-floor-dropdown-wrap">
 					<label htmlFor="floor-select" className="typo-label text-secondary">Chọn tầng hiển thị</label>
 					<select
@@ -1249,6 +1730,7 @@ function BuildingModelViewer({
 						))}
 					</select>
 				</div>
+
 			</div>
 
 			<div className="manager-model-stage" style={{ position: 'relative' }}>
@@ -1263,19 +1745,31 @@ function BuildingModelViewer({
 						</div>
 						<div className="fire-notification-actions">
 							{internalFloorId !== syncSelectedFloorId && (
-								<button 
+								<button
 									className="fire-notification-btn view-btn"
 									onClick={() => setInternalFloorId(syncSelectedFloorId)}
 								>
 									Xem vị trí cháy
 								</button>
 							)}
-							<button 
+							<button
 								className="fire-notification-btn close-btn"
 								onClick={() => setShowFireNotification(false)}
 							>
 								Đóng
 							</button>
+						</div>
+					</div>
+				)}
+
+				{simulationActive && pathBlocked && (
+					<div className="fire-notification-banner" style={{ background: 'rgba(220, 38, 38, 0.96)', borderColor: '#ef4444', top: showFireNotification ? '100px' : '16px' }}>
+						<div className="fire-notification-icon">🚨</div>
+						<div className="fire-notification-content">
+							<span className="fire-notification-title" style={{ color: '#ffffff' }}>ĐƯỜNG THOÁT HIỂM BỊ CHẶN HOÀN TOÀN!</span>
+							<span className="fire-notification-desc" style={{ color: '#fecaca', fontWeight: 'bold' }}>
+								Mọi lối thoát hiểm từ vị trí {escapeStartDoor} đã bị khói lửa cô lập. Hãy đóng chặt cửa, chèn khe bằng khăn ướt, và di chuyển ra cửa sổ/ban công để chờ cứu hộ!
+							</span>
 						</div>
 					</div>
 				)}

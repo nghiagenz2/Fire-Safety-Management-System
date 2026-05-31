@@ -43,26 +43,7 @@ function ResidentEscapePage() {
           </div>
           <span className="resident-floor-chip typo-label">Tầng hiện tại: 3</span>
         </header>
-        {/* Khối Sơ đồ lối thoát (Placeholder) */}
-        <section className="resident-list-section">
-          <div className="resident-section-heading">
-            <h2 className="typo-h2">Sơ đồ lối thoát</h2>
-          </div>
-          <div 
-            className="resident-panel" 
-            style={{ 
-              minHeight: '300px', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              borderStyle: 'dashed',
-              backgroundColor: '#f8fafc'
-            }}
-          >
-            <p className="typo-h2 text-secondary">Mô hình 3D hiện tại chưa có</p>
-          </div>
-        </section>
-
+        
         {/* Danh sách lối thoát */}
         <section className="resident-list-section">
           <div className="resident-section-heading">
