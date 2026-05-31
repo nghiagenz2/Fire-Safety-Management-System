@@ -85,6 +85,15 @@ export function getFloors() {
 export async function getDeviceStatistics() {
   const devices = await getManagerDevices({ allTypes: true });
 
+  let escapesCount = 0;
+  try {
+    const escapesRes = await fetch('http://localhost:5000/api/escapes');
+    const escapesJson = await escapesRes.json();
+    escapesCount = escapesJson.data ? escapesJson.data.length : 0;
+  } catch (error) {
+    console.error('Failed to fetch escapes:', error);
+  }
+
   return devices.reduce(
     (stats, device) => {
       if (device.type === 'Bình chữa cháy' || device.type === 'Tủ chữa cháy') {
@@ -106,8 +115,8 @@ export async function getDeviceStatistics() {
       warning: 0,
       danger: 0,
       maintenance: 0,
-      totalExits: 0,
-      availableExits: 0
+      totalExits: escapesCount,
+      availableExits: escapesCount
     }
   );
 }
