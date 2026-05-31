@@ -24,32 +24,40 @@
   margin-bottom: 0;
 }
 
-.resident-escape-model {
+.resident-escape-model,
+.manager-escape-model {
   margin-top: 16px;
   padding: 12px;
 }
 
-.resident-escape-model .manager-model-controls {
+.resident-escape-model .manager-model-controls,
+.manager-escape-model .manager-model-controls {
   margin-top: 0;
   margin-bottom: 10px;
 }
 
-.resident-escape-model .manager-floor-dropdown-wrap {
+.resident-escape-model .manager-floor-dropdown-wrap,
+.manager-escape-model .manager-floor-dropdown-wrap {
   max-width: 280px;
 }
 
 .resident-escape-model .manager-model-stage,
-.resident-escape-model .manager-model-canvas {
+.resident-escape-model .manager-model-canvas,
+.manager-escape-model .manager-model-stage,
+.manager-escape-model .manager-model-canvas {
   min-height: 520px;
 }
 
-.resident-escape-model .manager-model-canvas {
+.resident-escape-model .manager-model-canvas,
+.manager-escape-model .manager-model-canvas {
   border-radius: 14px;
 }
 
 @media (max-width: 768px) {
   .resident-escape-model .manager-model-stage,
-  .resident-escape-model .manager-model-canvas {
+  .resident-escape-model .manager-model-canvas,
+  .manager-escape-model .manager-model-stage,
+  .manager-escape-model .manager-model-canvas {
     min-height: 340px;
   }
 }
