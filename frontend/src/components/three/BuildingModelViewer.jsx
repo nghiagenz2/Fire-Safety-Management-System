@@ -616,7 +616,10 @@ function BuildingModelViewer({
 	ariaLabel = 'Mô hình 3D tòa nhà',
 	highlightExits = false,
 	selectedFloorId: propSelectedFloorId,
+	defaultFloorId = 'all',
+	focusedNodeName = '',
 	onDoorsLoaded,
+	onFloorChange,
 
 	// New simulation props (prefixed to distinguish from resolved values)
 	simulationActive: propSimulationActive,
@@ -630,6 +633,7 @@ function BuildingModelViewer({
 	const markersRef = useRef([]);
 	const highlightExitsRef = useRef(highlightExits);
 	const activeFiresRef = useRef([]);
+	const lastHandledFocusRef = useRef(null);
 
 	// Quản lý Mesh và hoạt ảnh đường thoát hiểm neon
 	const pathMeshesRef = useRef([]);
@@ -665,7 +669,7 @@ function BuildingModelViewer({
 	const [modelLoaded, setModelLoaded] = useState(false);
 	const [loadingError, setLoadingError] = useState('');
 	const [floorNodes, setFloorNodes] = useState(modelCache.floors || []);
-	const [internalFloorId, setInternalFloorId] = useState('all');
+	const [internalFloorId, setInternalFloorId] = useState(defaultFloorId);
 
 	const [showFireNotification, setShowFireNotification] = useState(false);
 	const prevSimulationActiveRef = useRef(false);
@@ -675,7 +679,7 @@ function BuildingModelViewer({
 		if (simulationActive) {
 			setShowFireNotification(true);
 			if (!prevSimulationActiveRef.current && syncSelectedFloorId && !isSimulationControlled) {
-				setInternalFloorId(syncSelectedFloorId);
+				setSelectedFloorId(syncSelectedFloorId);
 			}
 		} else {
 			setShowFireNotification(false);
@@ -687,7 +691,12 @@ function BuildingModelViewer({
 		? propSelectedFloorId
 		: internalFloorId;
 
-	const setSelectedFloorId = propSelectedFloorId !== undefined ? () => { } : setInternalFloorId;
+	const setSelectedFloorId = (floorId) => {
+		setInternalFloorId(floorId);
+		if (onFloorChange) {
+			onFloorChange(floorId);
+		}
+	};
 	const [modelSummary, setModelSummary] = useState(modelCache.summary || { name: MODEL_NAME, meshCount: 0 });
 
 	// Đồng bộ hóa các state sang Ref để giải quyết lỗi closure tĩnh (stale closure) trong vòng lặp WebGL (60 FPS)
@@ -1021,6 +1030,93 @@ function BuildingModelViewer({
 	useEffect(() => {
 		highlightExitsRef.current = highlightExits;
 	}, [highlightExits]);
+
+	useEffect(() => {
+		if (!focusedNodeName) return;
+		const targetName = typeof focusedNodeName === 'object' ? focusedNodeName.name : focusedNodeName;
+		const targetTimestamp = typeof focusedNodeName === 'object' ? focusedNodeName.timestamp : null;
+
+		if (targetTimestamp && lastHandledFocusRef.current === targetTimestamp) {
+			return;
+		}
+
+		const sanitizeName = (name) => {
+			if (!name) return '';
+			return name.toLowerCase().replace(/[^a-z0-9]/g, '');
+		};
+		const sanitizedTarget = sanitizeName(targetName);
+
+		console.log('[Debug3D] focusedNodeName changed. resolved targetName:', targetName, 'sanitizedTarget:', sanitizedTarget, 'modelLoaded:', modelLoaded, 'gltfRef.current is present:', !!gltfRef.current);
+		if (gltfRef.current && modelLoaded && sanitizedTarget) {
+			let targetObject = null;
+			gltfRef.current.scene.traverse((child) => {
+				if (child.name) {
+					const sanitizedChild = sanitizeName(child.name);
+					if (sanitizedChild === sanitizedTarget) {
+						targetObject = child;
+					}
+				}
+			});
+
+			console.log('[Debug3D] Target object search result:', targetObject ? `FOUND (${targetObject.type})` : 'NOT FOUND');
+
+			if (targetObject) {
+				let meshFloorId = targetObject.userData.floorId;
+				if (!meshFloorId) {
+					targetObject.traverse((subChild) => {
+						if (subChild.userData.floorId) {
+							meshFloorId = subChild.userData.floorId;
+						}
+					});
+				}
+				console.log('[Debug3D] Target floorId resolved:', meshFloorId, 'current selectedFloorId:', selectedFloorId);
+
+				if (meshFloorId && meshFloorId !== selectedFloorId) {
+					console.log('[Debug3D] Changing selected floor to:', meshFloorId);
+					setSelectedFloorId(meshFloorId);
+				} else {
+					if (targetTimestamp) {
+						lastHandledFocusRef.current = targetTimestamp;
+					}
+
+					setTimeout(() => {
+						if (globalContext.camera && globalContext.controls) {
+							console.log('[Debug3D] Fitting camera to object:', targetObject.name);
+							fitCameraToObject(globalContext.camera, globalContext.controls, targetObject);
+							
+							// Premium gold flash effect to highlight the focused exit door
+							const flashMaterial = new THREE.MeshStandardMaterial({
+								color: 0xffb700, // Rich gold
+								emissive: 0xffaa00, // Gold glow
+								emissiveIntensity: 2.0,
+								roughness: 0.1,
+								metalness: 0.9,
+							});
+
+							const originalMaterialsMap = new Map();
+							targetObject.traverse((child) => {
+								if (child.isMesh) {
+									originalMaterialsMap.set(child, child.material);
+									child.material = flashMaterial;
+								}
+							});
+							globalContext.needsRender = true;
+
+							// Restore original materials after 2.5 seconds
+							setTimeout(() => {
+								originalMaterialsMap.forEach((material, childMesh) => {
+									childMesh.material = material;
+								});
+								globalContext.needsRender = true;
+							}, 2500);
+						} else {
+							console.warn('[Debug3D] globalContext camera or controls is missing!');
+						}
+					}, 300);
+				}
+			}
+		}
+	}, [focusedNodeName, modelLoaded, selectedFloorId]);
 
 	useEffect(() => {
 		if (gltfRef.current && globalContext.isModelInitialized) {
@@ -1744,10 +1840,10 @@ function BuildingModelViewer({
 							</span>
 						</div>
 						<div className="fire-notification-actions">
-							{internalFloorId !== syncSelectedFloorId && (
+							{selectedFloorId !== syncSelectedFloorId && (
 								<button
 									className="fire-notification-btn view-btn"
-									onClick={() => setInternalFloorId(syncSelectedFloorId)}
+									onClick={() => setSelectedFloorId(syncSelectedFloorId)}
 								>
 									Xem vị trí cháy
 								</button>

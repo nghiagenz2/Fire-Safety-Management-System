@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Header from '../../components/Header';
 import ResidentBottomNav from '../../components/resident/ResidentBottomNav';
+import BuildingModelViewer from '../../components/three/BuildingModelViewer.jsx';
+import { Eye } from '@phosphor-icons/react';
 import '../../styles/ResidentEscape.css';
 
 function getStatusClass(status) {
@@ -10,9 +12,21 @@ function getStatusClass(status) {
   return 'status-danger';
 }
 
+function modelFloorIdToLabel(floorId) {
+  if (!floorId || floorId === 'all') return 'all';
+  if (floorId === 'floor_tret') return 'Tầng trệt';
+  const match = floorId.match(/^floor_(\d+)$/);
+  if (match) {
+    return `Tầng ${match[1]}`;
+  }
+  return floorId;
+}
+
 function ResidentEscapePage() {
   const [escapes, setEscapes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [focusedNode, setFocusedNode] = useState(null);
+  const [selectedFloor, setSelectedFloor] = useState('floor_3');
 
   useEffect(() => {
     const fetchEscapes = async () => {
@@ -29,7 +43,10 @@ function ResidentEscapePage() {
     fetchEscapes();
   }, []);
 
-  const filteredEscapes = escapes.filter(e => e.floor === 'Tầng 3');
+  const filteredEscapes = escapes.filter((e) => {
+    if (selectedFloor === 'all') return true;
+    return e.floor === modelFloorIdToLabel(selectedFloor);
+  });
 
   return (
     <main className="resident-screen">
@@ -41,8 +58,21 @@ function ResidentEscapePage() {
             <p className="typo-label text-secondary resident-overline">Cư dân - Ứng phó khẩn cấp</p>
             <h1 className="typo-h1 resident-title">Lối thoát hiểm</h1>
           </div>
-          <span className="resident-floor-chip typo-label">Tầng hiện tại: 3</span>
+          <span className="resident-floor-chip typo-label">
+            Tầng: {selectedFloor === 'all' ? 'Tất cả' : modelFloorIdToLabel(selectedFloor).replace('Tầng ', '')}
+          </span>
         </header>
+
+        <BuildingModelViewer
+          className="resident-escape-model"
+          showHeader={false}
+          showCaption={false}
+          ariaLabel="Mô hình 3D lối thoát hiểm"
+          highlightExits={true}
+          selectedFloorId={selectedFloor}
+          onFloorChange={setSelectedFloor}
+          focusedNodeName={focusedNode}
+        />
         
         {/* Danh sách lối thoát */}
         <section className="resident-list-section">
@@ -72,6 +102,23 @@ function ResidentEscapePage() {
                         {escape.status === 'inspection' ? 'Cần kiểm tra cửa/lối đi' : 'Lối thoát bị chặn hoặc không an toàn'}
                       </p>
                     </div>
+                  )}
+
+                  {escape.glbNodeName && (
+                    <button
+                      type="button"
+                      className="resident-btn-view-3d typo-body-md"
+                      onClick={() => {
+                        setFocusedNode({ name: escape.glbNodeName, timestamp: Date.now() });
+                        const modelElement = document.querySelector('.resident-escape-model');
+                        if (modelElement) {
+                          modelElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                      }}
+                    >
+                      <Eye size={18} style={{ marginRight: '6px' }} />
+                      Xem trong mô hình 3D
+                    </button>
                   )}
                 </li>
               ))}
