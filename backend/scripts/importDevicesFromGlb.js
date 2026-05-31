@@ -229,11 +229,17 @@ async function importDevices() {
     throw error;
   } finally {
     client.release();
-    await pool.end();
+    if (require.main === module) {
+      await pool.end();
+    }
   }
 }
 
-importDevices().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+module.exports = { importDevices };
+
+if (require.main === module) {
+  importDevices().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}

@@ -1,4 +1,6 @@
 const { pool } = require('./db');
+const { importDevices } = require('../../scripts/importDevicesFromGlb');
+const { importEscapes } = require('../../scripts/importEscapesFromGlb');
 
 async function ensureManagerTables() {
   await pool.query(`
@@ -47,6 +49,70 @@ async function ensureManagerTables() {
       `, user);
     }
     console.log("Seeding default user accounts completed.");
+  }
+
+  // Tự động kiểm tra và import bảng devices
+  let seedDevices = false;
+  try {
+    const tableCheck = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM pg_tables 
+        WHERE schemaname = 'public' 
+        AND tablename = 'devices'
+      )
+    `);
+    if (!tableCheck.rows[0].exists) {
+      seedDevices = true;
+    } else {
+      const countCheck = await pool.query('SELECT COUNT(*) FROM devices');
+      if (parseInt(countCheck.rows[0].count, 10) === 0) {
+        seedDevices = true;
+      }
+    }
+  } catch (err) {
+    seedDevices = true;
+  }
+
+  if (seedDevices) {
+    console.log("Bảng devices chưa tồn tại hoặc trống. Bắt đầu tự động import từ model GLB...");
+    try {
+      await importDevices();
+      console.log("Tự động import thiết bị hoàn tất.");
+    } catch (err) {
+      console.error("Không thể tự động seed dữ liệu thiết bị:", err.message);
+    }
+  }
+
+  // Tự động kiểm tra và import bảng escapes
+  let seedEscapes = false;
+  try {
+    const tableCheck = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM pg_tables 
+        WHERE schemaname = 'public' 
+        AND tablename = 'escapes'
+      )
+    `);
+    if (!tableCheck.rows[0].exists) {
+      seedEscapes = true;
+    } else {
+      const countCheck = await pool.query('SELECT COUNT(*) FROM escapes');
+      if (parseInt(countCheck.rows[0].count, 10) === 0) {
+        seedEscapes = true;
+      }
+    }
+  } catch (err) {
+    seedEscapes = true;
+  }
+
+  if (seedEscapes) {
+    console.log("Bảng escapes chưa tồn tại hoặc trống. Bắt đầu tự động import từ model GLB...");
+    try {
+      await importEscapes();
+      console.log("Tự động import lối thoát hiểm hoàn tất.");
+    } catch (err) {
+      console.error("Không thể tự động seed dữ liệu lối thoát hiểm:", err.message);
+    }
   }
 }
 

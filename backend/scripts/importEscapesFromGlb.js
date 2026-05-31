@@ -191,11 +191,17 @@ async function importEscapes() {
     throw error;
   } finally {
     client.release();
-    await pool.end();
+    if (require.main === module) {
+      await pool.end();
+    }
   }
 }
 
-importEscapes().catch((error) => {
-  console.error('Import failed:', error);
-  process.exit(1);
-});
+module.exports = { importEscapes };
+
+if (require.main === module) {
+  importEscapes().catch((error) => {
+    console.error('Import failed:', error);
+    process.exit(1);
+  });
+}
