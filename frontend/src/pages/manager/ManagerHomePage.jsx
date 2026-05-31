@@ -43,13 +43,10 @@ function ManagerHomePage() {
 					<div>
 						<p className="typo-label text-secondary manager-overline">Ban quản lý - Trung tâm vận hành</p>
 						<h1 className="typo-h1 manager-title">Mô hình 3D tổng quan</h1>
-						<p className="typo-body-md text-secondary">
-							Quan sát mô hình tòa nhà trực tiếp, xoay góc nhìn và kiểm tra tổng thể nhanh hơn.
-						</p>
 					</div>
 				</header>
 
-				<BuildingModelViewer highlightExits={true} />
+				<BuildingModelViewer highlightExits={true} title="" showHeader={false} />
 
 				<section className="resident-stats-grid" aria-label="Thống kê tổng quan">
 					<div className="resident-panel stat-card-item bg-light-safe">

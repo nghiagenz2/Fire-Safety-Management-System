@@ -28,14 +28,7 @@ function Header({ roleLabel = 'Cư dân', homePath = '/resident/home' }) {
         </div>
 
         <div className="header-right">
-          <div className="header-search">
-            <MagnifyingGlass size={20} color="#9ca3af" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm thiết bị, tầng..."
-              className="search-input"
-            />
-          </div>
+
 
           <div className="header-actions">
             <button type="button" className="action-btn" aria-label="Thông báo">

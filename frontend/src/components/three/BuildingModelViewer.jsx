@@ -1803,7 +1803,7 @@ function BuildingModelViewer({
 			{showHeader ? (
 				<div className="manager-model-header">
 					<div>
-						<h2 className="typo-h2 manager-title">{title}</h2>
+						{title && <h2 className="typo-h2 manager-title">{title}</h2>}
 					</div>
 					<span className="manager-model-badge">{floorNodes.length > 0 ? `${floorNodes.length} tầng` : 'GLB'}</span>
 				</div>
