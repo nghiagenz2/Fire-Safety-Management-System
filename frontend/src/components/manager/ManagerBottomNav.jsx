@@ -1,6 +1,5 @@
 import {
 	ChartBar,
-	ClipboardText,
 	Door,
 	HouseSimple,
 	MapPin,
@@ -18,7 +17,6 @@ const navItems = [
 	{ label: 'Kiểm tra tầng', to: '/manager/floor-check', Icon: MapPin },
 	{ label: 'Dashboard', to: '/manager/dashboard', Icon: ChartBar },
 	{ label: 'Sự cố', to: '/manager/incidents', Icon: WarningDiamond },
-	{ label: 'Báo cáo', to: '/manager/reports', Icon: ClipboardText },
 	{ label: 'Tài khoản', to: '/manager/account', Icon: UserCircle }
 ];
 

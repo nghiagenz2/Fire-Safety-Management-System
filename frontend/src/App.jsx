@@ -23,7 +23,6 @@ import ManagerAccountPage from "./pages/manager/ManagerAccountPage.jsx";
 import ManagerFloorCheckPage from "./pages/manager/ManagerFloorCheckPage.jsx";
 import ManagerDashboardPage from "./pages/manager/ManagerDashboardPage.jsx";
 import ManagerIncidentPage from "./pages/manager/ManagerIncidentPage.jsx";
-import ManagerReportPage from "./pages/manager/ManagerReportPage.jsx";
 
 import ResidentHomePage from "./pages/resident/ResidentHomePage.jsx";
 import ResidentEscapePage from "./pages/resident/ResidentEscapePage.jsx";
@@ -82,7 +81,6 @@ function App() {
         <Route path="/manager/floor-check" element={<ProtectedRoute requiredRole="manager"><ManagerFloorCheckPage /></ProtectedRoute>} />
         <Route path="/manager/dashboard" element={<ProtectedRoute requiredRole="manager"><ManagerDashboardPage /></ProtectedRoute>} />
         <Route path="/manager/incidents" element={<ProtectedRoute requiredRole="manager"><ManagerIncidentPage /></ProtectedRoute>} />
-        <Route path="/manager/reports" element={<ProtectedRoute requiredRole="manager"><ManagerReportPage /></ProtectedRoute>} />
         <Route path="/manager/account" element={<ProtectedRoute requiredRole="manager"><ManagerAccountPage /></ProtectedRoute>} />
         <Route path="/manager/profile" element={<ProtectedRoute requiredRole="manager"><ProfilePage actor="manager" /></ProtectedRoute>} />
 
