@@ -1,21 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Bell, User, ShieldCheck, FireExtinguisher, HouseLine, X, Fire, ClipboardText } from '@phosphor-icons/react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Bell, User, ShieldCheck, FireExtinguisher, HouseLine, X, ClipboardText } from '@phosphor-icons/react';
 import { getCurrentUser } from '../services/authApi';
 import '../styles/Header.css';
-
-function floorNameFromId(floorId = '') {
-  if (floorId === 'floor_tret') return 'Tầng trệt';
-  const match = String(floorId).match(/^floor_(\d+)$/);
-  if (match) return `Tầng ${match[1]}`;
-  return floorId || 'khu vực chưa xác định';
-}
 
 const TASK_STORAGE_KEY = 'firestaff_last_seen_task_total';
 
 function Header({ roleLabel = 'Cư dân', homePath = '/resident/home' }) {
   const navigate = useNavigate();
-  const location = useLocation();
   const actor = homePath.startsWith('/manager')
     ? 'manager'
     : homePath.startsWith('/firestaff')
@@ -31,9 +23,6 @@ function Header({ roleLabel = 'Cư dân', homePath = '/resident/home' }) {
   const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
-
-  // Track fire simulation state
-  const simActiveRef = useRef(false);
 
   // Add a notification (deduplicate by id)
   function addNotification(notif) {
@@ -52,62 +41,6 @@ function Header({ roleLabel = 'Cư dân', homePath = '/resident/home' }) {
   function clearAll() {
     setNotifications([]);
   }
-
-  // SSE: listen to fire simulation for ALL actors
-  useEffect(() => {
-    let eventSource = null;
-    let reconnectTimer = null;
-
-    const connect = () => {
-      eventSource = new EventSource('/api/incidents/simulation/stream');
-
-      eventSource.onmessage = (event) => {
-        try {
-          const state = JSON.parse(event.data);
-          if (state.active && !simActiveRef.current) {
-            // Fire just started
-            simActiveRef.current = true;
-            const floor = floorNameFromId(state.floorId);
-            addNotification({
-              id: `fire-sim-${state.startTime || Date.now()}`,
-              type: 'fire',
-              title: 'CẢNH BÁO: Phát hiện cháy!',
-              body: `Mô phỏng cháy đang hoạt động tại ${floor}.`,
-              time: new Date(),
-              link: actor === 'resident' ? '/resident/escape'
-                  : actor === 'firestaff' ? '/firestaff/incidents'
-                  : '/manager/incidents'
-            });
-          } else if (!state.active && simActiveRef.current) {
-            // Fire ended
-            simActiveRef.current = false;
-            addNotification({
-              id: `fire-end-${Date.now()}`,
-              type: 'info',
-              title: 'Mô phỏng cháy đã kết thúc',
-              body: 'Tình huống mô phỏng cháy đã được giải quyết.',
-              time: new Date(),
-              link: null
-            });
-          }
-        } catch (err) {
-          console.error('Header SSE parse error:', err);
-        }
-      };
-
-      eventSource.onerror = () => {
-        if (eventSource) eventSource.close();
-        reconnectTimer = window.setTimeout(connect, 5000);
-      };
-    };
-
-    connect();
-
-    return () => {
-      if (eventSource) eventSource.close();
-      if (reconnectTimer) window.clearTimeout(reconnectTimer);
-    };
-  }, [actor]);
 
   // Polling: check for new tasks for firestaff only
   useEffect(() => {
@@ -188,7 +121,6 @@ function Header({ roleLabel = 'Cư dân', homePath = '/resident/home' }) {
   }
 
   const NotifIcon = ({ type }) => {
-    if (type === 'fire') return <Fire size={18} weight="fill" className="notif-icon notif-icon--fire" />;
     if (type === 'task') return <ClipboardText size={18} weight="fill" className="notif-icon notif-icon--task" />;
     return <Bell size={18} weight="fill" className="notif-icon notif-icon--info" />;
   };
