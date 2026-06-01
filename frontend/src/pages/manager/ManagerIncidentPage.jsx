@@ -4,7 +4,7 @@ import Header from '../../components/Header';
 import ManagerBottomNav from '../../components/manager/ManagerBottomNav';
 import ManagerIncidentCard from '../../components/manager/ManagerIncidentCard';
 import { getManagerIncidentsData, getSimulationIncident } from '../../services/managerIncidentsApi';
-import './ManagerIncidentPage.css';
+import '../../styles/ManagerIncidentPage.css';
 
 function getFloorInfo(floorValue) {
   const str = String(floorValue || '').toLowerCase();

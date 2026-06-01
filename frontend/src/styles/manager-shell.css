@@ -1,6 +1,6 @@
 .manager-screen {
 	min-height: 100vh;
-	padding: 18px 14px 96px;
+	padding: 18px 14px;
 	background:
 		radial-gradient(circle at 12% -20%, rgba(255, 193, 7, 0.32), transparent 45%),
 		radial-gradient(circle at 90% 10%, rgba(0, 82, 204, 0.14), transparent 40%),
@@ -721,7 +721,7 @@ select.manager-escape-input {
 
 @media (max-width: 768px) {
 	.manager-screen {
-		padding: 14px 10px 96px;
+		padding: 14px 10px;
 	}
 
 	.manager-device-shell {
