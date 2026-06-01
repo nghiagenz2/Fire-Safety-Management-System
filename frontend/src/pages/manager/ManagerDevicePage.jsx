@@ -47,6 +47,15 @@ function convertYYYYMMDDToDDMMYYYY(dateStr) {
 	return dateStr;
 }
 
+function labelToModelFloorId(label) {
+	if (!label || label === 'all') return 'all';
+	const normalized = String(label).toLowerCase();
+	if (normalized.includes('tret') || normalized.includes('trệt')) return 'floor_tret';
+	const match = String(label).match(/^Tầng (\d+)$/);
+	if (match) return `floor_${match[1]}`;
+	return label;
+}
+
 function createInitialForm(floor = 'Tầng 1') {
 	return {
 		type: 'Bình chữa cháy',
@@ -490,7 +499,7 @@ function ManagerDevicePage() {
 				isOpen={Boolean(modelTarget)}
 				title={modelTarget ? `Vị trí ${modelTarget.id}` : 'Vị trí thiết bị'}
 				subtitle={modelTarget ? `${modelTarget.type} - ${modelTarget.floor || modelTarget.location || ''}` : ''}
-				selectedFloorId={modelTarget ? (modelTarget.glbFloorId || modelTarget.floor || 'all') : 'all'}
+				selectedFloorId={modelTarget ? labelToModelFloorId(modelTarget.glbFloorId || modelTarget.floor || modelTarget.location) : 'all'}
 				focusedNodeName={modelTarget?.glbNodeName || ''}
 				highlightExits={true}
 				focusedNodeHighlightColor="#f97316"

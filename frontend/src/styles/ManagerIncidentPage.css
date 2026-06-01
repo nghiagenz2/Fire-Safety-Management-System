@@ -219,7 +219,7 @@
 
 @media (max-width: 480px) {
   .manager-screen {
-    padding: 12px 10px 96px;
+    padding: 12px 10px;
   }
 
   .incident-shell {

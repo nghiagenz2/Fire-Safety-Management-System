@@ -39,15 +39,19 @@
     "duration": "02:08",
     "level": "Quan trọng",
     "category": "emergency",
-    "summary": "Khai báo ngắn gọn theo mẫu: vị trí cháy, mức độ, số người kẹt và lối tiếp cận.",
+    "summary": "Giữ bình tĩnh, cúi thấp người di chuyển tránh khói độc, dùng khăn ẩm che mũi miệng, đi thang bộ và tuyệt đối không dùng thang máy.",
     "videoTitle": "Hướng dẫn 8 kỹ năng thoát nạn khi có cháy",
     "videoUrl": "https://www.youtube.com/watch?v=2V1EW08AyQk",
     "coverImage": "/crawling.png",
     "textSteps": [
-      "Nêu rõ địa chỉ tòa nhà, tầng và khu vực cháy cụ thể.",
-      "Cung cấp thông tin số người mắc kẹt, tình trạng khói và khả năng tiếp cận.",
-      "Để lại số điện thoại liên hệ và làm theo hướng dẫn của điều phối viên.",
-      "Thông báo lại cho ban quản lý để kích hoạt phương án hỗ trợ tại chỗ."
+      "Giữ bình tĩnh để xác định nguồn cháy và tìm hướng thoát nạn an toàn nhất.",
+      "Cúi thấp người, bò sát mặt đất hoặc men theo tường để tránh hít phải khói độc.",
+      "Dùng khăn ẩm, vải ướt che kín mũi miệng để lọc bớt khói và khí độc.",
+      "Nằm xuống và lăn qua lại để dập tắt lửa nếu chẳng may quần áo bị cháy bén.",
+      "Kêu cứu và vẫy tay ra hiệu từ cửa sổ, ban công, hoặc gọi 114 thông báo vị trí.",
+      "Kiểm tra nhiệt độ cửa bằng mu bàn tay trước khi mở; không mở nếu cửa nóng.",
+      "Chỉ sử dụng cầu thang bộ để thoát hiểm, tuyệt đối không được đi thang máy.",
+      "Tuân thủ hướng dẫn của lực lượng chức năng, không chen lấn xô đẩy khi thoát nạn."
     ],
     "contacts": [
       "114 - Cảnh sát PCCC",
@@ -61,14 +65,20 @@
     "duration": "01:45",
     "level": "Quan trọng",
     "category": "escape",
-    "summary": "Dùng mu bàn tay kiểm tra nhiệt cửa, mở hé để đánh giá khói và rút lui nếu nhiệt cao.",
+    "summary": "Những lời khuyên vàng từ lính cứu hỏa chuyên nghiệp giúp bạn tăng tối đa cơ hội sống sót và thoát khỏi đám cháy an toàn.",
     "videoTitle": "9 lời khuyên của lính cứu hỏa để giúp bạn sống sót khi cháy",
     "videoUrl": "https://www.youtube.com/watch?v=Ei-fjrwVLag",
     "coverImage": "/tips.png",
     "textSteps": [
-      "Dùng mu bàn tay áp nhẹ lên cánh cửa và tay nắm để kiểm tra nhiệt.",
-      "Nếu cửa nóng bất thường, không mở và chuyển sang lối thoát khác.",
-      "Nếu cửa mát, mở hé và quan sát khói trước khi di chuyển tiếp."
+      "Giữ bình tĩnh và hành động thật nhanh chóng ngay khi phát hiện đám cháy.",
+      "Luôn có sẵn và nắm vững kế hoạch thoát hiểm cùng các lối thoát dự phòng.",
+      "Di chuyển thật thấp dưới làn khói độc, dùng khăn ẩm che mũi miệng để thở.",
+      "Kiểm tra nhiệt độ cửa và tay nắm bằng mu bàn tay trước khi mở cửa.",
+      "Tuyệt đối không sử dụng thang máy, chỉ dùng cầu thang bộ thoát hiểm.",
+      "Tập trung thoát thân nhanh chóng, tuyệt đối không cố mang theo đồ đạc tài sản.",
+      "Đóng các cánh cửa phía sau lưng khi bạn thoát ra để làm chậm khói lửa lan rộng.",
+      "Nếu bị kẹt, chèn kín khe cửa ngăn khói, ra cửa sổ ra hiệu kêu cứu và gọi 114.",
+      "Khi đã ra ngoài an toàn, tuyệt đối không được quay trở lại bên trong ngôi nhà."
     ]
   }
 ]

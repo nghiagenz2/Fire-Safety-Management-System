@@ -216,7 +216,7 @@ function getFloorNodes(gltf) {
 	// --- Cách 1: Thử quét theo cấu trúc Hierarchy từ Blender (khi bật "Full Collection Hierarchy") ---
 	let hierarchyFloors = [];
 	gltf.scene.traverse((child) => {
-		if ((child.isGroup || child.isObject3D) && child.name) {
+		if (child.name) {
 			const nameLower = child.name.toLowerCase().trim();
 			if (nameLower.startsWith('tang') || nameLower.startsWith('tầng') || nameLower.startsWith('floor')) {
 				const meshes = [];
@@ -307,34 +307,34 @@ function getFloorNodes(gltf) {
 	if (isBconCity) {
 		console.log('Detected BconCity.glb. Slicing floors according to Blender Outliner object counts...');
 		const floorDefinitions = [
-			{ id: 'floor_tret', name: 'Tầng trệt', count: 199 },
-			{ id: 'floor_1', name: 'Tầng 1', count: 199 },
-			{ id: 'floor_2', name: 'Tầng 2', count: 199 },
-			{ id: 'floor_3', name: 'Tầng 3', count: 199 },
-			{ id: 'floor_4', name: 'Tầng 4', count: 409 },
-			{ id: 'floor_5', name: 'Tầng 5', count: 409 },
-			{ id: 'floor_6', name: 'Tầng 6', count: 409 },
-			{ id: 'floor_7', name: 'Tầng 7', count: 409 },
-			{ id: 'floor_8', name: 'Tầng 8', count: 356 },
-			{ id: 'floor_9', name: 'Tầng 9', count: 350 },
-			{ id: 'floor_10', name: 'Tầng 10', count: 350 },
-			{ id: 'floor_11', name: 'Tầng 11', count: 350 },
-			{ id: 'floor_12', name: 'Tầng 12', count: 350 },
-			{ id: 'floor_13', name: 'Tầng 13', count: 350 },
-			{ id: 'floor_14', name: 'Tầng 14', count: 350 },
-			{ id: 'floor_15', name: 'Tầng 15', count: 350 },
-			{ id: 'floor_16', name: 'Tầng 16', count: 350 },
-			{ id: 'floor_17', name: 'Tầng 17', count: 350 },
-			{ id: 'floor_18', name: 'Tầng 18', count: 350 },
-			{ id: 'floor_19', name: 'Tầng 19', count: 350 },
-			{ id: 'floor_20', name: 'Tầng 20', count: 350 },
-			{ id: 'floor_21', name: 'Tầng 21', count: 350 },
-			{ id: 'floor_22', name: 'Tầng 22', count: 350 },
-			{ id: 'floor_23', name: 'Tầng 23', count: 350 },
-			{ id: 'floor_24', name: 'Tầng 24', count: 350 },
-			{ id: 'floor_25', name: 'Tầng 25', count: 350 },
-			{ id: 'floor_26', name: 'Tầng 26', count: 350 },
-			{ id: 'floor_27', name: 'Tầng 27', count: 351 }
+			{ id: 'floor_tret', name: 'Tầng trệt', count: 230 },
+			{ id: 'floor_1', name: 'Tầng 1', count: 223 },
+			{ id: 'floor_2', name: 'Tầng 2', count: 223 },
+			{ id: 'floor_3', name: 'Tầng 3', count: 222 },
+			{ id: 'floor_4', name: 'Tầng 4', count: 447 },
+			{ id: 'floor_5', name: 'Tầng 5', count: 487 },
+			{ id: 'floor_6', name: 'Tầng 6', count: 407 },
+			{ id: 'floor_7', name: 'Tầng 7', count: 407 },
+			{ id: 'floor_8', name: 'Tầng 8', count: 353 },
+			{ id: 'floor_9', name: 'Tầng 9', count: 352 },
+			{ id: 'floor_10', name: 'Tầng 10', count: 352 },
+			{ id: 'floor_11', name: 'Tầng 11', count: 352 },
+			{ id: 'floor_12', name: 'Tầng 12', count: 352 },
+			{ id: 'floor_13', name: 'Tầng 13', count: 352 },
+			{ id: 'floor_14', name: 'Tầng 14', count: 352 },
+			{ id: 'floor_15', name: 'Tầng 15', count: 352 },
+			{ id: 'floor_16', name: 'Tầng 16', count: 352 },
+			{ id: 'floor_17', name: 'Tầng 17', count: 352 },
+			{ id: 'floor_18', name: 'Tầng 18', count: 352 },
+			{ id: 'floor_19', name: 'Tầng 19', count: 352 },
+			{ id: 'floor_20', name: 'Tầng 20', count: 352 },
+			{ id: 'floor_21', name: 'Tầng 21', count: 352 },
+			{ id: 'floor_22', name: 'Tầng 22', count: 352 },
+			{ id: 'floor_23', name: 'Tầng 23', count: 352 },
+			{ id: 'floor_24', name: 'Tầng 24', count: 352 },
+			{ id: 'floor_25', name: 'Tầng 25', count: 352 },
+			{ id: 'floor_26', name: 'Tầng 26', count: 352 },
+			{ id: 'floor_27', name: 'Tầng 27', count: 353 }
 		];
 
 		let currentIndex = 0;
@@ -470,8 +470,29 @@ function applyFloorVisibility(gltf, selectedId) {
 	});
 }
 
+function getBoundingBoxIncludingInvisible(object) {
+	const box = new THREE.Box3();
+	let hasMesh = false;
+	object.traverse((child) => {
+		if (child.isMesh) {
+			hasMesh = true;
+			if (!child.geometry.boundingBox) {
+				child.geometry.computeBoundingBox();
+			}
+			const childBox = child.geometry.boundingBox.clone();
+			child.updateMatrixWorld(true);
+			childBox.applyMatrix4(child.matrixWorld);
+			box.union(childBox);
+		}
+	});
+	if (!hasMesh) {
+		return new THREE.Box3().setFromObject(object);
+	}
+	return box;
+}
+
 function fitCameraToObject(camera, controls, object, options = {}) {
-	const box = new THREE.Box3().setFromObject(object);
+	const box = getBoundingBoxIncludingInvisible(object);
 	const size = box.getSize(new THREE.Vector3());
 	const center = box.getCenter(new THREE.Vector3());
 	const maxDim = Math.max(size.x, size.y, size.z);
@@ -698,6 +719,8 @@ function BuildingModelViewer({
 	const lastHandledFocusRef = useRef(null);
 	const selectedExitNodeNameRef = useRef('');
 	const focusedMaterialRestoreRef = useRef(new Map());
+	const blinkingMeshesRef = useRef(new Map());
+
 
 	// Quản lý Mesh và hoạt ảnh đường thoát hiểm neon
 	const pathMeshesRef = useRef([]);
@@ -771,12 +794,22 @@ function BuildingModelViewer({
 		return typeof focusedNode === 'object' ? (focusedNode.name || '') : focusedNode;
 	};
 	const clearFocusedMaterial = () => {
+		// Restore replaced materials
 		focusedMaterialRestoreRef.current.forEach((material, childMesh) => {
 			childMesh.material = material;
 		});
 		focusedMaterialRestoreRef.current.clear();
+
+		// Clear blinking registry (materials have been restored so no need to reset emissiveIntensity)
+		blinkingMeshesRef.current.clear();
 		globalContext.needsRender = true;
 	};
+
+	function isFireCabinetName(name = '') {
+		if (!name) return false;
+		const n = name.toLowerCase();
+		return n.includes('tu_chua') || n.includes('tu_chua_chay') || n.includes('binh_chua') || n.includes('binh_chua_chay');
+	}
 	const highlightedNodeName = highlightedEscape?.glbNodeName || '';
 	const resolvedFocusedNodeName = focusedNodeName || highlightedNodeName;
 
@@ -1180,22 +1213,49 @@ function BuildingModelViewer({
 							});
 							
 							clearFocusedMaterial();
-							const focusColor = new THREE.Color(focusedNodeHighlightColor);
-							const focusMaterial = new THREE.MeshStandardMaterial({
-								color: focusColor,
-								emissive: focusColor,
-								emissiveIntensity: 2.0,
-								roughness: 0.1,
-								metalness: 0.9,
-							});
+							// If target is a fire cabinet, do not replace material color — make it blink instead
+							const isCabinet = isFireCabinetName(targetObject.name || '');
+							if (isCabinet) {
+								// Replace mesh materials with an orange highlight material and register for blinking
+								targetObject.traverse((child) => {
+									if (child.isMesh) {
+										try {
+											// save original material for restoration
+											focusedMaterialRestoreRef.current.set(child, child.material);
+										} catch (err) {
+											// ignore
+										}
+										const orangeColor = new THREE.Color('#f97316');
+										const focusMaterial = new THREE.MeshStandardMaterial({
+											color: orangeColor,
+											emissive: orangeColor,
+											emissiveIntensity: 0.6,
+											roughness: 0.3,
+											metalness: 0.6,
+										});
+										child.material = focusMaterial;
+										// register for blinking; store base emissiveIntensity so animation is stable
+										blinkingMeshesRef.current.set(child, { base: focusMaterial.emissiveIntensity || 0.6, amp: 1.6, speed: 0.008 });
+									}
+								});
+							} else {
+								const focusColor = new THREE.Color(focusedNodeHighlightColor);
+								const focusMaterial = new THREE.MeshStandardMaterial({
+									color: focusColor,
+									emissive: focusColor,
+									emissiveIntensity: 2.0,
+									roughness: 0.1,
+									metalness: 0.9,
+								});
 
-							targetObject.traverse((child) => {
-								if (child.isMesh) {
-									focusedMaterialRestoreRef.current.set(child, child.material);
-									child.material = focusMaterial;
-								}
-							});
-							globalContext.needsRender = true;
+								targetObject.traverse((child) => {
+									if (child.isMesh) {
+										focusedMaterialRestoreRef.current.set(child, child.material);
+										child.material = focusMaterial;
+									}
+								});
+								globalContext.needsRender = true;
+							}
 						} else {
 							console.warn('[Debug3D] globalContext camera or controls is missing!');
 						}
@@ -1709,6 +1769,23 @@ function BuildingModelViewer({
 							const scale = 1.0 + Math.sin(now * 0.008) * 0.25;
 							marker.scale.set(scale, scale, scale);
 						}
+					}
+				});
+				needsPulseRender = true;
+			}
+
+			// Blink registered fire cabinet meshes (do not change their color)
+			if (blinkingMeshesRef.current && blinkingMeshesRef.current.size > 0) {
+				const blinkTime = now * 0.006;
+				blinkingMeshesRef.current.forEach((meta, mesh) => {
+					if (!mesh || !mesh.material) return;
+					try {
+						const base = meta.base !== undefined ? meta.base : (mesh.material.emissiveIntensity || 0);
+						const amp = meta.amp || 1.5;
+						const speed = meta.speed || 0.006;
+						mesh.material.emissiveIntensity = base + Math.abs(Math.sin(blinkTime * (speed / 0.006))) * amp;
+					} catch (err) {
+						// ignore
 					}
 				});
 				needsPulseRender = true;
