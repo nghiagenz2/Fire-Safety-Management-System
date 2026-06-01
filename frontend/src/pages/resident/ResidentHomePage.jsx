@@ -10,6 +10,7 @@ import { useSimulationStatus } from '../../hooks/useSimulationStatus.js';
 function ResidentHomePage() {
   const [deviceTotal, setDeviceTotal] = useState('--');
   const [exitTotal, setExitTotal] = useState('--');
+  const [selectedFloorId, setSelectedFloorId] = useState('all');
   const { isSimulationActive, simulationFloor } = useSimulationStatus();
 
   useEffect(() => {
@@ -35,6 +36,12 @@ function ResidentHomePage() {
     };
   }, []);
 
+  const getFloorDisplayName = (floorId) => {
+    if (floorId === 'all') return 'Tất cả';
+    if (floorId === 'floor_tret') return 'Trệt';
+    return floorId.replace('floor_', '').replace('Tang ', '').trim();
+  };
+
   return (
     <main className="resident-screen resident-home-screen">
       <Header />
@@ -45,7 +52,7 @@ function ResidentHomePage() {
             <p className="typo-label text-secondary resident-overline">Cư dân - Trung tâm vận hành</p>
             <h1 className="typo-h1 resident-title">Trang chủ 3D</h1>
           </div>
-          <span className="resident-floor-chip typo-label">Tầng hiện tại: 3</span>
+          <span className="resident-floor-chip typo-label">Tầng hiện tại: {getFloorDisplayName(selectedFloorId)}</span>
         </header>
 
         <BuildingModelViewer
@@ -54,6 +61,8 @@ function ResidentHomePage() {
           showCaption={false}
           ariaLabel="Khu vực mô hình 3D"
           highlightExits={true}
+          selectedFloorId={selectedFloorId}
+          onFloorChange={setSelectedFloorId}
         />
 
         <section className="resident-stats-grid">
