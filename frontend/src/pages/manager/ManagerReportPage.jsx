@@ -17,7 +17,7 @@ import {
   getManagerReports,
   updateManagerReport
 } from '../../services/managerReportsApi';
-import './ManagerReportPage.css';
+import '../../styles/ManagerReportPage.css';
 
 const reportTypes = [
   { value: 'monthly', label: 'Báo cáo hàng tháng' },
