@@ -3,6 +3,10 @@ const { pool } = require('../config/db');
 function toDevice(row) {
   if (!row) return null;
 
+  const nodeIndexStr = row.glb_node_name?.match(/\d+/)?.[0] || row.id?.match(/\d+$/)?.[0] || '01';
+  const floorNum = row.floor?.match(/\d+/)?.[0] || 'G';
+  const room = floorNum === 'G' ? 'Sảnh trệt' : `Phòng ${floorNum}${nodeIndexStr.padStart(2, '0')}`;
+
   return {
     id: row.id,
     type: row.type,
@@ -17,6 +21,7 @@ function toDevice(row) {
     quantity: row.quantity,
     condition: row.condition_note,
     floor: row.floor,
+    room: room,
     glbNodeName: row.glb_node_name,
     glbNodeIndex: row.glb_node_index,
     glbTranslation: row.glb_translation,

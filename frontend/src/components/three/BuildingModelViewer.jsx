@@ -64,6 +64,29 @@ function getFloorNameById(floorId) {
 	return `Tầng ${num}`;
 }
 
+function getFriendlyDoorName(doorName, floorId) {
+	if (!doorName) return '';
+	if (doorName === 'Vị trí mặc định (Node 1)') return doorName;
+	if (!doorName.toLowerCase().includes('cua_phong')) return doorName;
+
+	const match = doorName.match(/\d+/);
+	if (!match) return doorName;
+
+	const rawNum = match[0].substring(0, 2);
+	const roomIdx = parseInt(rawNum, 10);
+	if (isNaN(roomIdx)) return doorName;
+
+	const isTret = floorId === 'floor_tret' || floorId?.toLowerCase().includes('tret');
+	if (isTret) {
+		const roomNum = String(roomIdx).padStart(3, '0');
+		return `Cửa phòng ${roomNum}`;
+	} else {
+		const num = String(floorId).replace('floor_', '').replace('Tang ', '').trim();
+		const roomNum = String(roomIdx).padStart(2, '0');
+		return `Cửa phòng ${num}${roomNum}`;
+	}
+}
+
 function hasObjectNameInAncestors(object, normalizedTargetNames) {
 	let current = object;
 	while (current) {
@@ -1918,7 +1941,7 @@ function BuildingModelViewer({
 						<div className="fire-notification-content">
 							<span className="fire-notification-title">CẢNH BÁO PHÁT HIỆN SỰ CỐ CHÁY!</span>
 							<span className="fire-notification-desc">
-								Đang có giả lập cháy tại {getFloorNameById(syncSelectedFloorId)} (Khu vực: {syncSimulationOrigin})
+								Đang có giả lập cháy tại {getFloorNameById(syncSelectedFloorId)} (Khu vực: {getFriendlyDoorName(syncSimulationOrigin, syncSelectedFloorId)})
 							</span>
 						</div>
 						<div className="fire-notification-actions">
@@ -1941,12 +1964,12 @@ function BuildingModelViewer({
 				)}
 
 				{simulationActive && pathBlocked && (
-					<div className="fire-notification-banner" style={{ background: 'rgba(220, 38, 38, 0.96)', borderColor: '#ef4444', top: showFireNotification ? '100px' : '16px' }}>
+					<div className="fire-notification-banner" style={{ background: 'rgba(30, 10, 10, 0.95)', borderLeft: '4px solid #dc2626', top: showFireNotification ? '100px' : '16px' }}>
 						<div className="fire-notification-icon">🚨</div>
 						<div className="fire-notification-content">
-							<span className="fire-notification-title" style={{ color: '#ffffff' }}>ĐƯỜNG THOÁT HIỂM BỊ CHẶN HOÀN TOÀN!</span>
-							<span className="fire-notification-desc" style={{ color: '#fecaca', fontWeight: 'bold' }}>
-								Mọi lối thoát hiểm từ vị trí {escapeStartDoor} đã bị khói lửa cô lập. Hãy đóng chặt cửa, chèn khe bằng khăn ướt, và di chuyển ra cửa sổ/ban công để chờ cứu hộ!
+							<span className="fire-notification-title" style={{ color: '#f87171' }}>ĐƯỜNG THOÁT HIỂM BỊ CHẶN HOÀN TOÀN!</span>
+							<span className="fire-notification-desc" style={{ color: '#e2e8f0' }}>
+								Mọi lối thoát hiểm từ vị trí {getFriendlyDoorName(escapeStartDoor, selectedFloorId)} đã bị khói lửa cô lập. Hãy đóng chặt cửa, chèn khe bằng khăn ướt, và di chuyển ra cửa sổ/ban công để chờ cứu hộ!
 							</span>
 						</div>
 					</div>

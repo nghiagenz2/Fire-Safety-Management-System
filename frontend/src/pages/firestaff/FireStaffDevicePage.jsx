@@ -374,7 +374,6 @@ function FireStaffDevicePage() {
                   <th>Mã thiết bị</th>
                   <th>Loại thiết bị</th>
                   <th>Tầng</th>
-                  <th>Khu vực / phòng</th>
                   <th>Trạng thái</th>
                   <th>Hạn bảo trì</th>
                   <th>Lần kiểm tra gần nhất</th>
@@ -386,7 +385,7 @@ function FireStaffDevicePage() {
                 {isLoading && (
                   <tr>
                     <td
-                      colSpan="9"
+                      colSpan="8"
                       className="firestaff-device-empty typo-body-md"
                     >
                       Đang tải dữ liệu thiết bị...
@@ -397,7 +396,7 @@ function FireStaffDevicePage() {
                 {!isLoading && tableData.items.length === 0 && (
                   <tr>
                     <td
-                      colSpan="9"
+                      colSpan="8"
                       className="firestaff-device-empty typo-body-md"
                     >
                       Không có thiết bị phù hợp bộ lọc hiện tại.
@@ -417,7 +416,6 @@ function FireStaffDevicePage() {
                       <td>{device.code}</td>
                       <td>{device.type}</td>
                       <td>{device.floor}</td>
-                      <td>{device.areaOrRoom}</td>
                       <td>
                         <span
                           className={`firestaff-device-status status-${device.status}`}

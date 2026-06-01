@@ -260,6 +260,7 @@
   display: grid;
   gap: 10px;
   padding: 14px;
+  align-content: start;
 }
 
 .md-table-wrap {

@@ -27,7 +27,7 @@ function ManagerIncidentCard({ incident, onClick }) {
           <WarningDiamond size={20} weight="fill" className={getSeverityClass(incident.severity)} />
           <div className="incident-titles">
             <h3 className="typo-h2 incident-title">{incident.title}</h3>
-            <p className="typo-body-md incident-id">ID: {incident.id}</p>
+            <p className="typo-body-md incident-id">ID: {incident.displayId || incident.id}</p>
           </div>
         </div>
         <span className={`incident-status typo-label ${getStatusClass(incident.status)}`}>
@@ -46,7 +46,7 @@ function ManagerIncidentCard({ incident, onClick }) {
         </div>
         <div className="meta-item">
           <Users size={16} />
-          <span className="typo-body-md">{incident.resourcesDeployed.length} đội</span>
+          <span className="typo-body-md">{incident.assignee || "Đội trực ca PCCC"}</span>
         </div>
       </div>
 

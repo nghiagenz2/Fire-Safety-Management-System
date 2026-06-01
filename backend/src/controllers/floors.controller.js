@@ -188,24 +188,31 @@ async function getFloorById(req, res, next) {
       [floorId]
     );
 
-    const devices = devicesResult.rows.map((row) => ({
-      id: row.id,
-      type: row.type,
-      location: row.location,
-      status: row.status,
-      statusLabel: row.status_label,
-      maintenanceDue: row.maintenance_due || '--',
-      owner: row.owner_name || '--',
-      model: row.model || '--',
-      lastInspection: row.last_inspection || '--',
-      installDate: row.install_date || '--',
-      quantity: row.quantity || 1,
-      condition: row.condition_note || '--',
-      floor: row.floor,
-      glbNodeName: row.glb_node_name,
-      glbNodeIndex: row.glb_node_index,
-      glbTranslation: row.glb_translation
-    }));
+    const devices = devicesResult.rows.map((row) => {
+      const nodeIndexStr = row.glb_node_name?.match(/\d+/)?.[0] || row.id?.match(/\d+$/)?.[0] || '01';
+      const floorNum = row.floor?.match(/\d+/)?.[0] || 'G';
+      const room = floorNum === 'G' ? 'Sảnh trệt' : `Phòng ${floorNum}${nodeIndexStr.padStart(2, '0')}`;
+
+      return {
+        id: row.id,
+        type: row.type,
+        location: row.location,
+        status: row.status,
+        statusLabel: row.status_label,
+        maintenanceDue: row.maintenance_due || '--',
+        owner: row.owner_name || '--',
+        model: row.model || '--',
+        lastInspection: row.last_inspection || '--',
+        installDate: row.install_date || '--',
+        quantity: row.quantity || 1,
+        condition: row.condition_note || '--',
+        floor: row.floor,
+        room,
+        glbNodeName: row.glb_node_name,
+        glbNodeIndex: row.glb_node_index,
+        glbTranslation: row.glb_translation
+      };
+    });
 
     // Calculate dynamic stats
     const totalDevices = devices.length;

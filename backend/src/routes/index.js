@@ -24,5 +24,6 @@ router.use('/escapes', escapesRoutes);
 router.use('/accounts', accountsRoutes);
 router.use('/reports', reportsRoutes);
 router.use('/floors', require('./floors.route'));
+router.use('/tasks', require('./tasks.routes'));
 
 module.exports = router;

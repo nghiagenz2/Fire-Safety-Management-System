@@ -27,6 +27,36 @@ function formatNumber(value) {
   return Number(value || 0).toLocaleString('vi-VN');
 }
 
+function getFloorInfo(floorValue) {
+  const str = String(floorValue || '').toLowerCase();
+  const isTret = str.includes('tret') || str.includes('trệt');
+  let num = '';
+  if (!isTret) {
+    const match = str.match(/\d+/);
+    if (match) {
+      num = match[0];
+    }
+  }
+  return { isTret, num };
+}
+
+function translateDoorNamesInText(text, floorValue) {
+  if (!text) return '';
+  const { isTret, num } = getFloorInfo(floorValue);
+  
+  return text.replace(/Cua_Phong_(\d+)/gi, (match, digits) => {
+    const rawNum = digits.substring(0, 2);
+    const roomIdx = parseInt(rawNum, 10);
+    if (isNaN(roomIdx)) return match;
+    
+    if (isTret) {
+      return `Cửa phòng ${String(roomIdx).padStart(3, '0')}`;
+    } else {
+      return `Cửa phòng ${num}${String(roomIdx).padStart(2, '0')}`;
+    }
+  });
+}
+
 function formatDateTime(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value || '—';
@@ -185,7 +215,7 @@ function ManagerDashboardPage() {
                 <p className="typo-h1 status-danger">
                   {formatNumber(cards.monthlyIncidents?.value)}
                 </p>
-                <p className="typo-label text-secondary">sự cố chưa xử lý</p>
+                <p className="typo-label text-secondary">sự cố</p>
               </article>
             </section>
 
@@ -315,7 +345,7 @@ function ManagerDashboardPage() {
 
               <article className="manager-panel md-table-card">
                 <header className="md-chart-head">
-                  <h2 className="typo-h2">Sự cố đang mở</h2>
+                  <h2 className="typo-h2">Sự cố</h2>
                 </header>
                 <div className="md-table-wrap">
                   <table className="manager-device-table md-table">
@@ -331,15 +361,15 @@ function ManagerDashboardPage() {
                       {actionableItems.incidents.map((incident) => (
                         <tr key={incident.id}>
                           <td className="manager-device-id">{incident.id}</td>
-                          <td>{incident.floor}</td>
-                          <td>{incident.incidentType}</td>
+                          <td>{translateDoorNamesInText(incident.floor, incident.floor)}</td>
+                          <td>{translateDoorNamesInText(incident.incidentType, incident.floor)}</td>
                           <td>{formatDateTime(incident.occurredAt)}</td>
                         </tr>
                       ))}
                       {actionableItems.incidents.length === 0 && (
                         <tr>
                           <td colSpan="4" className="manager-device-empty typo-body-lg">
-                            Không có sự cố nào đang mở.
+                            Không có sự cố nào.
                           </td>
                         </tr>
                       )}

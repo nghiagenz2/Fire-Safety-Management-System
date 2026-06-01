@@ -12,21 +12,6 @@ const DEFAULT_FILTERS = {
   keyword: "",
 };
 
-const CATEGORY_LABEL = {
-  isolation: "Cô lập an toàn",
-  evacuation: "Điều phối sơ tán",
-  verification: "Kiểm tra xác minh",
-  logistics: "Điều phối thiết bị",
-  reporting: "Báo cáo hiện trường",
-};
-
-const RELATED_DEVICE_LABEL = {
-  isolation: "Tủ điện khu vực",
-  evacuation: "Loa hướng dẫn sơ tán",
-  verification: "Sprinkler / cảm biến nhiệt",
-  logistics: "Bình chữa cháy CO2",
-  reporting: "Thiết bị ghi nhận hiện trường",
-};
 
 function formatDueDate(isoValue) {
   if (!isoValue) {
@@ -271,16 +256,12 @@ function FireStaffTaskPage() {
                         </p>
                       </td>
                       <td>
-                        {CATEGORY_LABEL[task.category] ||
-                          task.category ||
-                          "Chưa phân loại"}
+                        {task.category || "Chưa phân loại"}
                       </td>
                       <td>
-                        {task.relatedDevice ||
-                          RELATED_DEVICE_LABEL[task.category] ||
-                          "Chưa gán thiết bị"}
+                        {task.relatedDevice || "Chưa gán thiết bị"}
                       </td>
-                      <td>{`${task.floor || "--"} / ${task.zone || "--"}`}</td>
+                      <td>{task.floor || "--"}</td>
                       <td>{formatDueDate(task.dueAt)}</td>
                       <td>
                         <select

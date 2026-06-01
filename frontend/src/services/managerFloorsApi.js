@@ -61,3 +61,22 @@ export async function generateFloorReport(floorId) {
     },
   };
 }
+
+export async function updateDeviceStatus(deviceId, status) {
+  const STATUS_LABEL = {
+    active: 'Hoạt động tốt',
+    warning: 'Cảnh báo',
+    danger: 'Hỏng',
+    maintenance: 'Bảo trì'
+  };
+  const response = await fetch(`/api/devices/${encodeURIComponent(deviceId)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status, statusLabel: STATUS_LABEL[status] || status })
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (response.ok && payload.success) {
+    return payload.data;
+  }
+  throw new Error(payload.message || 'Lỗi cập nhật trạng thái thiết bị');
+}

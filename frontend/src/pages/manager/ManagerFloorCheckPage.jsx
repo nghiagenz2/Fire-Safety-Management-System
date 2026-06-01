@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
 	ArrowLeft,
@@ -28,7 +28,9 @@ import {
 	getDeviceTypes,
 	generateFloorReport,
 	getBuildingInfo,
+	updateDeviceStatus,
 } from '../../services/managerFloorsApi';
+import { createTask, fetchFireStaffTaskList, fetchFireStaffUsers } from '../../services/mockFireStaffTasksApi';
 import '../../styles/manager-shell.css';
 import '../../styles/manager-floor-check.css';
 
@@ -93,8 +95,45 @@ function StatCard({ icon, value, label, colorClass }) {
 	);
 }
 
-function DeviceDetailModal({ device, onClose, onView3d }) {
+const DEVICE_STATUS_OPTIONS = [
+	{ value: 'active', label: 'Hoạt động tốt' },
+	{ value: 'warning', label: 'Cảnh báo' },
+	{ value: 'maintenance', label: 'Bảo trì' },
+	{ value: 'danger', label: 'Hỏng' },
+];
+
+function DeviceDetailModal({ device, onClose, onView3d, onUpdated }) {
+	const [editStatus, setEditStatus] = useState(device?.status || 'active');
+	const [saving, setSaving] = useState(false);
+	const [saveMsg, setSaveMsg] = useState('');
+	const [saveErr, setSaveErr] = useState('');
+
 	if (!device) return null;
+
+	const handleUpdate = async () => {
+		if (editStatus === device.status) {
+			setSaveMsg('Trạng thái không thay đổi.');
+			setTimeout(() => setSaveMsg(''), 2000);
+			return;
+		}
+		setSaving(true);
+		setSaveErr('');
+		setSaveMsg('');
+		try {
+			const updated = await updateDeviceStatus(device.id, editStatus);
+			setSaveMsg('Cập nhật thành công!');
+			if (onUpdated) onUpdated(updated);
+			setTimeout(() => {
+				setSaveMsg('');
+				onClose();
+			}, 1200);
+		} catch (err) {
+			setSaveErr(err.message || 'Lỗi cập nhật.');
+		} finally {
+			setSaving(false);
+		}
+	};
+
 	return (
 		<div
 			className="manager-modal-backdrop"
@@ -132,12 +171,23 @@ function DeviceDetailModal({ device, onClose, onView3d }) {
 						<span className="floor-device-modal-key typo-label text-secondary">Vị trí</span>
 						<span className="floor-device-modal-val typo-body-md">{device.location || '—'}</span>
 					</div>
+
+					{/* Trạng thái có thể chỉnh sửa */}
 					<div className="floor-device-modal-row">
 						<span className="floor-device-modal-key typo-label text-secondary">Trạng thái</span>
-						<span className={`manager-device-status status-${device.status} typo-label`}>
-							{device.statusLabel}
-						</span>
+						<select
+							id="device-status-select"
+							className="manager-filter-select typo-body-md"
+							style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #e5e7eb', backgroundColor: '#fff', minWidth: '150px', fontSize: '13px' }}
+							value={editStatus}
+							onChange={(e) => setEditStatus(e.target.value)}
+						>
+							{DEVICE_STATUS_OPTIONS.map(opt => (
+								<option key={opt.value} value={opt.value}>{opt.label}</option>
+							))}
+						</select>
 					</div>
+
 					<div className="floor-device-modal-row">
 						<span className="floor-device-modal-key typo-label text-secondary">
 							Kiểm tra lần cuối
@@ -158,11 +208,36 @@ function DeviceDetailModal({ device, onClose, onView3d }) {
 							{device.condition || '—'}
 						</span>
 					</div>
+
+					{/* Feedback messages */}
+					{saveMsg && (
+						<div className="floor-device-modal-row floor-device-modal-row--full">
+							<span style={{ color: '#065f46', backgroundColor: '#d1fae5', padding: '6px 12px', borderRadius: '6px', fontSize: '13px', fontWeight: '500', width: '100%', display: 'block' }}>
+								{saveMsg}
+							</span>
+						</div>
+					)}
+					{saveErr && (
+						<div className="floor-device-modal-row floor-device-modal-row--full">
+							<span style={{ color: '#991b1b', backgroundColor: '#fee2e2', padding: '6px 12px', borderRadius: '6px', fontSize: '13px', fontWeight: '500', width: '100%', display: 'block' }}>
+								{saveErr}
+							</span>
+						</div>
+					)}
 				</div>
 
 				<div className="floor-device-modal-footer">
-					<button type="button" className="floor-modal-action-btn floor-modal-action-btn--secondary typo-body-md" onClick={onClose}>
+					<button type="button" className="floor-modal-action-btn floor-modal-action-btn--secondary typo-body-md" onClick={onClose} disabled={saving}>
 						Đóng
+					</button>
+					<button
+						type="button"
+						className="floor-modal-action-btn floor-modal-action-btn--secondary typo-body-md"
+						onClick={handleUpdate}
+						disabled={saving || editStatus === device.status}
+						style={{ backgroundColor: editStatus !== device.status ? '#f0fdf4' : undefined, borderColor: editStatus !== device.status ? '#16a34a' : undefined, color: editStatus !== device.status ? '#15803d' : undefined }}
+					>
+						{saving ? 'Đang lưu...' : 'Cập nhật'}
 					</button>
 					<button type="button" className="floor-modal-action-btn floor-modal-action-btn--primary typo-body-md" onClick={onView3d}>
 						<MapPin size={16} />
@@ -191,6 +266,8 @@ function ManagerFloorCheckPage() {
 	const [selectedDevice, setSelectedDevice] = useState(null);
 	const [modelTarget, setModelTarget] = useState(null);
 	const [activeTab, setActiveTab] = useState('devices'); // 'devices' | 'exits' | 'hazards'
+
+	const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
 
 	const [isLoadingList, setIsLoadingList] = useState(true);
 	const [isLoadingDetail, setIsLoadingDetail] = useState(false);
@@ -355,7 +432,7 @@ function ManagerFloorCheckPage() {
 							disabled={!floorDetail}
 							onClick={() => {
 								if (!floorDetail) return;
-								window.alert(`Đã tạo đề xuất giao nhiệm vụ kiểm tra ${floorDetail.name}.`);
+								setIsAssignModalOpen(true);
 							}}
 						>
 							<UserPlus size={17} />
@@ -790,8 +867,476 @@ function ManagerFloorCheckPage() {
 				onClose={() => setModelTarget(null)}
 			/>
 
+			{isAssignModalOpen && (
+				<TaskAssignModal
+					isOpen={isAssignModalOpen}
+					onClose={() => setIsAssignModalOpen(false)}
+					floorList={floorList}
+					defaultFloorId={floorDetail?.id}
+				/>
+			)}
+
 			<ManagerBottomNav />
 		</main>
+	);
+}
+
+function TaskAssignModal({ isOpen, onClose, floorList, defaultFloorId }) {
+	const [modalTab, setModalTab] = useState('create'); // 'create' | 'list'
+	const [taskType, setTaskType] = useState('Kiểm tra');
+	const [floorId, setFloorId] = useState(defaultFloorId || '');
+	const [deviceId, setDeviceId] = useState('');
+	const [dueAt, setDueAt] = useState('');
+	const [assigneeId, setAssigneeId] = useState('');
+	const [loading, setLoading] = useState(false);
+	const [devices, setDevices] = useState([]);
+	const [loadingDevices, setLoadingDevices] = useState(false);
+	const [staffList, setStaffList] = useState([]);
+	const [loadingStaff, setLoadingStaff] = useState(false);
+	const [successMessage, setSuccessMessage] = useState('');
+	const [errorMessage, setErrorMessage] = useState('');
+
+	// Quản lý danh sách nhiệm vụ đã giao
+	const [assignedTasks, setAssignedTasks] = useState([]);
+	const [loadingTasks, setLoadingTasks] = useState(false);
+
+	const loadTasksForFloor = useCallback(async (targetFloorId) => {
+		if (!targetFloorId) {
+			setAssignedTasks([]);
+			return;
+		}
+		setLoadingTasks(true);
+		try {
+			const res = await fetchFireStaffTaskList();
+			const tasksForFloor = (res.items || []).filter(t => t.floor === targetFloorId);
+			setAssignedTasks(tasksForFloor);
+		} catch (err) {
+			console.error("Lỗi lấy danh sách nhiệm vụ đã giao:", err);
+		} finally {
+			setLoadingTasks(false);
+		}
+	}, []);
+
+	// Load danh sách nhân viên PCCC khi modal mở
+	useEffect(() => {
+		if (!isOpen) return;
+		setLoadingStaff(true);
+		fetchFireStaffUsers()
+			.then((users) => {
+				setStaffList(users);
+				if (users.length > 0) setAssigneeId(users[0].id);
+			})
+			.finally(() => setLoadingStaff(false));
+	}, [isOpen]);
+
+	useEffect(() => {
+		if (isOpen) {
+			setFloorId(defaultFloorId || '');
+			setTaskType('Kiểm tra');
+			setDeviceId('');
+			setDueAt('');
+			setSuccessMessage('');
+			setErrorMessage('');
+			setModalTab('create');
+			if (defaultFloorId) {
+				loadTasksForFloor(defaultFloorId);
+			}
+		}
+	}, [isOpen, defaultFloorId, loadTasksForFloor]);
+
+	useEffect(() => {
+		if (floorId) {
+			loadTasksForFloor(floorId);
+		}
+	}, [floorId, loadTasksForFloor]);
+
+	useEffect(() => {
+		if (!floorId) {
+			setDevices([]);
+			return;
+		}
+
+		let isMounted = true;
+		setLoadingDevices(true);
+		getFloorById(floorId)
+			.then((detail) => {
+				if (!isMounted) return;
+				const devList = (detail.devices || []).map(d => ({
+					id: d.id,
+					name: `${d.type} (${d.id}) - ${d.room || d.location || ''}`,
+					raw: d
+				}));
+				const exitList = (detail.exits || []).map(e => ({
+					id: e.id,
+					name: `${e.type} (${e.id}) - ${e.location || ''}`,
+					raw: e
+				}));
+				const all = [...devList, ...exitList];
+				setDevices(all);
+				if (all.length > 0) {
+					setDeviceId(all[0].id);
+				} else {
+					setDeviceId('');
+				}
+			})
+			.catch((err) => {
+				console.error(err);
+			})
+			.finally(() => {
+				if (isMounted) setLoadingDevices(false);
+			});
+
+		return () => {
+			isMounted = false;
+		};
+	}, [floorId]);
+
+	if (!isOpen) return null;
+
+	const formatDateTime = (isoString) => {
+		if (!isoString) return '--';
+		try {
+			const date = new Date(isoString);
+			if (isNaN(date.getTime())) return isoString;
+			const day = String(date.getDate()).padStart(2, '0');
+			const month = String(date.getMonth() + 1).padStart(2, '0');
+			const year = date.getFullYear();
+			const hours = String(date.getHours()).padStart(2, '0');
+			const minutes = String(date.getMinutes()).padStart(2, '0');
+			return `${hours}:${minutes} ${day}/${month}/${year}`;
+		} catch (e) {
+			return isoString;
+		}
+	};
+
+	const getStatusBadgeStyle = (status) => {
+		switch (status) {
+			case 'completed':
+				return { backgroundColor: '#d1fae5', color: '#065f46' };
+			case 'in_progress':
+				return { backgroundColor: '#dbeafe', color: '#1e40af' };
+			default:
+				return { backgroundColor: '#fef3c7', color: '#92400e' };
+		}
+	};
+
+	const handleSubmit = async (e) => {
+		e.preventDefault();
+		if (!floorId) {
+			setErrorMessage('Vui lòng chọn tầng.');
+			return;
+		}
+		if (!deviceId) {
+			setErrorMessage('Vui lòng chọn thiết bị hoặc cửa thoát hiểm.');
+			return;
+		}
+		if (!dueAt) {
+			setErrorMessage('Vui lòng chọn thời hạn hoàn thành.');
+			return;
+		}
+
+		setLoading(true);
+		setErrorMessage('');
+		setSuccessMessage('');
+
+		try {
+			const selectedDevice = devices.find(d => d.id === deviceId);
+			const relatedDeviceName = selectedDevice ? selectedDevice.name : deviceId;
+			
+			// Tìm zone từ thiết bị được chọn
+			let zone = '';
+			if (selectedDevice && selectedDevice.raw) {
+				zone = selectedDevice.raw.room || selectedDevice.raw.location || '';
+			}
+
+			// Lấy tên nhân viên được chọn
+			const selectedStaff = staffList.find(s => s.id === assigneeId);
+			const assigneeName = selectedStaff ? selectedStaff.fullName : '';
+
+			const payload = {
+				category: taskType,
+				floor: floorId,
+				relatedDevice: relatedDeviceName,
+				dueAt: new Date(dueAt).toISOString(),
+				assignee: assigneeName,
+				status: 'pending',
+				statusLabel: 'Chờ thực hiện'
+			};
+
+			await createTask(payload);
+			setSuccessMessage('Giao nhiệm vụ thành công!');
+			
+			// Tải lại danh sách nhiệm vụ
+			await loadTasksForFloor(floorId);
+
+			setTimeout(() => {
+				setSuccessMessage('');
+				setModalTab('list'); // Tự động chuyển sang tab danh sách nhiệm vụ đã giao
+			}, 1000);
+		} catch (err) {
+			setErrorMessage(err.message || 'Lỗi khi giao nhiệm vụ.');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	return (
+		<div className="manager-modal-backdrop" role="dialog" aria-modal="true" style={{ zIndex: 1000 }}>
+			<div className="manager-panel floor-device-modal" style={{ maxWidth: '520px', width: '95%', maxHeight: '90vh', overflowY: 'auto', padding: '24px' }}>
+				<div className="floor-device-modal-head" style={{ marginBottom: '15px' }}>
+					<div>
+						<h2 className="typo-h2">Quản lý nhiệm vụ</h2>
+						<p className="typo-label text-secondary">Giao và theo dõi tiến độ nhiệm vụ PCCC</p>
+					</div>
+					<button type="button" className="floor-modal-close-btn" onClick={onClose}>
+						<X size={20} />
+					</button>
+				</div>
+
+				{/* Navigation Tabs */}
+				<div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: '20px' }}>
+					<button
+						type="button"
+						style={{
+							flex: 1,
+							padding: '12px',
+							border: 'none',
+							background: 'none',
+							borderBottom: modalTab === 'create' ? '3px solid #2563eb' : '3px solid transparent',
+							color: modalTab === 'create' ? '#2563eb' : '#6b7280',
+							fontWeight: '600',
+							fontSize: '14px',
+							cursor: 'pointer',
+							transition: 'all 0.2s'
+						}}
+						onClick={() => setModalTab('create')}
+					>
+						Giao nhiệm vụ mới
+					</button>
+					<button
+						type="button"
+						style={{
+							flex: 1,
+							padding: '12px',
+							border: 'none',
+							background: 'none',
+							borderBottom: modalTab === 'list' ? '3px solid #2563eb' : '3px solid transparent',
+							color: modalTab === 'list' ? '#2563eb' : '#6b7280',
+							fontWeight: '600',
+							fontSize: '14px',
+							cursor: 'pointer',
+							transition: 'all 0.2s'
+						}}
+						onClick={() => setModalTab('list')}
+					>
+						Nhiệm vụ đã giao ({assignedTasks.length})
+					</button>
+				</div>
+
+				{modalTab === 'create' ? (
+					<form onSubmit={handleSubmit} className="floor-device-modal-body" style={{ gap: '16px', display: 'flex', flexDirection: 'column', padding: 0 }}>
+						{successMessage && (
+							<div style={{ padding: '10px', backgroundColor: '#d1fae5', color: '#065f46', borderRadius: '6px', fontSize: '14px', fontWeight: '500' }}>
+								{successMessage}
+							</div>
+						)}
+						{errorMessage && (
+							<div style={{ padding: '10px', backgroundColor: '#fee2e2', color: '#991b1b', borderRadius: '6px', fontSize: '14px', fontWeight: '500' }}>
+								{errorMessage}
+							</div>
+						)}
+
+						<div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+							<label className="typo-label text-secondary" htmlFor="assign-floor" style={{ alignSelf: 'flex-start' }}>CHỌN TẦNG</label>
+							<select
+								id="assign-floor"
+								className="manager-filter-select typo-body-md"
+								style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #e5e7eb', backgroundColor: '#fff', height: '40px' }}
+								value={floorId}
+								onChange={(e) => setFloorId(e.target.value)}
+								required
+							>
+								<option value="">-- Chọn tầng --</option>
+								{floorList.map((f) => (
+									<option key={f.id} value={f.id}>{f.name}</option>
+								))}
+							</select>
+						</div>
+
+						<div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+							<label className="typo-label text-secondary" htmlFor="assign-type" style={{ alignSelf: 'flex-start' }}>LOẠI NHIỆM VỤ</label>
+							<select
+								id="assign-type"
+								className="manager-filter-select typo-body-md"
+								style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #e5e7eb', backgroundColor: '#fff', height: '40px' }}
+								value={taskType}
+								onChange={(e) => setTaskType(e.target.value)}
+								required
+							>
+								<option value="Kiểm tra">Kiểm tra</option>
+								<option value="Bảo trì">Bảo trì</option>
+							</select>
+						</div>
+
+						<div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+							<label className="typo-label text-secondary" htmlFor="assign-device" style={{ alignSelf: 'flex-start' }}>THIẾT BỊ / CỬA THOÁT HIỂM</label>
+							<select
+								id="assign-device"
+								className="manager-filter-select typo-body-md"
+								style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #e5e7eb', backgroundColor: '#fff', height: '40px' }}
+								value={deviceId}
+								onChange={(e) => setDeviceId(e.target.value)}
+								disabled={loadingDevices || !floorId}
+								required
+							>
+								{loadingDevices && <option>Đang tải danh sách thiết bị...</option>}
+								{!loadingDevices && devices.length === 0 && <option value="">-- Không có thiết bị trên tầng này --</option>}
+								{!loadingDevices && devices.map((d) => (
+									<option key={d.id} value={d.id}>{d.name}</option>
+								))}
+							</select>
+						</div>
+
+						<div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+							<label className="typo-label text-secondary" htmlFor="assign-staff" style={{ alignSelf: 'flex-start' }}>NHÂN VIÊN THỰC HIỆN</label>
+							<select
+								id="assign-staff"
+								className="manager-filter-select typo-body-md"
+								style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #e5e7eb', backgroundColor: '#fff', height: '40px' }}
+								value={assigneeId}
+								onChange={(e) => setAssigneeId(e.target.value)}
+								disabled={loadingStaff}
+								required
+							>
+								{loadingStaff && <option>Đang tải danh sách nhân viên...</option>}
+								{!loadingStaff && staffList.length === 0 && <option value="">-- Không có nhân viên PCCC --</option>}
+								{!loadingStaff && staffList.map((s) => (
+									<option key={s.id} value={s.id}>{s.fullName} ({s.username})</option>
+								))}
+							</select>
+						</div>
+
+						<div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+							<label className="typo-label text-secondary" htmlFor="assign-due" style={{ alignSelf: 'flex-start' }}>THỜI HẠN HOÀN THÀNH</label>
+							<input
+								id="assign-due"
+								type="datetime-local"
+								className="manager-search-input typo-body-md"
+								style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #e5e7eb', backgroundColor: '#fff', height: '40px' }}
+								value={dueAt}
+								onChange={(e) => setDueAt(e.target.value)}
+								required
+							/>
+						</div>
+
+						<div className="floor-device-modal-footer" style={{ marginTop: '20px', padding: 0, border: 'none', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+							<button
+								type="button"
+								className="floor-modal-action-btn floor-modal-action-btn--secondary typo-body-md"
+								onClick={onClose}
+								disabled={loading}
+								style={{ padding: '10px 20px', borderRadius: '6px', border: '1px solid #e5e7eb', cursor: 'pointer' }}
+							>
+								Hủy
+							</button>
+							<button
+								type="submit"
+								className="floor-modal-action-btn floor-modal-action-btn--primary typo-body-md"
+								disabled={loading || loadingDevices || !deviceId}
+								style={{ padding: '10px 20px', borderRadius: '6px', backgroundColor: '#2563eb', color: '#fff', border: 'none', cursor: 'pointer' }}
+							>
+								{loading ? 'Đang gửi...' : 'Giao nhiệm vụ'}
+							</button>
+						</div>
+					</form>
+				) : (
+					<div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+						{loadingTasks ? (
+							<div style={{ textAlign: 'center', padding: '30px', color: '#6b7280' }} className="typo-body-md">
+								Đang tải danh sách nhiệm vụ...
+							</div>
+						) : assignedTasks.length === 0 ? (
+							<div style={{ textAlign: 'center', padding: '40px 20px', color: '#6b7280', border: '2px dashed #e5e7eb', borderRadius: '8px' }}>
+								<p className="typo-body-md" style={{ marginBottom: '10px' }}>Chưa có nhiệm vụ nào được giao cho tầng này.</p>
+								<button
+									type="button"
+									onClick={() => setModalTab('create')}
+									style={{ backgroundColor: '#e0f2fe', color: '#0369a1', border: 'none', padding: '8px 16px', borderRadius: '6px', fontWeight: '600', cursor: 'pointer' }}
+								>
+									+ Giao nhiệm vụ ngay
+								</button>
+							</div>
+						) : (
+							<div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '50vh', overflowY: 'auto', paddingRight: '4px' }}>
+								{assignedTasks.map((task) => (
+									<div
+										key={task.id}
+										style={{
+											border: '1px solid #e5e7eb',
+											borderRadius: '8px',
+											padding: '12px 16px',
+											backgroundColor: '#f9fafb',
+											display: 'flex',
+											flexDirection: 'column',
+											gap: '8px',
+											textAlign: 'left'
+										}}
+									>
+										<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+											<h4 className="typo-body-md" style={{ fontWeight: '600', margin: 0, color: '#111827' }}>
+												{task.title || `${task.category} ${task.relatedDevice}`}
+											</h4>
+											<span
+												style={{
+													fontSize: '11px',
+													fontWeight: '600',
+													padding: '2px 8px',
+													borderRadius: '12px',
+													whiteSpace: 'nowrap',
+													...getStatusBadgeStyle(task.status)
+												}}
+											>
+												{task.statusLabel || task.status}
+											</span>
+										</div>
+
+										<p className="typo-label text-secondary" style={{ margin: 0, fontSize: '12px' }}>
+											{task.description}
+										</p>
+
+										<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', fontSize: '11px', flexWrap: 'wrap', gap: '6px' }}>
+											<div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+												<div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+													<span style={{ color: '#6b7280' }}>Hạn:</span>
+													<span style={{ fontWeight: '500', color: '#374151' }}>{formatDateTime(task.dueAt)}</span>
+												</div>
+												{task.assignee && (
+													<div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+														<span style={{ color: '#6b7280' }}>Nhân viên:</span>
+														<span style={{ fontWeight: '500', color: '#1e40af' }}>{task.assignee}</span>
+													</div>
+												)}
+											</div>
+										</div>
+									</div>
+								))}
+							</div>
+						)}
+
+						<div style={{ marginTop: '15px', display: 'flex', justifyContent: 'flex-end' }}>
+							<button
+								type="button"
+								className="floor-modal-action-btn floor-modal-action-btn--secondary typo-body-md"
+								onClick={onClose}
+								style={{ padding: '10px 20px', borderRadius: '6px', border: '1px solid #e5e7eb', cursor: 'pointer' }}
+							>
+								Đóng
+							</button>
+						</div>
+					</div>
+				)}
+			</div>
+		</div>
 	);
 }
 

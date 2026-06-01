@@ -6,22 +6,59 @@ import ManagerIncidentCard from '../../components/manager/ManagerIncidentCard';
 import { getManagerIncidentsData, getSimulationIncident } from '../../services/managerIncidentsApi';
 import './ManagerIncidentPage.css';
 
+function getFloorInfo(floorValue) {
+  const str = String(floorValue || '').toLowerCase();
+  const isTret = str.includes('tret') || str.includes('trệt');
+  let num = '';
+  if (!isTret) {
+    const match = str.match(/\d+/);
+    if (match) {
+      num = match[0];
+    }
+  }
+  return { isTret, num };
+}
+
+function translateDoorNamesInText(text, floorValue) {
+  if (!text) return '';
+  const { isTret, num } = getFloorInfo(floorValue);
+  
+  return text.replace(/Cua_Phong_(\d+)/gi, (match, digits) => {
+    const rawNum = digits.substring(0, 2);
+    const roomIdx = parseInt(rawNum, 10);
+    if (isNaN(roomIdx)) return match;
+    
+    if (isTret) {
+      return `Cửa phòng ${String(roomIdx).padStart(3, '0')}`;
+    } else {
+      return `Cửa phòng ${num}${String(roomIdx).padStart(2, '0')}`;
+    }
+  });
+}
+
 function mapDBToUI(dbIncident) {
   // Chuyển đổi dữ liệu từ DB thật sang chuẩn mà component giao diện đang dùng
   let mappedStatus = "Đang xử lý";
   if (dbIncident.status === "resolved") mappedStatus = "Dập tắt";
   else if (dbIncident.status === "false_alarm") mappedStatus = "Xác nhận sai";
 
+  const floorValue = dbIncident.floor || "Tầng trệt";
+  const rawTitle = dbIncident.summary || dbIncident.incident_type || "Sự cố chưa rõ";
+  const rawDescription = dbIncident.detail || dbIncident.description || "Không có mô tả chi tiết.";
+  const rawAffectedArea = dbIncident.affectedArea || [floorValue];
+
   return {
     id: dbIncident.id,
-    title: dbIncident.incident_type || "Sự cố chưa rõ",
-    location: dbIncident.floor || "Không rõ vị trí",
+    displayId: dbIncident.displayId || dbIncident.id,
+    title: translateDoorNamesInText(rawTitle, floorValue),
+    location: floorValue,
     status: mappedStatus,
     severity: dbIncident.severity || "medium",
-    startTime: dbIncident.startTime || new Date(dbIncident.occurredAt || dbIncident.occurred_at).toLocaleString("vi-VN"),
+    startTime: dbIncident.startTime || new Date(dbIncident.occurredAt || dbIncident.occurred_at || dbIncident.occurredAt).toLocaleString("vi-VN"),
     resourcesDeployed: dbIncident.resourcesDeployed || [],
-    affectedArea: dbIncident.affectedArea || [dbIncident.floor || "Không rõ vị trí"],
-    description: dbIncident.description || "Không có mô tả chi tiết.",
+    affectedArea: rawAffectedArea.map(area => translateDoorNamesInText(area, floorValue)),
+    description: translateDoorNamesInText(rawDescription, floorValue),
+    assignee: dbIncident.assignee || "Đội trực ca PCCC",
   };
 }
 

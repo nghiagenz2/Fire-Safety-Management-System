@@ -143,7 +143,13 @@ async function importDevices() {
         floor TEXT NOT NULL,
         incident_type TEXT NOT NULL,
         status TEXT NOT NULL,
-        occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        severity TEXT,
+        occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        display_id TEXT,
+        summary TEXT,
+        assignee TEXT,
+        source_label TEXT,
+        detail TEXT
       );
     `);
     await client.query(`

@@ -27,9 +27,9 @@ export async function getSimulationIncident() {
     severity: data.level === 'high' ? 'Nguy cơ cao' : data.level === 'low' ? 'Thấp' : 'Trung bình',
     occurredAt: data.startTime ? new Date(data.startTime).toISOString() : new Date().toISOString(),
     resourcesDeployed: [],
-    affectedArea: [data.origin || floorName],
+    affectedArea: [floorName],
     description: data.origin
-      ? `Nhân viên PCCC đang mô phỏng cháy tại ${data.origin}.`
+      ? `Mô phỏng sự cố cháy khởi phát tại vị trí ${data.origin} ở ${floorName}.`
       : 'Nhân viên PCCC đang bật mô phỏng cháy.'
   };
 }

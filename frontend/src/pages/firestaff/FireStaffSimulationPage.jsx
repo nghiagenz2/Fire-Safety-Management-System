@@ -4,6 +4,7 @@ import Header from '../../components/Header';
 import FireStaffBottomNav from '../../components/firestaff/FireStaffBottomNav.jsx';
 import BuildingModelViewer from '../../components/three/BuildingModelViewer.jsx';
 import '../../styles/ResidentHome.css';
+import { getCurrentUser } from '../../services/authApi';
 
 function FireStaffSimulationPage() {
 	const [selectedFloor, setSelectedFloor] = useState('Tầng trệt');
@@ -96,6 +97,8 @@ function FireStaffSimulationPage() {
 	}
 
 	async function handleStopSimulation() {
+		const currentUser = getCurrentUser();
+		const assigneeName = currentUser?.fullName || 'Đội trực ca PCCC';
 		try {
 			await fetch('http://localhost:5000/api/incidents/simulation', {
 				method: 'POST',
@@ -106,7 +109,8 @@ function FireStaffSimulationPage() {
 					active: false,
 					origin: '',
 					level: 'medium',
-					floorId: 'floor_tret'
+					floorId: 'floor_tret',
+					assignee: assigneeName
 				})
 			});
 			setHasSimulated(false);
@@ -157,11 +161,29 @@ function FireStaffSimulationPage() {
 						onChange={(event) => setFireOrigin(event.target.value)}
 					>
 						<option value="">-- Chọn vị trí cháy --</option>
-						{currentFloorDoors.map((doorName) => (
-							<option key={doorName} value={doorName}>
-								{doorName}
-							</option>
-						))}
+						{currentFloorDoors.map((doorName) => {
+							let label = doorName;
+							if (doorName.toLowerCase().includes('cua_phong')) {
+								const match = doorName.match(/\d+/);
+								if (match) {
+									const rawNum = match[0].substring(0, 2);
+									const roomIdx = parseInt(rawNum, 10);
+									if (!isNaN(roomIdx)) {
+										if (selectedFloor === 'Tầng trệt') {
+											label = `Cửa phòng ${String(roomIdx).padStart(3, '0')}`;
+										} else {
+											const floorNum = selectedFloor.replace('Tầng ', '');
+											label = `Cửa phòng ${floorNum}${String(roomIdx).padStart(2, '0')}`;
+										}
+									}
+								}
+							}
+							return (
+								<option key={doorName} value={doorName}>
+									{label}
+								</option>
+							);
+						})}
 					</select>
 
 					<label className="typo-body-md firestaff-sim-label" htmlFor="simulation-fire-level">

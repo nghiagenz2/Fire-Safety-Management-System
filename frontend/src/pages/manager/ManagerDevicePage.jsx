@@ -23,6 +23,30 @@ const statusFilters = [
 	{ value: 'maintenance', label: 'Bảo trì' }
 ];
 
+
+function convertDDMMYYYYToYYYYMMDD(dateStr) {
+	if (!dateStr || dateStr === '--') return '';
+	const match = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+	if (match) {
+		const [, dd, mm, yyyy] = match;
+		return `${yyyy}-${mm}-${dd}`;
+	}
+	if (dateStr.includes('-')) {
+		return dateStr.split('T')[0];
+	}
+	return '';
+}
+
+function convertYYYYMMDDToDDMMYYYY(dateStr) {
+	if (!dateStr) return '--';
+	const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+	if (match) {
+		const [, yyyy, mm, dd] = match;
+		return `${dd}/${mm}/${yyyy}`;
+	}
+	return dateStr;
+}
+
 function createInitialForm(floor = 'Tầng 1') {
 	return {
 		type: 'Bình chữa cháy',
@@ -119,7 +143,7 @@ function ManagerDevicePage() {
 			maintenanceDue: device.maintenanceDue || '',
 			owner: device.owner || '',
 			model: device.model || '',
-			lastInspection: device.lastInspection || '',
+			lastInspection: convertDDMMYYYYToYYYYMMDD(device.lastInspection),
 			installDate: device.installDate || '',
 			quantity: device.quantity || 1,
 			condition: device.condition || '',
@@ -136,6 +160,7 @@ function ManagerDevicePage() {
 			setIsSaving(true);
 			const payload = {
 				...formState,
+				lastInspection: convertYYYYMMDDToDDMMYYYY(formState.lastInspection),
 				quantity: Number(formState.quantity) || 1,
 				glbNodeIndex: formState.glbNodeIndex === '' ? null : Number(formState.glbNodeIndex)
 			};

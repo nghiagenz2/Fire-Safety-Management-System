@@ -22,7 +22,7 @@ exports.simulationStream = (req, res) => {
   const elapsedMs = currentSimulationState.active && currentSimulationState.startTime
     ? (Date.now() - currentSimulationState.startTime)
     : 0;
-  
+
   res.write(`data: ${JSON.stringify({ ...currentSimulationState, elapsedMs })}\n\n`);
 
   sseClients.push(res);
@@ -45,13 +45,67 @@ exports.getSimulationState = (req, res) => {
   });
 };
 
-exports.setSimulationState = (req, res) => {
-  const { active, origin, level, floorId } = req.body;
-  
+async function saveSimulationToDb(state) {
+  if (!state.active || !state.startTime) return null;
+
+  const id = `INC-SIM-${Date.now().toString().slice(-6)}`;
+  let floorName = "Tầng trệt";
+  if (state.floorId && state.floorId !== "floor_tret") {
+    const num = state.floorId.replace("floor_", "");
+    floorName = `Tầng ${num}`;
+  }
+
+  const incidentType = state.origin
+    ? `Mô phỏng cháy (${state.origin})`
+    : "Mô phỏng cháy";
+
+  const displayId = id;
+  const summary = incidentType;
+  const assignee = state.assignee || "Đội trực ca PCCC";
+  const sourceLabel = "Hệ thống mô phỏng";
+  const detail = `Mô phỏng sự cố cháy khởi phát tại vị trí ${state.origin || "không xác định"} ở ${floorName}.`;
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO incidents (
+        id, floor, incident_type, status, severity, occurred_at,
+        display_id, summary, assignee, source_label, detail
+      )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+       RETURNING *`,
+      [
+        id,
+        floorName,
+        incidentType,
+        "active",
+        state.level || "medium",
+        new Date(state.startTime),
+        displayId,
+        summary,
+        assignee,
+        sourceLabel,
+        detail
+      ]
+    );
+    console.log(`Saved simulation run ${id} to database.`);
+    return result.rows[0];
+  } catch (error) {
+    console.error("Failed to save simulation to database:", error);
+    return null;
+  }
+}
+
+exports.setSimulationState = async (req, res) => {
+  const { active, origin, level, floorId, assignee } = req.body;
+
   let startTime = currentSimulationState.startTime;
   if (active && !currentSimulationState.active) {
     startTime = Date.now();
-  } else if (!active) {
+  } else if (!active && currentSimulationState.active) {
+    await saveSimulationToDb({
+      ...currentSimulationState,
+      assignee
+    });
     startTime = null;
   }
 
@@ -76,7 +130,20 @@ exports.setSimulationState = (req, res) => {
 exports.getAllIncidents = async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, floor, incident_type, status, severity, occurred_at as "occurredAt" FROM incidents ORDER BY occurred_at DESC`,
+      `SELECT 
+        id, 
+        floor, 
+        incident_type, 
+        status, 
+        severity, 
+        occurred_at as "occurredAt",
+        display_id as "displayId",
+        summary,
+        assignee,
+        source_label as "sourceLabel",
+        detail
+       FROM incidents 
+       ORDER BY occurred_at DESC`,
     );
     res.json({ success: true, data: result.rows });
   } catch (error) {
@@ -86,12 +153,48 @@ exports.getAllIncidents = async (req, res) => {
 
 exports.updateIncidentStatus = async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { status, assignee } = req.body;
+
+  if (id === "SIM-FIRE-ACTIVE") {
+    if (status === "resolved" && currentSimulationState.active) {
+      const savedIncident = await saveSimulationToDb({
+        ...currentSimulationState,
+        assignee
+      });
+
+      currentSimulationState = {
+        active: false,
+        origin: "",
+        level: "medium",
+        floorId: "floor_tret",
+        startTime: null
+      };
+
+      const elapsedMs = 0;
+      const updateData = JSON.stringify({ ...currentSimulationState, elapsedMs });
+      sseClients.forEach(client => {
+        client.write(`data: ${updateData}\n\n`);
+      });
+
+      return res.json({ success: true, data: savedIncident || { id, status: "resolved" } });
+    } else {
+      return res.json({ success: true, data: { id, status } });
+    }
+  }
+
   try {
-    const result = await pool.query(
-      "UPDATE incidents SET status = $1 WHERE id = $2 RETURNING *",
-      [status, id]
-    );
+    let result;
+    if (assignee) {
+      result = await pool.query(
+        "UPDATE incidents SET status = $1, assignee = $2 WHERE id = $3 RETURNING *",
+        [status, assignee, id]
+      );
+    } else {
+      result = await pool.query(
+        "UPDATE incidents SET status = $1 WHERE id = $2 RETURNING *",
+        [status, id]
+      );
+    }
     if (result.rowCount === 0) {
       return res.status(404).json({ success: false, message: "Incident not found" });
     }

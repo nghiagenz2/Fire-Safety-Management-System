@@ -1062,18 +1062,19 @@ grid-template-columns: 1fr;
 	left: 16px;
 	right: 16px;
 	z-index: 1000;
-	background: rgba(239, 68, 68, 0.18);
-	backdrop-filter: blur(16px);
-	-webkit-backdrop-filter: blur(16px);
-	border: 1px solid rgba(239, 68, 68, 0.55);
-	box-shadow: 0 8px 32px 0 rgba(239, 68, 68, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+	background: rgba(15, 23, 42, 0.92); /* Dark slate glassmorphism */
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-left: 4px solid #ef4444; /* Alert border on the left */
+	box-shadow: 0 12px 32px rgba(15, 23, 42, 0.25);
 	border-radius: 12px;
 	padding: 14px 20px;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: 16px;
-	animation: slideInDown 0.4s cubic-bezier(0.16, 1, 0.3, 1), firePulse 2s infinite alternate;
+	animation: slideInDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes slideInDown {
@@ -1087,28 +1088,18 @@ grid-template-columns: 1fr;
 	}
 }
 
-@keyframes firePulse {
-	from {
-		box-shadow: 0 8px 32px 0 rgba(239, 68, 68, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-	}
-	to {
-		box-shadow: 0 8px 32px 0 rgba(239, 68, 68, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-		border-color: rgba(239, 68, 68, 0.75);
-	}
-}
-
 .fire-notification-icon {
 	font-size: 24px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	color: #ef4444;
+	color: #f87171; /* Soft red icon */
 	animation: iconBlink 1s infinite alternate;
 }
 
 @keyframes iconBlink {
-	from { opacity: 0.4; transform: scale(0.9); }
-	to { opacity: 1; transform: scale(1.1); }
+	from { opacity: 0.5; transform: scale(0.95); }
+	to { opacity: 1; transform: scale(1.05); }
 }
 
 .fire-notification-content {
@@ -1122,12 +1113,12 @@ grid-template-columns: 1fr;
 	font-weight: 700;
 	font-size: 14px;
 	letter-spacing: 0.05em;
-	color: #fca5a5;
+	color: #ef4444; /* Strong red title for priority, but soft on dark background */
 }
 
 .fire-notification-desc {
 	font-size: 13px;
-	color: #ffffff;
+	color: #e2e8f0; /* Soft white/gray description */
 }
 
 .fire-notification-actions {
@@ -1148,19 +1139,19 @@ grid-template-columns: 1fr;
 }
 
 .fire-notification-btn.view-btn {
-	background: #ef4444;
+	background: #dc2626;
 	color: #ffffff;
-	border: 1px solid #ef4444;
+	border: 1px solid #dc2626;
 }
 
 .fire-notification-btn.view-btn:hover {
-	background: #dc2626;
-	box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+	background: #b91c1c;
+	box-shadow: 0 0 12px rgba(220, 38, 38, 0.4);
 }
 
 .fire-notification-btn.close-btn {
 	background: rgba(255, 255, 255, 0.15);
-	color: #e2e8f0;
+	color: #cbd5e1;
 	border: 1px solid rgba(255, 255, 255, 0.1);
 }
 

@@ -1,4 +1,5 @@
 const { pool } = require("../config/db");
+const { currentSimulationState } = require("./incidents.controller");
 
 function getFloorOrder(floorName) {
   if (!floorName) return 999;
@@ -158,8 +159,8 @@ exports.getDashboardData = async (req, res) => {
       `SELECT id, floor, incident_type as "incidentType", status, occurred_at as "occurredAt" FROM incidents ${incidentWhere} ORDER BY occurred_at DESC LIMIT 10`,
       incidentParams,
     );
-    const openIncidentsCountRes = await pool.query(
-      `SELECT COUNT(*) FROM incidents ${openIncidentWhere}`,
+    const incidentsCountRes = await pool.query(
+      `SELECT COUNT(*) FROM incidents ${incidentWhere}`,
       incidentParams,
     );
 
@@ -173,10 +174,34 @@ exports.getDashboardData = async (req, res) => {
       `SELECT id, floor, type, status FROM devices ${actionableWhere} ORDER BY floor, id LIMIT 10`,
       deviceParams,
     );
-    const openIncidentsRes = await pool.query(
-      `SELECT id, floor, incident_type as "incidentType", status, occurred_at as "occurredAt" FROM incidents ${openIncidentWhere} ORDER BY occurred_at DESC LIMIT 10`,
+    const allIncidentsRes = await pool.query(
+      `SELECT id, floor, incident_type as "incidentType", status, occurred_at as "occurredAt" FROM incidents ${incidentWhere} ORDER BY occurred_at DESC LIMIT 10`,
       incidentParams,
     );
+
+    let incidentsCount = parseInt(incidentsCountRes.rows[0].count);
+    let allIncidents = allIncidentsRes.rows;
+
+    if (currentSimulationState && currentSimulationState.active) {
+      let floorName = "Tầng trệt";
+      if (currentSimulationState.floorId && currentSimulationState.floorId !== "floor_tret") {
+        const num = currentSimulationState.floorId.replace("floor_", "");
+        floorName = `Tầng ${num}`;
+      }
+      
+      const simIncident = {
+        id: 'SIM-FIRE-ACTIVE',
+        floor: floorName,
+        incidentType: 'Mô phỏng cháy đang hoạt động',
+        status: 'open',
+        occurredAt: currentSimulationState.startTime ? new Date(currentSimulationState.startTime).toISOString() : new Date().toISOString()
+      };
+
+      if (!floor || floor === "all" || floor === floorName) {
+        incidentsCount += 1;
+        allIncidents = [simIncident, ...allIncidents];
+      }
+    }
 
     let segments = [
       { key: "healthy", label: "Tốt", value: healthy, color: "#2E7D32" },
@@ -215,8 +240,8 @@ exports.getDashboardData = async (req, res) => {
             ratio: 100,
           },
           monthlyIncidents: {
-            label: "Sự cố đang mở",
-            value: parseInt(openIncidentsCountRes.rows[0].count),
+            label: "Sự cố",
+            value: incidentsCount,
           },
         },
         charts: {
@@ -233,7 +258,7 @@ exports.getDashboardData = async (req, res) => {
         recentIncidents: incidentsRes.rows,
         actionableItems: {
           devices: actionableDevicesRes.rows,
-          incidents: openIncidentsRes.rows,
+          incidents: allIncidents,
         },
       },
     });

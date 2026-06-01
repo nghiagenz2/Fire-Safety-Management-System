@@ -28,7 +28,51 @@ async function ensureManagerTables() {
     )
   `);
 
-  // Seed default users if the table is empty
+  // Đảm bảo bảng incidents tồn tại và đồng bộ cấu trúc
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS incidents (
+      id TEXT PRIMARY KEY,
+      floor TEXT NOT NULL,
+      incident_type TEXT NOT NULL,
+      status TEXT NOT NULL,
+      severity TEXT,
+      occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      display_id TEXT,
+      summary TEXT,
+      assignee TEXT,
+      source_label TEXT,
+      detail TEXT
+    )
+  `);
+
+  // Seed default incidents if the table is empty
+  const incidentCountResult = await pool.query('SELECT COUNT(*) FROM incidents');
+  const incidentCount = parseInt(incidentCountResult.rows[0].count, 10);
+  if (incidentCount === 0) {
+    console.log("Seeding default incidents...");
+    await pool.query(`
+      INSERT INTO incidents (
+        id, floor, incident_type, status, severity, occurred_at,
+        display_id, summary, assignee, source_label, detail
+      ) VALUES
+        (
+          'INC-001', 'Tầng 2', 'Khói bất thường', 'resolved', 'high', NOW() - INTERVAL '2 days',
+          'INC-2026-001', 'Phát hiện khói nhẹ từ phòng B201', 'Trần Văn B', 'Hệ thống báo cháy', 'Phát hiện khói nhẹ từ phòng B201.'
+        ),
+        (
+          'INC-002', 'Tầng 1', 'Mất tín hiệu', 'resolved', 'medium', NOW() - INTERVAL '5 hours',
+          'INC-2026-002', 'Mất tín hiệu cảm biến tầng 1', 'Trần Thị Hồng', 'Hệ thống báo cháy', 'Đám cháy cục bộ, đã kích hoạt sprinkler, tiếp tục theo dõi tái bùng phát.'
+        ),
+        (
+          'INC-003', 'Tầng trệt', 'Áp suất thấp', 'in_progress', 'low', NOW() - INTERVAL '35 days',
+          'INC-2026-003', 'Áp suất thấp tại trạm bơm', 'Đội trực ca PCCC', 'Hệ thống báo cháy', 'Áp suất thấp tại trạm bơm phòng kỹ thuật.'
+        )
+      ON CONFLICT (id) DO NOTHING;
+    `);
+    console.log("Seeding default incidents completed.");
+  }
+
+    // Seed default users if the table is empty
   const userCountResult = await pool.query('SELECT COUNT(*) FROM "USER"');
   const count = parseInt(userCountResult.rows[0].count, 10);
   if (count === 0) {
@@ -50,6 +94,24 @@ async function ensureManagerTables() {
     }
     console.log("Seeding default user accounts completed.");
   }
+
+  // Tạo bảng tasks
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS tasks (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      category TEXT NOT NULL,
+      status TEXT DEFAULT 'pending',
+      status_label TEXT DEFAULT 'Chờ thực hiện',
+      assignee TEXT,
+      floor TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      due_at TIMESTAMPTZ,
+      updated_at TIMESTAMPTZ DEFAULT NOW(),
+      related_device TEXT
+    )
+  `);
+
 
   // Tự động kiểm tra và import bảng devices
   let seedDevices = false;
@@ -119,3 +181,4 @@ async function ensureManagerTables() {
 module.exports = {
   ensureManagerTables
 };
+
