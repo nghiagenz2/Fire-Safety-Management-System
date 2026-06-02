@@ -375,6 +375,30 @@ function ManagerFloorCheckPage() {
 		setSelectedDevice(null);
 	};
 
+	const handleDeviceUpdated = async (updatedDevice) => {
+		// Cập nhật dữ liệu thiết bị cục bộ lập tức để giao diện mượt mà
+		setFloorDetail((prev) => {
+			if (!prev) return prev;
+			return {
+				...prev,
+				devices: prev.devices.map((d) =>
+					d.id === updatedDevice.id ? { ...d, ...updatedDevice } : d
+				),
+			};
+		});
+
+		// Gọi API tải lại thông tin tầng và danh sách tầng để đồng bộ điểm số và thẻ thống kê
+		try {
+			const detail = await getFloorById(selectedFloorId);
+			setFloorDetail(detail);
+
+			const list = await getFloorList();
+			setFloorList(list);
+		} catch (err) {
+			console.error('Failed to refresh floor detail after update:', err);
+		}
+	};
+
 	return (
 		<main className="manager-screen">
 			<Header roleLabel="Ban quản lý" homePath="/manager/home" />
@@ -853,6 +877,7 @@ function ManagerFloorCheckPage() {
 					device={selectedDevice}
 					onClose={() => setSelectedDevice(null)}
 					onView3d={() => handleViewDevice3d(selectedDevice)}
+					onUpdated={handleDeviceUpdated}
 				/>
 			)}
 
