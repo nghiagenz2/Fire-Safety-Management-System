@@ -107,6 +107,10 @@ function FireStaffTaskPage() {
   }, [filters]);
 
   const summary = useMemo(() => {
+    if (taskData.summary) {
+      return taskData.summary;
+    }
+
     const pending = taskData.items.filter(
       (item) => item.status === "pending",
     ).length;
@@ -118,7 +122,7 @@ function FireStaffTaskPage() {
     ).length;
 
     return { pending, inProgress, completed };
-  }, [taskData.items]);
+  }, [taskData.items, taskData.summary]);
 
   function updateFilter(key, value) {
     setFilters((previous) => ({

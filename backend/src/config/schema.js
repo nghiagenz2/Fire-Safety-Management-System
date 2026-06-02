@@ -176,6 +176,33 @@ async function ensureManagerTables() {
       console.error("Không thể tự động seed dữ liệu lối thoát hiểm:", err.message);
     }
   }
+
+  // Tự động seed dữ liệu tasks nếu trống
+  try {
+    const taskCountResult = await pool.query('SELECT COUNT(*) FROM tasks');
+    const taskCount = parseInt(taskCountResult.rows[0].count, 10);
+    if (taskCount === 0) {
+      console.log("Bảng tasks trống. Bắt đầu tự động seed dữ liệu...");
+      const mockTasks = [
+        ['TASK-001', 'Kiểm tra hệ thống cảm biến khói', 'Kiểm tra', 'pending', 'Chờ thực hiện', 'Trần Thị Hồng', 'Tầng 1', '2026-06-10 10:00:00+07', 'Cảm biến khói tầng 1 (SD-01)'],
+        ['TASK-002', 'Bảo trì đầu phun sprinkler', 'Bảo trì', 'in_progress', 'Đang thực hiện', 'Trần Thị Hồng', 'Tầng 3', '2026-06-15 15:30:00+07', 'Vòi phun nước tự động tầng 3 (SP-03)'],
+        ['TASK-003', 'Kiểm tra bình chữa cháy xách tay', 'Kiểm tra', 'completed', 'Hoàn thành', 'Trần Thị Hồng', 'Tầng trệt', '2026-06-01 17:00:00+07', 'Bình chữa cháy xách tay tầng trệt (FE-05)'],
+        ['TASK-004', 'Bảo trì loa thông báo khẩn cấp', 'Bảo trì', 'pending', 'Chờ thực hiện', 'Lê Văn Nam', 'Tầng 2', '2026-06-20 09:00:00+07', 'Loa thông báo tầng 2 (SPK-02)'],
+        ['TASK-005', 'Kiểm tra cửa thoát hiểm hành lang', 'Kiểm tra', 'completed', 'Hoàn thành', 'Trần Thị Hồng', 'Tầng 4', '2026-05-25 14:00:00+07', 'Cửa thoát hiểm hành lang tầng 4 (ED-04)']
+      ];
+
+      for (const task of mockTasks) {
+        await pool.query(`
+          INSERT INTO tasks (
+            id, title, category, status, status_label, assignee, floor, due_at, related_device
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `, task);
+      }
+      console.log("Tự động seed dữ liệu tasks hoàn tất.");
+    }
+  } catch (err) {
+    console.error("Không thể tự động seed dữ liệu tasks:", err.message);
+  }
 }
 
 module.exports = {

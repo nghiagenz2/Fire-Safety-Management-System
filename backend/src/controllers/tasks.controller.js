@@ -7,12 +7,21 @@ async function getTasks(req, res, next) {
     const allTasks = await tasksRepository.findAll();
     const filteredTasks = await tasksRepository.findAll({ status, keyword });
 
+    const tasksForSummary = keyword
+      ? await tasksRepository.findAll({ keyword })
+      : allTasks;
+
+    const pending = tasksForSummary.filter((t) => t.status === "pending").length;
+    const inProgress = tasksForSummary.filter((t) => t.status === "in_progress").length;
+    const completed = tasksForSummary.filter((t) => t.status === "completed").length;
+
     res.status(200).json({
       success: true,
       data: {
         total: allTasks.length,
         filtered: filteredTasks.length,
-        items: filteredTasks
+        items: filteredTasks,
+        summary: { pending, inProgress, completed }
       }
     });
   } catch (error) {
