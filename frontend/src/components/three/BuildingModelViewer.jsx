@@ -1399,6 +1399,48 @@ function BuildingModelViewer({
 				}
 			});
 
+			// Auto-center and fit camera to the newly selected floor to prevent cutting off
+			if (globalContext.camera && globalContext.controls) {
+				const box = new THREE.Box3();
+				let hasMesh = false;
+				gltfRef.current.scene.traverse((child) => {
+					if (child.isMesh && child.visible) {
+						hasMesh = true;
+						if (!child.geometry.boundingBox) {
+							child.geometry.computeBoundingBox();
+						}
+						const childBox = child.geometry.boundingBox.clone();
+						child.updateMatrixWorld(true);
+						childBox.applyMatrix4(child.matrixWorld);
+						box.union(childBox);
+					}
+				});
+
+				if (hasMesh) {
+					const size = box.getSize(new THREE.Vector3());
+					const center = box.getCenter(new THREE.Vector3());
+					const maxDim = Math.max(size.x, size.y, size.z);
+					const fov = (globalContext.camera.fov * Math.PI) / 180;
+					let cameraDistance = Math.abs(maxDim / (2 * Math.tan(fov / 2)));
+					
+					const multiplier = selectedFloorId === 'all' ? 1.35 : 1.75;
+					const minDistance = selectedFloorId === 'all' ? 0 : 55;
+					cameraDistance = Math.max(cameraDistance * multiplier, minDistance);
+
+					globalContext.camera.position.set(
+						center.x + cameraDistance, 
+						center.y + cameraDistance * 0.45, 
+						center.z + cameraDistance
+					);
+					globalContext.camera.near = Math.max(maxDim / 100, 0.01);
+					globalContext.camera.far = Math.max(maxDim * 100, 2000);
+					globalContext.camera.updateProjectionMatrix();
+
+					globalContext.controls.target.copy(center);
+					globalContext.controls.update();
+				}
+			}
+
 			globalContext.needsRender = true;
 		}
 	}, [selectedFloorId]);

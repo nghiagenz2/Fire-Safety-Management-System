@@ -138,7 +138,6 @@ function ResidentEscapePage() {
               value={selectedFloor}
               onChange={(event) => {
                 setSelectedFloor(event.target.value);
-                setStatusFilter('all');
               }}
             >
               <option value="all">Tất cả tầng</option>

@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react';
 import { X } from '@phosphor-icons/react';
 import BuildingModelViewer from './BuildingModelViewer.jsx';
 import './ModelLocationModal.css';
@@ -13,11 +14,21 @@ function ModelLocationModal({
   focusedNodeHighlightColor = '#f97316',
   onClose
 }) {
-  if (!isOpen) return null;
+  const [localFloorId, setLocalFloorId] = useState(selectedFloorId);
 
-  const focusPayload = focusedNodeName
-    ? { name: focusedNodeName, timestamp: Date.now() }
-    : '';
+  useEffect(() => {
+    if (isOpen) {
+      setLocalFloorId(selectedFloorId);
+    }
+  }, [selectedFloorId, isOpen]);
+
+  const focusPayload = useMemo(() => {
+    return focusedNodeName
+      ? { name: focusedNodeName, timestamp: Date.now() }
+      : '';
+  }, [focusedNodeName]);
+
+  if (!isOpen) return null;
 
   return (
     <div className="model-location-backdrop" role="dialog" aria-modal="true" aria-label={title} onClick={onClose}>
@@ -37,7 +48,8 @@ function ModelLocationModal({
           showHeader={false}
           showCaption={false}
           showFloorSelector={true}
-          selectedFloorId={selectedFloorId}
+          selectedFloorId={localFloorId}
+          onFloorChange={(floorId) => setLocalFloorId(floorId)}
           focusedNodeName={focusPayload}
           focusedNodeHighlightColor={focusedNodeHighlightColor}
           highlightExits={highlightExits}

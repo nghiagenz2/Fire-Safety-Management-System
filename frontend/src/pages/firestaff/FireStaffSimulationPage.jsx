@@ -35,7 +35,7 @@ function FireStaffSimulationPage() {
 		let isMounted = true;
 		const fetchActiveSimulation = async () => {
 			try {
-				const response = await fetch('http://localhost:5000/api/incidents/simulation');
+				const response = await fetch('/api/incidents/simulation');
 				const result = await response.json();
 				if (isMounted && result.success && result.data && result.data.active) {
 					const { origin, level, floorId } = result.data;
@@ -77,7 +77,7 @@ function FireStaffSimulationPage() {
 			return;
 		}
 		try {
-			await fetch('http://localhost:5000/api/incidents/simulation', {
+			await fetch('/api/incidents/simulation', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
@@ -100,7 +100,7 @@ function FireStaffSimulationPage() {
 		const currentUser = getCurrentUser();
 		const assigneeName = currentUser?.fullName || 'Đội trực ca PCCC';
 		try {
-			await fetch('http://localhost:5000/api/incidents/simulation', {
+			await fetch('/api/incidents/simulation', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
@@ -226,6 +226,7 @@ function FireStaffSimulationPage() {
 								className="resident-home-model"
 								showHeader={false}
 								showCaption={false}
+								showFloorSelector={false}
 								ariaLabel="Khu vực mô hình 3D"
 								highlightExits={true}
 								selectedFloorId={selectedFloorId}
