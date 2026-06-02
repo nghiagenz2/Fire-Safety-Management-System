@@ -346,7 +346,11 @@
     gap: 12px;
   }
   .notif-dropdown {
-    width: calc(100vw - 24px);
-    right: -12px;
+    position: fixed;
+    top: 60px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-height: calc(100vh - 120px);
   }
 }

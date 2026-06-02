@@ -1,6 +1,6 @@
 .firestaff-screen {
   min-height: 100vh;
-  padding: 18px 14px;
+  padding: 18px 14px 100px;
   background:
     radial-gradient(
       circle at 12% -20%,
