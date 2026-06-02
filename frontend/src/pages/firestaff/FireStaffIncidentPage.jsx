@@ -42,6 +42,9 @@ function FireStaffIncidentPage() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [resolvedIds, setResolvedIds] = useState([]);
 	const [detailIncidentId, setDetailIncidentId] = useState('');
+	const [logIncidentId, setLogIncidentId] = useState('');
+	const [logText, setLogText] = useState('');
+	const [isSavingLog, setIsSavingLog] = useState(false);
 
 	useEffect(() => {
 		let isMounted = true;
@@ -135,11 +138,19 @@ function FireStaffIncidentPage() {
 		return incidentCards.find((incident) => incident.id === detailIncidentId) || null;
 	}, [detailIncidentId, incidentCards]);
 
+	const logIncident = useMemo(() => {
+		if (!logIncidentId) {
+			return null;
+		}
+
+		return incidentCards.find((incident) => incident.id === logIncidentId) || null;
+	}, [logIncidentId, incidentCards]);
+
 	async function markIncidentResolved(incidentId) {
 		const currentUser = getCurrentUser();
 		const assigneeName = currentUser?.fullName || 'Đội trực ca PCCC';
 		try {
-			await axios.put(`http://localhost:5000/api/incidents/${incidentId}`, { 
+			await axios.put(`/api/incidents/${incidentId}`, { 
 				status: 'resolved',
 				assignee: assigneeName
 			});
@@ -161,6 +172,25 @@ function FireStaffIncidentPage() {
 			}
 			return [...previous, incidentId];
 		});
+	}
+
+	async function handleSaveLog(incidentId, text) {
+		try {
+			await axios.put(`/api/incidents/${incidentId}`, { 
+				detail: text
+			});
+		} catch (error) {
+			console.error("Lỗi khi ghi log sự cố:", error);
+			throw error;
+		}
+
+		setIncidents((prevIncidents) => 
+			prevIncidents.map((inc) => 
+				inc.id === incidentId 
+					? { ...inc, detail: text } 
+					: inc
+			)
+		);
 	}
 	return (
 		<main className="firestaff-screen">
@@ -226,7 +256,14 @@ function FireStaffIncidentPage() {
 											Đánh dấu đã xử lý
 										</button>
 									)}
-									<button type="button" className="firestaff-incident-btn typo-body-md">
+									<button
+										type="button"
+										className="firestaff-incident-btn typo-body-md"
+										onClick={() => {
+											setLogIncidentId(incident.id);
+											setLogText(incident.detail || '');
+										}}
+									>
 										<NotePencil size={16} />
 										<span>Ghi log</span>
 									</button>
@@ -288,6 +325,74 @@ function FireStaffIncidentPage() {
 								<strong>Mô tả:</strong> {detailIncident.detail}
 							</p>
 						</div>
+					</article>
+				</section>
+			)}
+
+			{logIncident && (
+				<section
+					className="firestaff-incident-detail-backdrop"
+					role="dialog"
+					aria-modal="true"
+					aria-label="Ghi log sự cố"
+				>
+					<article className="firestaff-panel firestaff-incident-detail-modal">
+						<header className="firestaff-incident-detail-header">
+							<div>
+								<h2 className="typo-h2">Ghi log sự cố {logIncident.displayId}</h2>
+								<p className="typo-body-md text-secondary">Cập nhật nhật ký xử lý sự cố.</p>
+							</div>
+							<button
+								type="button"
+								className="firestaff-incident-btn typo-body-md"
+								onClick={() => setLogIncidentId('')}
+							>
+								Đóng
+							</button>
+						</header>
+
+						<form
+							onSubmit={async (e) => {
+								e.preventDefault();
+								setIsSavingLog(true);
+								try {
+									await handleSaveLog(logIncident.id, logText);
+									setLogIncidentId('');
+								} catch (error) {
+									alert('Không thể lưu log: ' + error.message);
+								} finally {
+									setIsSavingLog(false);
+								}
+							}}
+							className="firestaff-incident-log-form"
+						>
+							<div style={{ margin: '15px 0' }}>
+								<textarea
+									className="firestaff-sim-input typo-body-md"
+									style={{ width: '100%', minHeight: '120px', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', resize: 'vertical' }}
+									value={logText}
+									onChange={(e) => setLogText(e.target.value)}
+									placeholder="Nhập nội dung nhật ký xử lý sự cố tại đây..."
+									required
+								/>
+							</div>
+							<div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+								<button
+									type="button"
+									className="firestaff-incident-btn typo-body-md"
+									onClick={() => setLogIncidentId('')}
+								>
+									Hủy
+								</button>
+								<button
+									type="submit"
+									className="firestaff-incident-btn success typo-body-md"
+									disabled={isSavingLog}
+								>
+									{isSavingLog ? 'Đang lưu...' : 'Lưu nhật ký'}
+								</button>
+							</div>
+						</form>
 					</article>
 				</section>
 			)}

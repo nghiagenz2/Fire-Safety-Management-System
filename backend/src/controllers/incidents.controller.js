@@ -153,7 +153,7 @@ exports.getAllIncidents = async (req, res) => {
 
 exports.updateIncidentStatus = async (req, res) => {
   const { id } = req.params;
-  const { status, assignee } = req.body;
+  const { status, assignee, detail } = req.body;
 
   if (id === "SIM-FIRE-ACTIVE") {
     if (status === "resolved" && currentSimulationState.active) {
@@ -183,18 +183,30 @@ exports.updateIncidentStatus = async (req, res) => {
   }
 
   try {
-    let result;
-    if (assignee) {
-      result = await pool.query(
-        "UPDATE incidents SET status = $1, assignee = $2 WHERE id = $3 RETURNING *",
-        [status, assignee, id]
-      );
-    } else {
-      result = await pool.query(
-        "UPDATE incidents SET status = $1 WHERE id = $2 RETURNING *",
-        [status, id]
-      );
+    const fields = [];
+    const values = [];
+
+    if (status !== undefined) {
+      values.push(status);
+      fields.push(`status = $${values.length}`);
     }
+    if (assignee !== undefined) {
+      values.push(assignee);
+      fields.push(`assignee = $${values.length}`);
+    }
+    if (detail !== undefined) {
+      values.push(detail);
+      fields.push(`detail = $${values.length}`);
+    }
+
+    if (fields.length === 0) {
+      return res.status(400).json({ success: false, message: "No fields to update" });
+    }
+
+    values.push(id);
+    const query = `UPDATE incidents SET ${fields.join(", ")} WHERE id = $${values.length} RETURNING *`;
+    const result = await pool.query(query, values);
+
     if (result.rowCount === 0) {
       return res.status(404).json({ success: false, message: "Incident not found" });
     }

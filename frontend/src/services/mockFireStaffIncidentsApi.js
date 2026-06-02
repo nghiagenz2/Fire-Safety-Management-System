@@ -1,7 +1,7 @@
 import fireStaffIncidents from '../mocks/fireStaffIncidents.json';
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:5000/api/incidents';
+const API_BASE = '/api/incidents';
 
 export async function fetchFireStaffIncidents() {
   try {

@@ -120,7 +120,7 @@ function ManagerIncidentPage() {
       <div className="incident-shell">
         {/* Page Title Section */}
         <div className="page-header-section">
-          <p className="typo-label text-secondary">Sự cố</p>
+          <p className="typo-label text-secondary manager-overline">Ban quản lý - Quản lý sự cố</p>
           <h1 className="typo-h1">Quản lý các sự cố trong tòa nhà</h1>
         </div>
         {/* Stats Cards */}
@@ -146,11 +146,11 @@ function ManagerIncidentPage() {
         {/* Filter Section */}
         <div className="incident-panel">
           <div className="filter-section">
-            <div className="search-wrap">
-              <MagnifyingGlass size={18} className="search-icon" />
+            <div className="manager-search-wrap">
+              <MagnifyingGlass size={18} className="manager-search-icon" />
               <input
                 type="text"
-                className="search-input"
+                className="manager-search-input"
                 placeholder="Tìm kiếm sự cố..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
