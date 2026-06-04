@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Fire, Envelope } from '@phosphor-icons/react';
+import { getHomePathForRole, loginAccount } from '../services/authApi';
 import './LoginForm.css';
 
 function LoginForm() {
@@ -11,11 +12,11 @@ function LoginForm() {
   const [rememberMe, setRememberMe] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
+  const [formError, setFormError] = useState('');
 
   const getErrorMessage = (field, value) => {
     if (field === 'email') {
-      if (!value.trim()) return 'Vui lòng nhập email';
-      if (!value.includes('@')) return 'Email không hợp lệ';
+      if (!value.trim()) return 'Vui lòng nhập email hoặc username';
     }
     if (field === 'password') {
       if (!value.trim()) return 'Vui lòng nhập mật khẩu';
@@ -23,7 +24,7 @@ function LoginForm() {
     return '';
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errors = { email: '', password: '' };
 
@@ -35,14 +36,23 @@ function LoginForm() {
       return;
     }
 
-    setFieldErrors({ email: '', password: '' });
-    setIsLoading(true);
-    setTimeout(() => {
+    try {
+      setFieldErrors({ email: '', password: '' });
+      setFormError('');
+      setIsLoading(true);
+
+      const user = await loginAccount({
+        login: email,
+        password,
+        rememberMe
+      });
+
+      navigate(getHomePathForRole(user.role), { replace: true });
+    } catch (error) {
+      setFormError(error.message || 'Đăng nhập thất bại.');
+    } finally {
       setIsLoading(false);
-      console.log('Đăng nhập:', { email, password, rememberMe });
-      alert('Đăng nhập thành công! (Demo)');
-      navigate('/resident/devices');
-    }, 800);
+    }
   };
 
   return (
@@ -61,20 +71,22 @@ function LoginForm() {
           <p className="card-subtitle">Chào mừng bạn trở lại</p>
 
           <form className="login-form" onSubmit={handleSubmit}>
+            {formError && <span className="error-text">{formError}</span>}
+
             <div className="form-group">
-              <label htmlFor="email">Email</label>
+              <label htmlFor="email">Email hoặc username</label>
               <div className="input-icon-wrap">
                 <Envelope className="input-icon" />
                 <input
                   id="email"
-                  type="email"
-                  placeholder="Nhập email"
+                  type="text"
+                  placeholder="Nhập email hoặc username"
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
                     if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: '' });
                   }}
-                  className={fieldErrors.email ? 'error' : ''}
+                  className={`has-leading-icon ${fieldErrors.email ? 'error' : ''}`}
                 />
               </div>
               {fieldErrors.email && <span className="error-text">{fieldErrors.email}</span>}
@@ -85,18 +97,16 @@ function LoginForm() {
               <div className="input-icon-wrap">
                 <input
                   id="password"
-                  type="text"
-                  inputMode="text"
+                  type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  value={showPassword ? password : password.replace(/./g, '•')}
+                  value={password}
                   onChange={(e) => {
                     const newVal = e.target.value;
                     setPassword(newVal);
                     if (fieldErrors.password) setFieldErrors({ ...fieldErrors, password: '' });
                   }}
-                  className={fieldErrors.password ? 'error' : ''}
-                  autoComplete="new-password"
-                  style={{ letterSpacing: '0.5em' }}
+                  className={`has-trailing-action ${fieldErrors.password ? 'error' : ''}`}
+                  autoComplete="current-password"
                 />
                 <button
                   type="button"
@@ -162,13 +172,6 @@ function LoginForm() {
               Facebook
             </button>
           </div>
-
-          <p className="register-line">
-            Chưa có tài khoản?{' '}
-            <button type="button" className="link-btn" onClick={() => navigate('/register')}>
-              Đăng ký ngay
-            </button>
-          </p>
         </div>
       </div>
     </div>

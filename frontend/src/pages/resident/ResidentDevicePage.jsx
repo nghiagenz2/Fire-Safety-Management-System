@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
+import { MagnifyingGlass, MapPin } from '@phosphor-icons/react';
 import Header from '../../components/Header';
 import ResidentBottomNav from '../../components/resident/ResidentBottomNav.jsx';
-import { fetchResidentDevices } from '../../services/mockResidentDevicesApi.js';
+import ModelLocationModal from '../../components/three/ModelLocationModal.jsx';
+import { getDeviceFloors, getResidentDevices } from '../../services/devicesApi.js';
 
 const STATUS_FILTERS = [
   { value: 'all', label: 'Tất cả' },
@@ -12,19 +14,28 @@ const STATUS_FILTERS = [
 ];
 
 function ResidentDevicePage() {
+  const [searchParams] = useSearchParams();
   const [devices, setDevices] = useState([]);
+  const [floors, setFloors] = useState([]);
   const [search, setSearch] = useState('');
+  const [floorFilter, setFloorFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDevice, setSelectedDevice] = useState(null);
+  const [modelTarget, setModelTarget] = useState(null);
+
+  useEffect(() => {
+    setSearch(searchParams.get('search') || '');
+  }, [searchParams]);
 
   useEffect(() => {
     let isMounted = true;
 
-    fetchResidentDevices()
-      .then((data) => {
+    Promise.all([getResidentDevices(), getDeviceFloors()])
+      .then(([data, floorList]) => {
         if (isMounted) {
           setDevices(data);
+          setFloors(floorList);
         }
       })
       .finally(() => {
@@ -40,7 +51,7 @@ function ResidentDevicePage() {
 
   const filteredDevices = useMemo(() => {
     return devices.filter((device) => {
-      const matchFloor = device.floor === 'Tầng 3';
+      const matchFloor = floorFilter === 'all' || device.floor === floorFilter;
       const matchStatus = statusFilter === 'all' || device.status === statusFilter;
       const keyword = search.trim().toLowerCase();
       const matchSearch =
@@ -53,13 +64,10 @@ function ResidentDevicePage() {
 
       return matchFloor && matchStatus && matchSearch;
     });
-  }, [devices, search, statusFilter]);
+  }, [devices, floorFilter, search, statusFilter]);
 
   function handleStatusFilterChange(nextFilter) {
     setStatusFilter(nextFilter);
-    if (nextFilter === 'all') {
-      setSearch('');
-    }
   }
 
   return (
@@ -72,42 +80,42 @@ function ResidentDevicePage() {
           <h1 className="typo-h1 resident-title">Thiết bị PCCC</h1>
           <p className="typo-label text-secondary resident-read-only-note">Chế độ cư dân: chỉ xem thông tin thiết bị.</p>
         </div>
-        <span className="resident-floor-chip typo-label">Tầng hiện tại: 3</span>
+        <span className="resident-floor-chip typo-label">Tầng hiện tại: {floorFilter === 'all' ? 'Tất cả' : floorFilter}</span>
       </header>
-      <section className="resident-search-wrap">
-        <input
-          className="resident-search-input typo-body-md"
-          placeholder="Tìm thiết bị theo mã, tầng hoặc khu vực"
-          aria-label="Tìm thiết bị"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-      </section>
-
-      <section className="resident-filter-row" aria-label="Lọc trạng thái thiết bị">
-        {STATUS_FILTERS.map((filter) => (
-          <button
-            key={filter.value}
-            type="button"
-            className={`resident-filter-pill typo-label ${statusFilter === filter.value ? 'is-active' : ''}`}
-            onClick={() => handleStatusFilterChange(filter.value)}
-          >
-            {filter.label}
-          </button>
-        ))}
-      </section>
-
-      <section className="resident-panel resident-emergency-panel" aria-live="polite">
-        <p className="typo-emergency resident-emergency-title">Cảnh báo: phát hiện cháy tại tầng 3</p>
-        <p className="typo-body-md resident-emergency-copy">Ưu tiên xem lối thoát hiểm an toàn trước, sau đó xem hướng dẫn thao tác tại hiện trường.</p>
-        <div className="resident-cta-row">
-          <Link to="/resident/escape" className="resident-cta-alert typo-label">
-            Xem lối thoát an toàn
-          </Link>
-          <Link to="/resident/guidance" className="resident-cta-alert resident-cta-secondary typo-label">
-            Xem hướng dẫn thoát hiểm
-          </Link>
+      <section className="resident-data-filter" aria-label="Bộ lọc thiết bị">
+        <div className="resident-filter-search">
+          <MagnifyingGlass size={20} className="resident-filter-search-icon" />
+          <input
+            className="resident-filter-input typo-body-md"
+            placeholder="Tìm thiết bị theo mã, tầng hoặc khu vực"
+            aria-label="Tìm thiết bị"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
         </div>
+
+        <select
+          className="resident-filter-select typo-body-md"
+          aria-label="Lọc tầng"
+          value={floorFilter}
+          onChange={(event) => setFloorFilter(event.target.value)}
+        >
+          <option value="all">Tất cả tầng</option>
+          {floors.map((floor) => (
+            <option key={floor} value={floor}>{floor}</option>
+          ))}
+        </select>
+
+        <select
+          className="resident-filter-select typo-body-md"
+          aria-label="Lọc trạng thái"
+          value={statusFilter}
+          onChange={(event) => handleStatusFilterChange(event.target.value)}
+        >
+          {STATUS_FILTERS.map((filter) => (
+            <option key={filter.value} value={filter.value}>{filter.label}</option>
+          ))}
+        </select>
       </section>
 
       <section className="resident-list-section">
@@ -145,6 +153,14 @@ function ResidentDevicePage() {
                   onClick={() => setSelectedDevice(device)}
                 >
                   Xem cách dùng
+                </button>
+                <button
+                  type="button"
+                  className="resident-secondary-btn typo-body-md"
+                  onClick={() => setModelTarget(device)}
+                  disabled={!device.glbNodeName}
+                >
+                  <MapPin size={16} weight="fill" /> Xem vị trí trên mô hình 3D
                 </button>
               </li>
             ))}
@@ -187,6 +203,17 @@ function ResidentDevicePage() {
           </article>
         </section>
       )}
+
+      <ModelLocationModal
+        isOpen={Boolean(modelTarget)}
+        title={modelTarget ? `Vị trí ${modelTarget.id}` : 'Vị trí thiết bị'}
+        subtitle={modelTarget ? `${modelTarget.type} - ${modelTarget.floor || modelTarget.location || ''}` : ''}
+        selectedFloorId={modelTarget ? (modelTarget.glbFloorId || modelTarget.floor || 'all') : 'all'}
+        focusedNodeName={modelTarget?.glbNodeName || ''}
+        highlightExits={true}
+        focusedNodeHighlightColor="#f97316"
+        onClose={() => setModelTarget(null)}
+      />
 
       <ResidentBottomNav />
     </main>

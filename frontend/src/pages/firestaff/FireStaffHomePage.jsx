@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react';
 import Header from '../../components/Header';
 import FireStaffBottomNav from '../../components/firestaff/FireStaffBottomNav';
 import BuildingModelViewer from '../../components/three/BuildingModelViewer.jsx';
-import { Cube, DoorOpen, CheckCircle } from '@phosphor-icons/react';
+import { Cube, DoorOpen, CheckCircle, Warning } from '@phosphor-icons/react';
 import '../../styles/ResidentHome.css';
-import { getDeviceStatistics } from '../../services/mockManagerDevicesApi.js';
+import { getDeviceStatistics } from '../../services/devicesApi.js';
+import { useSimulationStatus } from '../../hooks/useSimulationStatus.js';
 
 function FireStaffHomePage() {
 	const [deviceTotal, setDeviceTotal] = useState('--');
+	const [exitTotal, setExitTotal] = useState('--');
+	const { isSimulationActive, simulationFloor } = useSimulationStatus();
 
 	useEffect(() => {
 		let isMounted = true;
@@ -16,12 +19,14 @@ function FireStaffHomePage() {
 			.then((stats) => {
 				if (isMounted) {
 					setDeviceTotal(stats.total);
+					setExitTotal(stats.availableExits);
 				}
 			})
 			.catch((error) => {
 				console.error('Failed to load device statistics:', error);
 				if (isMounted) {
 					setDeviceTotal('--');
+					setExitTotal('--');
 				}
 			});
 
@@ -47,6 +52,7 @@ function FireStaffHomePage() {
 					showHeader={false}
 					showCaption={false}
 					ariaLabel="Khu vực mô hình 3D"
+					highlightExits={true}
 				/>
 
 				<section className="resident-stats-grid">
@@ -65,18 +71,29 @@ function FireStaffHomePage() {
 							<DoorOpen size={24} weight="fill" />
 						</div>
 						<div>
-							<p className="typo-h1 status-brand stat-card-value">12</p>
+							<p className="typo-h1 status-brand stat-card-value">{exitTotal}</p>
 							<p className="typo-body-md text-secondary stat-card-label">Lối thoát khả dụng</p>
 						</div>
 					</div>
 
-					<div className="resident-panel stat-card-item bg-light-safe">
-						<div className="stat-icon-wrapper green">
-							<CheckCircle size={24} weight="fill" />
+					{/* Thẻ trạng thái tòa nhà — đổi khi có mô phỏng cháy */}
+					<div
+						className={`resident-panel stat-card-item ${isSimulationActive ? 'bg-light-danger' : 'bg-light-safe'}`}
+						style={isSimulationActive ? { borderLeft: '4px solid #ef4444', animation: 'pulse-danger 1.5s infinite' } : {}}
+					>
+						<div className={`stat-icon-wrapper ${isSimulationActive ? 'red' : 'green'}`}>
+							{isSimulationActive
+								? <Warning size={24} weight="fill" color="#ef4444" />
+								: <CheckCircle size={24} weight="fill" />
+							}
 						</div>
 						<div>
-							<p className="typo-h1 status-safe stat-card-value small">An toàn</p>
-							<p className="typo-body-md text-secondary stat-card-label">Trạng thái tòa nhà</p>
+							<p className={`typo-h1 stat-card-value small ${isSimulationActive ? 'status-danger' : 'status-safe'}`}>
+								{isSimulationActive ? '⚠ Đang cháy' : 'An toàn'}
+							</p>
+							<p className="typo-body-md text-secondary stat-card-label">
+								{isSimulationActive ? `Mô phỏng cháy · ${simulationFloor}` : 'Trạng thái tòa nhà'}
+							</p>
 						</div>
 					</div>
 				</section>

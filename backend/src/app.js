@@ -2,25 +2,35 @@ const express = require('express');
 const env = require('./config/env');
 const routes = require('./routes');
 const { testConnection } = require('./config/db');
+const { ensureManagerTables } = require('./config/schema');
 const notFound = require('./middlewares/notFound.middleware');
 const errorHandler = require('./middlewares/errorHandler.middleware');
+const cors = require('cors');
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 
 app.use('/api', routes);
+
+const floorsRoute = require("./routes/floors.route");
+app.use("/api/manager/floors", floorsRoute);
 
 app.use(notFound);
 app.use(errorHandler);
 
 app.listen(env.PORT, async () => {
-  console.log(`Backend running at http://localhost:${env.PORT} (${env.NODE_ENV})`);
+  console.log(
+    `Backend running at http://localhost:${env.PORT} (${env.NODE_ENV})`,
+  );
 
   try {
     const db = await testConnection();
     console.log(`Database connected: ${env.DB_NAME} (PostGIS ${db.postgis_version})`);
+    await ensureManagerTables();
+    console.log("Database tables verified/created.");
   } catch (error) {
-    console.error('Database connection failed:', error.message);
+    console.error("Database connection failed:", error.message);
   }
 });

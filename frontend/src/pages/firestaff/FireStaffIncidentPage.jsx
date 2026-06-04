@@ -1,43 +1,71 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Clock, MapPin, NotePencil, User, WarningCircle } from '@phosphor-icons/react';
+import axios from 'axios';
 import Header from '../../components/Header';
 import FireStaffBottomNav from '../../components/firestaff/FireStaffBottomNav.jsx';
-import {
-	fetchFireStaffIncidents,
-	fetchFireStaffIncidentUpdates,
-	fetchFireStaffIncidentUiMeta,
-	fetchFireStaffFallbackProcessingSteps
-} from '../../services/mockFireStaffIncidentsApi.js';
+import { fetchFireStaffIncidents } from '../../services/mockFireStaffIncidentsApi.js';
+import { getSimulationIncident } from '../../services/managerIncidentsApi.js';
+import { getCurrentUser } from '../../services/authApi';
+
+function getFloorInfo(floorValue) {
+	const str = String(floorValue || '').toLowerCase();
+	const isTret = str.includes('tret') || str.includes('trệt');
+	let num = '';
+	if (!isTret) {
+		const match = str.match(/\d+/);
+		if (match) {
+			num = match[0];
+		}
+	}
+	return { isTret, num };
+}
+
+function translateDoorNamesInText(text, floorValue) {
+	if (!text) return '';
+	const { isTret, num } = getFloorInfo(floorValue);
+	
+	return text.replace(/Cua_Phong_(\d+)/gi, (match, digits) => {
+		const rawNum = digits.substring(0, 2);
+		const roomIdx = parseInt(rawNum, 10);
+		if (isNaN(roomIdx)) return match;
+		
+		if (isTret) {
+			return `Cửa phòng ${String(roomIdx).padStart(3, '0')}`;
+		} else {
+			return `Cửa phòng ${num}${String(roomIdx).padStart(2, '0')}`;
+		}
+	});
+}
 
 function FireStaffIncidentPage() {
 	const [incidents, setIncidents] = useState([]);
-	const [updateFeed, setUpdateFeed] = useState([]);
-	const [incidentUiMeta, setIncidentUiMeta] = useState({});
-	const [fallbackProcessingSteps, setFallbackProcessingSteps] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [resolvedIds, setResolvedIds] = useState([]);
 	const [detailIncidentId, setDetailIncidentId] = useState('');
+	const [logIncidentId, setLogIncidentId] = useState('');
+	const [logText, setLogText] = useState('');
+	const [isSavingLog, setIsSavingLog] = useState(false);
 
 	useEffect(() => {
 		let isMounted = true;
 
 		Promise.all([
 			fetchFireStaffIncidents(),
-			fetchFireStaffIncidentUpdates(),
-			fetchFireStaffIncidentUiMeta(),
-			fetchFireStaffFallbackProcessingSteps()
+			getSimulationIncident()
 		])
-			.then(([incidentData, updateData, uiMetaData, fallbackSteps]) => {
+			.then(([incidentData, simulationIncident]) => {
 				if (!isMounted) {
 					return;
 				}
 
-				setIncidents(incidentData);
-				setUpdateFeed(updateData);
-				setIncidentUiMeta(uiMetaData);
-				setFallbackProcessingSteps(fallbackSteps);
-				const initialResolved = incidentData
-					.filter((incident) => uiMetaData[incident.id]?.isResolved)
+				const combinedIncidents = [
+					...(simulationIncident ? [simulationIncident] : []),
+					...incidentData
+				];
+
+				setIncidents(combinedIncidents);
+				const initialResolved = combinedIncidents
+					.filter((incident) => incident.status === 'resolved')
 					.map((incident) => incident.id);
 				setResolvedIds(initialResolved);
 			})
@@ -54,25 +82,53 @@ function FireStaffIncidentPage() {
 
 	const incidentCards = useMemo(() => {
 		return incidents.map((incident) => {
-			const uiMeta = incidentUiMeta[incident.id] || {};
-			const isResolved = resolvedIds.includes(incident.id);
+			const isResolved = resolvedIds.includes(incident.id) || incident.status === 'resolved';
+			
+			let occurredAtStr = '—';
+			if (incident.occurredAt) {
+				const date = new Date(incident.occurredAt);
+				if (!isNaN(date.getTime())) {
+					const yyyy = date.getFullYear();
+					const mm = String(date.getMonth() + 1).padStart(2, '0');
+					const dd = String(date.getDate()).padStart(2, '0');
+					const hh = String(date.getHours()).padStart(2, '0');
+					const min = String(date.getMinutes()).padStart(2, '0');
+					occurredAtStr = `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+				}
+			}
+
+			let severityLabel = incident.severity || 'Trung bình';
+			let severityClass = 'medium';
+			if (incident.severity === 'high' || incident.severity === 'Nguy cơ cao') {
+				severityLabel = 'Cao';
+				severityClass = 'danger';
+			} else if (incident.severity === 'medium' || incident.severity === 'Trung bình') {
+				severityLabel = 'Trung bình';
+				severityClass = 'medium';
+			} else if (incident.severity === 'low' || incident.severity === 'Thấp') {
+				severityLabel = 'Thấp';
+				severityClass = 'low';
+			}
+
+			const floorValue = incident.floor || 'Tầng trệt';
+			const rawSummary = incident.summary || incident.incident_type || incident.title || 'Sự cố PCCC';
+			const rawDetail = incident.detail || incident.description || 'Phát hiện sự cố cảnh báo từ cảm biến hệ thống.';
+
 			return {
 				id: incident.id,
-				displayId: uiMeta.displayId || incident.id,
-				summary: uiMeta.summary || incident.title,
-				severityLabel: uiMeta.severityLabel || incident.severity,
-				severityClass: uiMeta.severityClass || 'medium',
-				occurredAt: uiMeta.occurredAt || incident.updatedAt,
-				locationLabel: uiMeta.locationLabel || incident.fireAt,
-				assignee: uiMeta.assignee || 'Chưa phân công',
-				sourceLabel: uiMeta.sourceLabel || '',
-				detail: incident.detail || 'Chưa có mô tả chi tiết.',
-				route: incident.route || [],
-				dangerZones: incident.dangerZones || [],
+				displayId: incident.displayId || incident.id,
+				summary: translateDoorNamesInText(rawSummary, floorValue),
+				severityLabel,
+				severityClass,
+				occurredAt: occurredAtStr,
+				locationLabel: translateDoorNamesInText(floorValue, floorValue),
+				assignee: incident.assignee || 'Đội trực ca PCCC',
+				sourceLabel: incident.id === 'SIM-FIRE-ACTIVE' ? 'Hệ thống mô phỏng' : (incident.sourceLabel || 'Hệ thống báo cháy'),
+				detail: translateDoorNamesInText(rawDetail, floorValue),
 				isResolved
 			};
 		});
-	}, [incidents, resolvedIds, incidentUiMeta]);
+	}, [incidents, resolvedIds]);
 
 	const detailIncident = useMemo(() => {
 		if (!detailIncidentId) {
@@ -82,7 +138,34 @@ function FireStaffIncidentPage() {
 		return incidentCards.find((incident) => incident.id === detailIncidentId) || null;
 	}, [detailIncidentId, incidentCards]);
 
-	function markIncidentResolved(incidentId) {
+	const logIncident = useMemo(() => {
+		if (!logIncidentId) {
+			return null;
+		}
+
+		return incidentCards.find((incident) => incident.id === logIncidentId) || null;
+	}, [logIncidentId, incidentCards]);
+
+	async function markIncidentResolved(incidentId) {
+		const currentUser = getCurrentUser();
+		const assigneeName = currentUser?.fullName || 'Đội trực ca PCCC';
+		try {
+			await axios.put(`/api/incidents/${incidentId}`, { 
+				status: 'resolved',
+				assignee: assigneeName
+			});
+		} catch (error) {
+			console.error("Lỗi khi cập nhật trạng thái sự cố:", error);
+		}
+		
+		setIncidents((prevIncidents) => 
+			prevIncidents.map((inc) => 
+				inc.id === incidentId 
+					? { ...inc, status: 'resolved', assignee: assigneeName } 
+					: inc
+			)
+		);
+
 		setResolvedIds((previous) => {
 			if (previous.includes(incidentId)) {
 				return previous;
@@ -91,14 +174,24 @@ function FireStaffIncidentPage() {
 		});
 	}
 
-	const processingSteps = useMemo(() => {
-		if (updateFeed.length === 0) {
-			return fallbackProcessingSteps;
+	async function handleSaveLog(incidentId, text) {
+		try {
+			await axios.put(`/api/incidents/${incidentId}`, { 
+				detail: text
+			});
+		} catch (error) {
+			console.error("Lỗi khi ghi log sự cố:", error);
+			throw error;
 		}
 
-		return updateFeed.slice(0, 3).map((item) => item.replace(/^\d{2}:\d{2}\s-\s/, ''));
-	}, [updateFeed, fallbackProcessingSteps]);
-
+		setIncidents((prevIncidents) => 
+			prevIncidents.map((inc) => 
+				inc.id === incidentId 
+					? { ...inc, detail: text } 
+					: inc
+			)
+		);
+	}
 	return (
 		<main className="firestaff-screen">
 			<Header roleLabel="Nhân viên PCCC" homePath="/firestaff/home" />
@@ -153,17 +246,6 @@ function FireStaffIncidentPage() {
 									</p>
 								</div>
 
-								{!incident.isResolved && (
-									<section className="firestaff-incident-processing">
-										<h3 className="typo-h2">Thông tin xử lý</h3>
-										<ul className="typo-body-md">
-											{processingSteps.map((step) => (
-												<li key={`${incident.id}-${step}`}>{step}</li>
-											))}
-										</ul>
-									</section>
-								)}
-
 								<div className="firestaff-incident-actions">
 									{!incident.isResolved && (
 										<button
@@ -174,7 +256,14 @@ function FireStaffIncidentPage() {
 											Đánh dấu đã xử lý
 										</button>
 									)}
-									<button type="button" className="firestaff-incident-btn typo-body-md">
+									<button
+										type="button"
+										className="firestaff-incident-btn typo-body-md"
+										onClick={() => {
+											setLogIncidentId(incident.id);
+											setLogText(incident.detail || '');
+										}}
+									>
 										<NotePencil size={16} />
 										<span>Ghi log</span>
 									</button>
@@ -235,15 +324,75 @@ function FireStaffIncidentPage() {
 							<p>
 								<strong>Mô tả:</strong> {detailIncident.detail}
 							</p>
-							<p>
-								<strong>Khu vực nguy hiểm:</strong>{' '}
-								{detailIncident.dangerZones.length > 0 ? detailIncident.dangerZones.join(', ') : 'Chưa có dữ liệu'}
-							</p>
-							<p>
-								<strong>Tuyến xử lý:</strong>{' '}
-								{detailIncident.route.length > 0 ? detailIncident.route.join(' → ') : 'Chưa có dữ liệu'}
-							</p>
 						</div>
+					</article>
+				</section>
+			)}
+
+			{logIncident && (
+				<section
+					className="firestaff-incident-detail-backdrop"
+					role="dialog"
+					aria-modal="true"
+					aria-label="Ghi log sự cố"
+				>
+					<article className="firestaff-panel firestaff-incident-detail-modal">
+						<header className="firestaff-incident-detail-header">
+							<div>
+								<h2 className="typo-h2">Ghi log sự cố {logIncident.displayId}</h2>
+								<p className="typo-body-md text-secondary">Cập nhật nhật ký xử lý sự cố.</p>
+							</div>
+							<button
+								type="button"
+								className="firestaff-incident-btn typo-body-md"
+								onClick={() => setLogIncidentId('')}
+							>
+								Đóng
+							</button>
+						</header>
+
+						<form
+							onSubmit={async (e) => {
+								e.preventDefault();
+								setIsSavingLog(true);
+								try {
+									await handleSaveLog(logIncident.id, logText);
+									setLogIncidentId('');
+								} catch (error) {
+									alert('Không thể lưu log: ' + error.message);
+								} finally {
+									setIsSavingLog(false);
+								}
+							}}
+							className="firestaff-incident-log-form"
+						>
+							<div style={{ margin: '15px 0' }}>
+								<textarea
+									className="firestaff-sim-input typo-body-md"
+									style={{ width: '100%', minHeight: '120px', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', resize: 'vertical' }}
+									value={logText}
+									onChange={(e) => setLogText(e.target.value)}
+									placeholder="Nhập nội dung nhật ký xử lý sự cố tại đây..."
+									required
+								/>
+							</div>
+							<div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+								<button
+									type="button"
+									className="firestaff-incident-btn typo-body-md"
+									onClick={() => setLogIncidentId('')}
+								>
+									Hủy
+								</button>
+								<button
+									type="submit"
+									className="firestaff-incident-btn success typo-body-md"
+									disabled={isSavingLog}
+								>
+									{isSavingLog ? 'Đang lưu...' : 'Lưu nhật ký'}
+								</button>
+							</div>
+						</form>
 					</article>
 				</section>
 			)}

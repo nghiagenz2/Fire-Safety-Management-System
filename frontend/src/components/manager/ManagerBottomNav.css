@@ -5,7 +5,7 @@
 	bottom: 0;
 	z-index: 40;
 	display: grid;
-	grid-template-columns: repeat(8, minmax(0, 1fr));
+	grid-template-columns: repeat(7, minmax(0, 1fr));
 	gap: 6px;
 	padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
 	background: rgba(255, 255, 255, 0.94);

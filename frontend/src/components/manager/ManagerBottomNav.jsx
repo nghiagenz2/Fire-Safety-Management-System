@@ -1,24 +1,22 @@
 import {
 	ChartBar,
-	ClipboardText,
 	Door,
 	HouseSimple,
-	MapTrifold,
+	MapPin,
 	UserCircle,
 	WarningDiamond,
-	Wrench
+	FireExtinguisher
 } from '@phosphor-icons/react';
 import { NavLink } from 'react-router-dom';
 import './ManagerBottomNav.css';
 
 const navItems = [
 	{ label: 'Home', to: '/manager/home', Icon: HouseSimple },
-	{ label: 'Thiết bị', to: '/manager/devices', Icon: Wrench },
 	{ label: 'Lối thoát', to: '/manager/escape', Icon: Door },
-	{ label: 'Kiểm tra tầng', to: '/manager/floor-check', Icon: MapTrifold },
+	{ label: 'Thiết bị', to: '/manager/devices', Icon: FireExtinguisher },
+	{ label: 'Kiểm tra tầng', to: '/manager/floor-check', Icon: MapPin },
 	{ label: 'Dashboard', to: '/manager/dashboard', Icon: ChartBar },
 	{ label: 'Sự cố', to: '/manager/incidents', Icon: WarningDiamond },
-	{ label: 'Báo cáo', to: '/manager/reports', Icon: ClipboardText },
 	{ label: 'Tài khoản', to: '/manager/account', Icon: UserCircle }
 ];
 

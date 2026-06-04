@@ -3,6 +3,10 @@ const { pool } = require('../config/db');
 function toDevice(row) {
   if (!row) return null;
 
+  const nodeIndexStr = row.glb_node_name?.match(/\d+/)?.[0] || row.id?.match(/\d+$/)?.[0] || '01';
+  const floorNum = row.floor?.match(/\d+/)?.[0] || 'G';
+  const room = floorNum === 'G' ? 'Sảnh trệt' : `Phòng ${floorNum}${nodeIndexStr.padStart(2, '0')}`;
+
   return {
     id: row.id,
     type: row.type,
@@ -17,6 +21,7 @@ function toDevice(row) {
     quantity: row.quantity,
     condition: row.condition_note,
     floor: row.floor,
+    room: room,
     glbNodeName: row.glb_node_name,
     glbNodeIndex: row.glb_node_index,
     glbTranslation: row.glb_translation,
@@ -25,7 +30,7 @@ function toDevice(row) {
   };
 }
 
-async function findAll({ status, floor, search } = {}) {
+async function findAll({ status, floor, search, allTypes } = {}) {
   const values = [];
   const conditions = [];
 
@@ -47,6 +52,10 @@ async function findAll({ status, floor, search } = {}) {
       OR location ILIKE $${values.length}
       OR glb_node_name ILIKE $${values.length}
     )`);
+  }
+
+  if (allTypes !== 'true' && allTypes !== true) {
+    conditions.push("type IN ('Bình chữa cháy', 'Tủ chữa cháy')");
   }
 
   const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';

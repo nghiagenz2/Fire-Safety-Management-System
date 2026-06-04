@@ -1,10 +1,10 @@
-import { FireExtinguisher, HouseSimple, Lifebuoy, Signpost } from '@phosphor-icons/react';
+import { FireExtinguisher, HouseSimple, Lifebuoy, Door } from '@phosphor-icons/react';
 import { NavLink } from 'react-router-dom';
 import './ResidentBottomNav.css';
 
 const navItems = [
   { label: 'Home', to: '/resident/home', Icon: HouseSimple },
-  { label: 'Lối thoát', to: '/resident/escape', Icon: Signpost },
+  { label: 'Lối thoát', to: '/resident/escape', Icon: Door },
   { label: 'Thiết bị', to: '/resident/devices', Icon: FireExtinguisher },
   { label: 'Hướng dẫn', to: '/resident/guidance', Icon: Lifebuoy }
 ];

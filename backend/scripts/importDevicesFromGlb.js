@@ -1,41 +1,44 @@
-const fs = require('fs');
-const path = require('path');
-const { pool } = require('../src/config/db');
+const fs = require("fs");
+const path = require("path");
+const { pool } = require("../src/config/db");
 
-const MODEL_PATH = path.resolve(__dirname, '../../frontend/public/model/BconCity.glb');
+const MODEL_PATH = path.resolve(
+  __dirname,
+  "../../frontend/public/model/BconCity.glb",
+);
 const DEVICE_NAME_PATTERN = /^(tu_chua_chay|binh_chua_chay)/i;
 
 const STATUS_LABEL = {
-  active: 'Ho\u1ea1t \u0111\u1ed9ng t\u1ed1t',
-  warning: 'C\u1ea3nh b\u00e1o',
-  danger: 'H\u1ecfng',
-  maintenance: 'B\u1ea3o tr\u00ec'
+  active: "Ho\u1ea1t \u0111\u1ed9ng t\u1ed1t",
+  warning: "C\u1ea3nh b\u00e1o",
+  danger: "H\u1ecfng",
+  maintenance: "B\u1ea3o tr\u00ec",
 };
 
 function parseGlbJson(buffer) {
-  const magic = buffer.toString('utf8', 0, 4);
+  const magic = buffer.toString("utf8", 0, 4);
   const version = buffer.readUInt32LE(4);
   const jsonChunkLength = buffer.readUInt32LE(12);
-  const jsonChunkType = buffer.toString('utf8', 16, 20);
+  const jsonChunkType = buffer.toString("utf8", 16, 20);
 
-  if (magic !== 'glTF' || version !== 2 || jsonChunkType !== 'JSON') {
-    throw new Error('Invalid GLB file format');
+  if (magic !== "glTF" || version !== 2 || jsonChunkType !== "JSON") {
+    throw new Error("Invalid GLB file format");
   }
 
-  return JSON.parse(buffer.toString('utf8', 20, 20 + jsonChunkLength));
+  return JSON.parse(buffer.toString("utf8", 20, 20 + jsonChunkLength));
 }
 
 function getFloorOrder(floorName) {
   const normalized = floorName.toLowerCase();
-  if (normalized.includes('tret') || normalized.includes('tr\u1ec7t')) return 0;
+  if (normalized.includes("tret") || normalized.includes("tr\u1ec7t")) return 0;
   const match = floorName.match(/\d+/);
   return match ? Number.parseInt(match[0], 10) : 999;
 }
 
 function getFloorLabel(floorName) {
   const normalized = floorName.toLowerCase();
-  if (normalized.includes('tret') || normalized.includes('tr\u1ec7t')) {
-    return 'T\u1ea7ng tr\u1ec7t';
+  if (normalized.includes("tret") || normalized.includes("tr\u1ec7t")) {
+    return "T\u1ea7ng tr\u1ec7t";
   }
 
   const match = floorName.match(/\d+/);
@@ -43,47 +46,62 @@ function getFloorLabel(floorName) {
 }
 
 function getDeviceType(nodeName) {
-  return nodeName.toLowerCase().startsWith('tu_chua_chay')
-    ? 'T\u1ee7 ch\u1eefa ch\u00e1y'
-    : 'B\u00ecnh ch\u1eefa ch\u00e1y';
+  return nodeName.toLowerCase().startsWith("tu_chua_chay")
+    ? "T\u1ee7 ch\u1eefa ch\u00e1y"
+    : "B\u00ecnh ch\u1eefa ch\u00e1y";
 }
 
 function getDevicePrefix(nodeName) {
-  return nodeName.toLowerCase().startsWith('tu_chua_chay') ? 'CAB' : 'EXT';
+  return nodeName.toLowerCase().startsWith("tu_chua_chay") ? "CAB" : "EXT";
 }
 
 function getDeviceSequence(nodeName, indexInFloor) {
   const match = nodeName.match(/_(\d+)(?:\.|$)/);
-  return match ? match[1].padStart(2, '0') : String(indexInFloor + 1).padStart(2, '0');
+  return match
+    ? match[1].padStart(2, "0")
+    : String(indexInFloor + 1).padStart(2, "0");
 }
 
 function makeDeviceId(nodeName, floorName, indexInFloor) {
   const prefix = getDevicePrefix(nodeName);
   const floorOrder = getFloorOrder(floorName);
-  const floorCode = floorOrder === 0 ? 'TR' : `F${floorOrder}`;
+  const floorCode = floorOrder === 0 ? "TR" : `F${floorOrder}`;
   return `${prefix}-${floorCode}-${getDeviceSequence(nodeName, indexInFloor)}`;
+}
+
+function generateMaintenanceDue(deviceId) {
+  let sum = 0;
+  for (let i = 0; i < deviceId.length; i++) {
+    sum += deviceId.charCodeAt(i);
+  }
+  const day = ((sum * 7) % 28 + 1).toString().padStart(2, "0");
+  const month = ((sum * 3) % 12 + 1).toString().padStart(2, "0");
+  const year = 2026 + (sum % 2);
+  return `${day}/${month}/${year}`;
 }
 
 function nodeToDevice(node, floorName, indexInFloor) {
   const floor = getFloorLabel(floorName);
+  const id = makeDeviceId(node.name, floorName, indexInFloor);
 
   return {
-    id: makeDeviceId(node.name, floorName, indexInFloor),
+    id,
     type: getDeviceType(node.name),
     location: floor,
-    status: 'active',
+    status: "active",
     status_label: STATUS_LABEL.active,
-    maintenance_due: '--',
-    owner_name: '--',
+    maintenance_due: generateMaintenanceDue(id),
+    owner_name: "--",
     model: node.name,
-    last_inspection: '--',
-    install_date: '--',
+    last_inspection: "--",
+    install_date: "--",
     quantity: 1,
-    condition_note: 'Thi\u1ebft b\u1ecb \u0111\u01b0\u1ee3c tr\u00edch xu\u1ea5t t\u1eeb m\u00f4 h\u00ecnh BconCity.glb',
+    condition_note:
+      "Thi\u1ebft b\u1ecb \u0111\u01b0\u1ee3c tr\u00edch xu\u1ea5t t\u1eeb m\u00f4 h\u00ecnh BconCity.glb",
     floor,
     glb_node_name: node.name,
     glb_node_index: node.index,
-    glb_translation: node.translation ? JSON.stringify(node.translation) : null
+    glb_translation: node.translation ? JSON.stringify(node.translation) : null,
   };
 }
 
@@ -92,7 +110,7 @@ function getDevicesFromGlb() {
   const nodes = gltf.nodes || [];
   const floorNodes = nodes
     .map((node, index) => ({ ...node, index }))
-    .filter((node) => /^Tang /i.test(node.name || ''))
+    .filter((node) => /^Tang /i.test(node.name || ""))
     .sort((a, b) => getFloorOrder(a.name) - getFloorOrder(b.name));
 
   const devices = [];
@@ -100,7 +118,7 @@ function getDevicesFromGlb() {
   floorNodes.forEach((floorNode) => {
     const deviceNodes = (floorNode.children || [])
       .map((nodeIndex) => ({ ...(nodes[nodeIndex] || {}), index: nodeIndex }))
-      .filter((node) => DEVICE_NAME_PATTERN.test(node.name || ''));
+      .filter((node) => DEVICE_NAME_PATTERN.test(node.name || ""));
 
     deviceNodes.forEach((node, indexInFloor) => {
       devices.push(nodeToDevice(node, floorNode.name, indexInFloor));
@@ -115,9 +133,27 @@ async function importDevices() {
   const client = await pool.connect();
 
   try {
-    await client.query('BEGIN');
+    await client.query("BEGIN");
+    await client.query("DROP TABLE IF EXISTS devices CASCADE;");
+    await client.query("DROP TABLE IF EXISTS incidents CASCADE;");
+    // Tạo bảng Sự cố thật và đảm bảo nó trống (0 sự cố)
     await client.query(`
-      CREATE TABLE IF NOT EXISTS devices (
+      CREATE TABLE IF NOT EXISTS incidents (
+        id TEXT PRIMARY KEY,
+        floor TEXT NOT NULL,
+        incident_type TEXT NOT NULL,
+        status TEXT NOT NULL,
+        severity TEXT,
+        occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        display_id TEXT,
+        summary TEXT,
+        assignee TEXT,
+        source_label TEXT,
+        detail TEXT
+      );
+    `);
+    await client.query(`
+      CREATE TABLE devices (
         id TEXT PRIMARY KEY,
         type TEXT NOT NULL,
         location TEXT NOT NULL,
@@ -187,23 +223,29 @@ async function importDevices() {
           device.floor,
           device.glb_node_name,
           device.glb_node_index,
-          device.glb_translation
-        ]
+          device.glb_translation,
+        ],
       );
     }
 
-    await client.query('COMMIT');
+    await client.query("COMMIT");
     console.log(`Imported ${devices.length} devices into devices table.`);
   } catch (error) {
-    await client.query('ROLLBACK');
+    await client.query("ROLLBACK");
     throw error;
   } finally {
     client.release();
-    await pool.end();
+    if (require.main === module) {
+      await pool.end();
+    }
   }
 }
 
-importDevices().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+module.exports = { importDevices };
+
+if (require.main === module) {
+  importDevices().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}

@@ -83,13 +83,29 @@ export function getFloors() {
 }
 
 export async function getDeviceStatistics() {
-  const devices = await getManagerDevices();
+  const devices = await getManagerDevices({ allTypes: true });
+
+  let escapesCount = 0;
+  try {
+    const escapesRes = await fetch('/api/escapes');
+    const escapesJson = await escapesRes.json();
+    escapesCount = escapesJson.data ? escapesJson.data.length : 0;
+  } catch (error) {
+    console.error('Failed to fetch escapes:', error);
+  }
 
   return devices.reduce(
     (stats, device) => {
-      stats.total += 1;
-      if (stats[device.status] !== undefined) {
-        stats[device.status] += 1;
+      if (device.type === 'Bình chữa cháy' || device.type === 'Tủ chữa cháy') {
+        stats.total += 1;
+        if (stats[device.status] !== undefined) {
+          stats[device.status] += 1;
+        }
+      } else if (device.type === 'Cửa thoát hiểm') {
+        stats.totalExits += 1;
+        if (device.status === 'active') {
+          stats.availableExits += 1;
+        }
       }
       return stats;
     },
@@ -98,7 +114,9 @@ export async function getDeviceStatistics() {
       active: 0,
       warning: 0,
       danger: 0,
-      maintenance: 0
+      maintenance: 0,
+      totalExits: escapesCount,
+      availableExits: escapesCount
     }
   );
 }

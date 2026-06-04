@@ -13,6 +13,7 @@ const sessionCache = {
   attachments: {},
   inspectionLogs: {},
   brokenReports: {},
+  deviceUpdates: {},
 };
 
 async function fetchAllDbDevices() {
@@ -25,17 +26,20 @@ async function fetchAllDbDevices() {
     return payload.data;
   } catch (error) {
     console.error('Failed to fetch from backend, falling back to mock data:', error);
-    return fireStaffDevices.map(item => ({
-      id: item.id,
-      type: item.type,
-      location: item.location,
-      status: item.status === 'safe' ? 'active' : (item.status === 'danger' ? 'danger' : 'warning'),
-      status_label: STATUS_LABEL[item.status] || 'Chưa rõ',
-      maintenance_due: item.maintenanceDue,
-      owner_name: item.inspectorName || item.assignedTeam,
-      last_inspection: item.lastInspection,
-      glb_node_index: 1,
-    }));
+    return fireStaffDevices.map(item => {
+      const localUpdate = sessionCache.deviceUpdates[item.id] || {};
+      return {
+        id: item.id,
+        type: item.type,
+        location: item.location,
+        status: localUpdate.status || (item.status === 'safe' ? 'active' : (item.status === 'danger' ? 'danger' : 'warning')),
+        status_label: localUpdate.status_label || STATUS_LABEL[item.status] || 'Chưa rõ',
+        maintenance_due: item.maintenanceDue,
+        owner_name: localUpdate.owner_name || item.inspectorName || item.assignedTeam,
+        last_inspection: localUpdate.last_inspection || item.lastInspection,
+        glb_node_index: 1,
+      };
+    });
   }
 }
 
@@ -94,38 +98,45 @@ function sortFloors(floors) {
 }
 
 function dbDeviceToFireStaff(device) {
-  const nodeIndexStr = device.glbNodeName?.match(/\d+/)?.[0] || device.id?.match(/\d+$/)?.[0] || '01';
-  const floorNum = device.floor?.match(/\d+/)?.[0] || 'G';
+  if (!device) return null;
+  const localUpdate = sessionCache.deviceUpdates[device.id] || {};
+  const mergedDevice = {
+    ...device,
+    ...localUpdate
+  };
+
+  const nodeIndexStr = mergedDevice.glbNodeName?.match(/\d+/)?.[0] || mergedDevice.id?.match(/\d+$/)?.[0] || '01';
+  const floorNum = mergedDevice.floor?.match(/\d+/)?.[0] || 'G';
   const room = floorNum === 'G' ? 'Sảnh trệt' : `Phòng ${floorNum}${nodeIndexStr.padStart(2, '0')}`;
 
   let fireStaffStatus = 'warning';
-  if (device.status === 'active') {
+  if (mergedDevice.status === 'active') {
     fireStaffStatus = 'safe';
-  } else if (device.status === 'danger') {
+  } else if (mergedDevice.status === 'danger') {
     fireStaffStatus = 'danger';
-  } else if (device.status === 'warning') {
+  } else if (mergedDevice.status === 'warning') {
     fireStaffStatus = 'warning';
   }
 
-  const fireStaffStatusLabel = STATUS_LABEL[fireStaffStatus] || device.statusLabel || 'Chưa rõ';
+  const fireStaffStatusLabel = STATUS_LABEL[fireStaffStatus] || mergedDevice.statusLabel || 'Chưa rõ';
 
   return {
-    id: device.id,
-    type: device.type,
-    floor: device.floor || 'Tầng 1',
+    id: mergedDevice.id,
+    type: mergedDevice.type,
+    floor: mergedDevice.floor || 'Tầng 1',
     room: room,
-    location: device.location || '',
+    location: mergedDevice.location || '',
     status: fireStaffStatus,
     statusLabel: fireStaffStatusLabel,
-    maintenanceDue: device.maintenanceDue || '--',
-    lastInspection: device.lastInspection || '--',
-    inspectorName: device.owner || 'Chưa ghi nhận',
-    glbNodeName: device.glbNodeName,
-    glbNodeIndex: device.glbNodeIndex,
-    glbTranslation: device.glbTranslation,
-    attachments: sessionCache.attachments[device.id] || [],
-    inspectionLogs: sessionCache.inspectionLogs[device.id] || [],
-    brokenReports: sessionCache.brokenReports[device.id] || [],
+    maintenanceDue: mergedDevice.maintenanceDue || '--',
+    lastInspection: mergedDevice.lastInspection || mergedDevice.last_inspection || '--',
+    inspectorName: mergedDevice.owner || mergedDevice.owner_name || 'Chưa ghi nhận',
+    glbNodeName: mergedDevice.glbNodeName,
+    glbNodeIndex: mergedDevice.glbNodeIndex,
+    glbTranslation: mergedDevice.glbTranslation,
+    attachments: sessionCache.attachments[mergedDevice.id] || [],
+    inspectionLogs: sessionCache.inspectionLogs[mergedDevice.id] || [],
+    brokenReports: sessionCache.brokenReports[mergedDevice.id] || [],
   };
 }
 
@@ -270,18 +281,32 @@ export async function updateFireStaffDeviceStatus(deviceId, payload = {}) {
   const dbStatus = nextStatus === 'safe' ? 'active' : nextStatus;
   const dbStatusLabel = dbStatus === 'active' ? 'Hoạt động tốt' : (dbStatus === 'danger' ? 'Hỏng' : 'Cảnh báo');
 
-  const response = await fetch(`${API_BASE}/${encodeURIComponent(deviceId)}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status: dbStatus, statusLabel: dbStatusLabel })
-  });
+  // Update local session cache
+  if (!sessionCache.deviceUpdates[deviceId]) {
+    sessionCache.deviceUpdates[deviceId] = {};
+  }
+  sessionCache.deviceUpdates[deviceId].status = dbStatus;
+  sessionCache.deviceUpdates[deviceId].status_label = dbStatusLabel;
 
-  const resPayload = await response.json();
-  if (!response.ok || !resPayload.success) {
-    throw new Error('Không thể cập nhật trạng thái lên server.');
+  try {
+    const response = await fetch(`${API_BASE}/${encodeURIComponent(deviceId)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: dbStatus, statusLabel: dbStatusLabel })
+    });
+
+    const resPayload = await response.json();
+    if (response.ok && resPayload.success) {
+      const device = dbDeviceToFireStaff(resPayload.data);
+      return toTableRow(device);
+    }
+  } catch (err) {
+    console.error('Failed to update status on server, using local cache fallback:', err);
   }
 
-  const device = dbDeviceToFireStaff(resPayload.data);
+  const dbDevices = await fetchAllDbDevices();
+  const matched = dbDevices.find(d => d.id === deviceId);
+  const device = dbDeviceToFireStaff(matched || { id: deviceId });
   return toTableRow(device);
 }
 
@@ -302,19 +327,29 @@ export async function recordFireStaffDeviceInspection(deviceId, payload = {}) {
   }
   sessionCache.inspectionLogs[deviceId].unshift(log);
 
-  // Update inspection status on database
-  const response = await fetch(`${API_BASE}/${encodeURIComponent(deviceId)}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      lastInspection: inspectedAt,
-      owner: inspectorName
-    })
-  });
+  // Update local session cache
+  if (!sessionCache.deviceUpdates[deviceId]) {
+    sessionCache.deviceUpdates[deviceId] = {};
+  }
+  sessionCache.deviceUpdates[deviceId].last_inspection = inspectedAt;
+  sessionCache.deviceUpdates[deviceId].owner_name = inspectorName;
 
-  const resPayload = await response.json();
-  if (!response.ok || !resPayload.success) {
-    console.error('Failed to update inspection date in db:', resPayload.message);
+  try {
+    const response = await fetch(`${API_BASE}/${encodeURIComponent(deviceId)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lastInspection: inspectedAt,
+        owner: inspectorName
+      })
+    });
+
+    const resPayload = await response.json();
+    if (!response.ok || !resPayload.success) {
+      console.error('Failed to update inspection date in db:', resPayload.message);
+    }
+  } catch (err) {
+    console.error('Failed to record inspection on server, using local cache fallback:', err);
   }
 
   return log;
@@ -334,19 +369,29 @@ export async function reportFireStaffDeviceBroken(deviceId, payload = {}) {
   }
   sessionCache.brokenReports[deviceId].unshift(report);
 
-  // Update status to danger in database
-  const response = await fetch(`${API_BASE}/${encodeURIComponent(deviceId)}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      status: 'danger',
-      statusLabel: 'Hỏng'
-    })
-  });
+  // Update local session cache
+  if (!sessionCache.deviceUpdates[deviceId]) {
+    sessionCache.deviceUpdates[deviceId] = {};
+  }
+  sessionCache.deviceUpdates[deviceId].status = 'danger';
+  sessionCache.deviceUpdates[deviceId].status_label = 'Hỏng';
 
-  const resPayload = await response.json();
-  if (!response.ok || !resPayload.success) {
-    throw new Error('Không thể báo cáo hỏng lên server.');
+  try {
+    const response = await fetch(`${API_BASE}/${encodeURIComponent(deviceId)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        status: 'danger',
+        statusLabel: 'Hỏng'
+      })
+    });
+
+    const resPayload = await response.json();
+    if (!response.ok || !resPayload.success) {
+      console.error('Failed to report broken in db:', resPayload.message);
+    }
+  } catch (err) {
+    console.error('Failed to report broken on server, using local cache fallback:', err);
   }
 
   return report;
@@ -377,5 +422,6 @@ export async function resetFireStaffDevicesMockState() {
   sessionCache.attachments = {};
   sessionCache.inspectionLogs = {};
   sessionCache.brokenReports = {};
+  sessionCache.deviceUpdates = {};
   return true;
 }

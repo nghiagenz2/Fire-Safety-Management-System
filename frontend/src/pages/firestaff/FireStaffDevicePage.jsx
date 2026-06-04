@@ -10,6 +10,7 @@ import {
 } from "../../services/mockFireStaffDevicesApi.js";
 import Header from "../../components/Header";
 import FireStaffBottomNav from "../../components/firestaff/FireStaffBottomNav.jsx";
+import { getCurrentUser } from "../../services/authApi.js";
 
 const DEFAULT_FILTERS = {
   floor: "all",
@@ -177,8 +178,10 @@ function FireStaffDevicePage() {
   async function handleRecordInspection(device) {
     setIsSubmittingAction(true);
     try {
+      const currentUser = getCurrentUser();
+      const inspectorName = currentUser?.fullName || "Nhân viên PCCC trực ca";
       await recordFireStaffDeviceInspection(device.id, {
-        inspectorName: "Nhân viên PCCC trực ca",
+        inspectorName,
         result: "pass",
         note: "Kiểm tra định kỳ - thiết bị hoạt động ổn định.",
       });
@@ -191,8 +194,10 @@ function FireStaffDevicePage() {
   async function handleReportBroken(device) {
     setIsSubmittingAction(true);
     try {
+      const currentUser = getCurrentUser();
+      const reporterName = currentUser?.fullName || "Nhân viên PCCC trực ca";
       await reportFireStaffDeviceBroken(device.id, {
-        reporterName: "Nhân viên PCCC trực ca",
+        reporterName,
         issueSummary: "Phát hiện lỗi cần xử lý kỹ thuật.",
         severity: "high",
       });
@@ -219,11 +224,13 @@ function FireStaffDevicePage() {
 
     setIsSubmittingAction(true);
     try {
+      const currentUser = getCurrentUser();
+      const uploadedBy = currentUser?.fullName || "Nhân viên PCCC trực ca";
       const fallbackFileName = `${attachModalDevice.id.toLowerCase()}-inspection.jpg`;
       await attachFireStaffDeviceInspectionImage(attachModalDevice.id, {
         fileName: selectedFileName || fallbackFileName,
         caption: imageCaption || "Ảnh kiểm tra nhanh hiện trường",
-        uploadedBy: "Nhân viên PCCC trực ca",
+        uploadedBy,
       });
       closeAttachModal();
     } finally {
@@ -367,7 +374,6 @@ function FireStaffDevicePage() {
                   <th>Mã thiết bị</th>
                   <th>Loại thiết bị</th>
                   <th>Tầng</th>
-                  <th>Khu vực / phòng</th>
                   <th>Trạng thái</th>
                   <th>Hạn bảo trì</th>
                   <th>Lần kiểm tra gần nhất</th>
@@ -379,7 +385,7 @@ function FireStaffDevicePage() {
                 {isLoading && (
                   <tr>
                     <td
-                      colSpan="9"
+                      colSpan="8"
                       className="firestaff-device-empty typo-body-md"
                     >
                       Đang tải dữ liệu thiết bị...
@@ -390,7 +396,7 @@ function FireStaffDevicePage() {
                 {!isLoading && tableData.items.length === 0 && (
                   <tr>
                     <td
-                      colSpan="9"
+                      colSpan="8"
                       className="firestaff-device-empty typo-body-md"
                     >
                       Không có thiết bị phù hợp bộ lọc hiện tại.
@@ -410,7 +416,6 @@ function FireStaffDevicePage() {
                       <td>{device.code}</td>
                       <td>{device.type}</td>
                       <td>{device.floor}</td>
-                      <td>{device.areaOrRoom}</td>
                       <td>
                         <span
                           className={`firestaff-device-status status-${device.status}`}
