@@ -1,0 +1,49 @@
+{
+  "incidents": [
+    {
+      "id": "INC-2025-001",
+      "title": "Cháy kho vật tư tầng 3",
+      "location": "C3",
+      "severity": "Nguy cơ cao",
+      "status": "Đang xử lý",
+      "startTime": "11:15",
+      "updatedAt": "11:35",
+      "affectedArea": ["C3", "C2", "C4"],
+      "resourcesDeployed": ["Đội cứu hỏa 1", "Đội y tế"],
+      "description": "Nhiệt độ tăng nhanh, khói dày khu vực trung tâm, ưu tiên cô lập nguồn điện.",
+      "reportedBy": "Cảm biến nhiệt độ tự động"
+    },
+    {
+      "id": "INC-2025-002",
+      "title": "Cháy phòng kỹ thuật tầng 1",
+      "location": "A2",
+      "severity": "Trung bình",
+      "status": "Dập tắt",
+      "startTime": "11:00",
+      "updatedAt": "11:28",
+      "affectedArea": ["A2", "A1"],
+      "resourcesDeployed": ["Đội cứu hỏa 2"],
+      "description": "Đám cháy cục bộ, đã kích hoạt sprinkler, tiếp tục theo dõi tái bùng phát.",
+      "reportedBy": "Nhân viên tầng 1"
+    },
+    {
+      "id": "INC-2025-003",
+      "title": "Báo động khí độc",
+      "location": "B5",
+      "severity": "Thấp",
+      "status": "Xác nhận sai",
+      "startTime": "10:45",
+      "updatedAt": "10:52",
+      "affectedArea": ["B5"],
+      "resourcesDeployed": [],
+      "description": "Báo động từ cảm biến khí độc, kết luận là báo động giả do hư hỏng thiết bị.",
+      "reportedBy": "Cảm biến khí độc"
+    }
+  ],
+  "stats": {
+    "total": 3,
+    "active": 1,
+    "resolved": 1,
+    "false_alarm": 1
+  }
+}

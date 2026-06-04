@@ -1,0 +1,80 @@
+[
+  {
+    "id": "ACC-001",
+    "fullName": "Nguyễn Minh Tuấn",
+    "username": "tuan.nm",
+    "password": "P@ssw0rd123",
+    "email": "tuan.nm@pccc3d.vn",
+    "phone": "0903123456",
+    "role": "manager",
+    "roleLabel": "Quản lý",
+    "status": "active",
+    "statusLabel": "Đang hoạt động",
+    "lastActiveAt": "2026-04-03 08:45"
+  },
+  {
+    "id": "ACC-002",
+    "fullName": "Trần Thị Hồng",
+    "username": "hong.tt",
+    "password": "P@ssw0rd123",
+    "email": "hong.tt@pccc3d.vn",
+    "phone": "0912345678",
+    "role": "firestaff",
+    "roleLabel": "Nhân viên PCCC",
+    "status": "active",
+    "statusLabel": "Đang hoạt động",
+    "lastActiveAt": "2026-04-02 22:10"
+  },
+  {
+    "id": "ACC-003",
+    "fullName": "Lê Văn Nam",
+    "username": "nam.lv",
+    "password": "P@ssw0rd123",
+    "email": "nam.lv@pccc3d.vn",
+    "phone": "0987000111",
+    "role": "firestaff",
+    "roleLabel": "Nhân viên PCCC",
+    "status": "locked",
+    "statusLabel": "Đã khóa",
+    "lastActiveAt": "2026-03-28 13:05"
+  },
+  {
+    "id": "ACC-004",
+    "fullName": "Phạm Quỳnh Anh",
+    "username": "anh.pq",
+    "password": "P@ssw0rd123",
+    "email": "anh.pq@pccc3d.vn",
+    "phone": "0909888777",
+    "role": "resident",
+    "roleLabel": "Cư dân",
+    "status": "inactive",
+    "statusLabel": "Ngưng hoạt động",
+    "lastActiveAt": "2026-03-25 09:40"
+  },
+  {
+    "id": "ACC-005",
+    "fullName": "Đỗ Nhật Linh",
+    "username": "linh.dn",
+    "password": "P@ssw0rd123",
+    "email": "linh.dn@pccc3d.vn",
+    "phone": "0933555444",
+    "role": "manager",
+    "roleLabel": "Quản lý",
+    "status": "active",
+    "statusLabel": "Đang hoạt động",
+    "lastActiveAt": "2026-04-03 07:30"
+  },
+  {
+    "id": "ACC-006",
+    "fullName": "Bùi Hữu Khang",
+    "username": "khang.bh",
+    "password": "P@ssw0rd123",
+    "email": "khang.bh@pccc3d.vn",
+    "phone": "0977333222",
+    "role": "resident",
+    "roleLabel": "Cư dân",
+    "status": "active",
+    "statusLabel": "Đang hoạt động",
+    "lastActiveAt": "2026-04-01 20:12"
+  }
+]

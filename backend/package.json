@@ -8,6 +8,9 @@
     "start": "node src/app.js"
   },
   "dependencies": {
-    "express": "^4.21.2"
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^4.21.2",
+    "pg": "^8.21.0"
   }
 }
