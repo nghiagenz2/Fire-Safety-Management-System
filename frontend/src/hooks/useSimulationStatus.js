@@ -14,7 +14,7 @@ export function useSimulationStatus() {
     let retryTimeout;
 
     function connect() {
-      eventSource = new EventSource('/api/incidents/simulation/stream');
+      eventSource = new EventSource(`${import.meta.env.VITE_API_URL}/api/incidents/simulation/stream`);
 
       eventSource.onmessage = (event) => {
         try {
