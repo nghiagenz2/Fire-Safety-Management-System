@@ -144,7 +144,7 @@ export async function deleteDevice(deviceId) {
 export async function getDeviceStatistics() {
   const [devices, escapePayload] = await Promise.all([
     getDevices({ allTypes: true }),
-    fetch('/api/escapes').then((response) => response.json()).catch(() => ({ data: [] }))
+    fetch(`${import.meta.env.VITE_API_URL}/api/escapes`).then((response) => response.json()).catch(() => ({ data: [] }))
   ]);
   const escapes = Array.isArray(escapePayload?.data) ? escapePayload.data : [];
 
