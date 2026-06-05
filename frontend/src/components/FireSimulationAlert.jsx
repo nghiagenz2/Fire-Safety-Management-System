@@ -52,7 +52,7 @@ function FireSimulationAlert() {
     let reconnectTimer = null;
 
     const connect = () => {
-      eventSource = new EventSource('/api/incidents/simulation/stream');
+      eventSource = new EventSource(`${import.meta.env.VITE_API_URL}/api/incidents/simulation/stream`);
 
       eventSource.onmessage = (event) => {
         try {
