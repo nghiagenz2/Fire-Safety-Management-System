@@ -1,5 +1,5 @@
 export async function getManagerIncidentsData() {
-  const response = await fetch('${import.meta.env.VITE_API_URL}/api/incidents');
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/incidents`);
   const payload = await response.json().catch(() => ({}));
   if (response.ok && payload.success) {
     return payload.data;
@@ -8,7 +8,7 @@ export async function getManagerIncidentsData() {
 }
 
 export async function getSimulationIncident() {
-  const response = await fetch('${import.meta.env.VITE_API_URL}/api/incidents/simulation');
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/incidents/simulation`);
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || !payload.success || !payload.data?.active) {
     return null;

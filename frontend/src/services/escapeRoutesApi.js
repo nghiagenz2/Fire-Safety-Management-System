@@ -7,7 +7,7 @@ import {
   updateManagerEscape
 } from './mockManagerEscapesApi';
 
-const API_BASE = '${import.meta.env.VITE_API_URL}/api/escapes';
+const API_BASE = `${import.meta.env.VITE_API_URL}/api/escapes`;
 
 const STATUS_LABEL = {
   available: 'Khả dụng',

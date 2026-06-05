@@ -1,6 +1,6 @@
 export async function fetchFireStaffTaskFilterOptions() {
   try {
-    const response = await fetch('${import.meta.env.VITE_API_URL}/api/tasks/filter-options');
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tasks/filter-options`);
     const payload = await response.json().catch(() => ({}));
     if (response.ok && payload.success) {
       return payload.data;
@@ -39,7 +39,7 @@ export async function fetchFireStaffTaskList(filters = {}) {
       query.append("keyword", filters.keyword);
     }
 
-    const response = await fetch(`/api/tasks?${query.toString()}`);
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tasks?${query.toString()}`);
     const payload = await response.json().catch(() => ({}));
     if (response.ok && payload.success) {
       return payload.data;
@@ -56,7 +56,7 @@ export async function fetchFireStaffTaskList(filters = {}) {
 }
 
 export async function updateFireStaffTaskStatus(taskId, nextStatus) {
-  const response = await fetch(`/api/tasks/${encodeURIComponent(taskId)}/status`, {
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tasks/${encodeURIComponent(taskId)}/status`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json'
@@ -72,7 +72,7 @@ export async function updateFireStaffTaskStatus(taskId, nextStatus) {
 }
 
 export async function createTask(taskData) {
-  const response = await fetch('/api/tasks', {
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tasks`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -89,7 +89,7 @@ export async function createTask(taskData) {
 
 export async function fetchFireStaffUsers() {
   try {
-    const response = await fetch('/api/accounts?role=firestaff&status=active');
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/accounts?role=firestaff&status=active`);
     const payload = await response.json().catch(() => ({}));
     if (response.ok && payload.success) {
       return payload.data || [];

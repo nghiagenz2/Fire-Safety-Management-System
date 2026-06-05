@@ -1,4 +1,4 @@
-const API_BASE = '${import.meta.env.VITE_API_URL}/api/devices';
+const API_BASE = `${import.meta.env.VITE_API_URL}/api/devices`;
 
 const STATUS_LABEL = {
   active: 'Hoạt động tốt',

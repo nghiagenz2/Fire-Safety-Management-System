@@ -1,7 +1,7 @@
 import fireStaffIncidents from '../mocks/fireStaffIncidents.json';
 import axios from 'axios';
 
-const API_BASE = '${import.meta.env.VITE_API_URL}/api/incidents';
+const API_BASE = `${import.meta.env.VITE_API_URL}/api/incidents`;
 
 export async function fetchFireStaffIncidents() {
   try {
