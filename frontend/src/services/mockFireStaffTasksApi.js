@@ -1,6 +1,6 @@
 export async function fetchFireStaffTaskFilterOptions() {
   try {
-    const response = await fetch('/api/tasks/filter-options');
+    const response = await fetch('${import.meta.env.VITE_API_URL}/api/tasks/filter-options');
     const payload = await response.json().catch(() => ({}));
     if (response.ok && payload.success) {
       return payload.data;

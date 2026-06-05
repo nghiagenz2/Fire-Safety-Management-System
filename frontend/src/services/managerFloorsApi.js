@@ -1,4 +1,4 @@
-const API_BASE = "/api/floors";
+const API_BASE = "${import.meta.env.VITE_API_URL}/api/floors";
 
 export async function getFloorList() {
   const response = await fetch(API_BASE);

@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': 'https://fire-safety-management-system.onrender.com'
+      '/api': 'http://localhost:5000'
     }
   }
 });

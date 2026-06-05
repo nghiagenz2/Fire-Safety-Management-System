@@ -1,4 +1,4 @@
-const API_BASE = "/api/dashboard";
+const API_BASE = "${import.meta.env.VITE_API_URL}/api/dashboard";
 
 export async function getManagerDashboardFilterOptions() {
   const response = await fetch(`${API_BASE}/filters`);

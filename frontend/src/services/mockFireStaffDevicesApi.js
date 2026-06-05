@@ -1,6 +1,6 @@
 import fireStaffDevices from "../mocks/fireStaffDevices.json";
 
-const API_BASE = '/api/devices';
+const API_BASE = '${import.meta.env.VITE_API_URL}/api/devices';
 
 const STATUS_LABEL = {
   safe: "Hoạt động tốt",
