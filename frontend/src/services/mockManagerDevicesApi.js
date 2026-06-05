@@ -87,7 +87,7 @@ export async function getDeviceStatistics() {
 
   let escapesCount = 0;
   try {
-    const escapesRes = await fetch('/api/escapes');
+    const escapesRes = await fetch(`${import.meta.env.VITE_API_URL}/api/escapes`);
     const escapesJson = await escapesRes.json();
     escapesCount = escapesJson.data ? escapesJson.data.length : 0;
   } catch (error) {
